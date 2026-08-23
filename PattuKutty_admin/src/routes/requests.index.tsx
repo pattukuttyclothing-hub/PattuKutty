@@ -6,7 +6,7 @@ import { type Tone } from "@/components/shared/Badge";
 import { useAdmin, requestStatusLabel, type RequestStatus } from "@/lib/admin-store";
 
 
-const title = "Customer Requests — Butterflies Tailoring Admin";
+const title = "Customer Requests — Pattu Kutty Admin";
 const description =
   "Custom design requests sent from the storefront, ready to be reviewed and quoted.";
 

@@ -62,10 +62,14 @@ function CategoryPage() {
       />
 
       <PageSection>
-          <div className="grid grid-cols-2 gap-4 sm:gap-6 lg:grid-cols-3 lg:gap-8">
-            {cat.subs.map((sub, i) => {
-              const count = sub.designCount ?? sub.design_count ?? (Array.isArray(sub.images) ? sub.images.length : 0);
-              const badgeText = `${count} ${count === 1 ? "design" : "designs"}`;
+        <div className="grid grid-cols-2 gap-4 sm:gap-6 lg:grid-cols-3 lg:gap-8">
+          {cat.subs.map((sub, i) => {
+              const count =
+                sub.designCount != null
+                  ? sub.designCount
+                  : sub.design_count;
+              // count === -1 means "no live DB data yet" — hide badge entirely
+              const badgeText = (count != null && count >= 0) ? `${count} ${count === 1 ? "design" : "designs"}` : null;
               return (
                 <Reveal key={sub.id} delay={stagger(i, 80)}>
                 <Link
@@ -82,9 +86,11 @@ function CategoryPage() {
                   />
                   <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-maroon/85 via-maroon/20 to-transparent" />
                   <div className="absolute top-3 left-3 z-10">
-                    <span className="inline-flex items-center rounded-full bg-primary px-2.5 py-1 text-[0.6rem] sm:text-[0.65rem] font-bold tracking-wide text-primary-foreground shadow-soft border border-accent/40">
-                      {badgeText}
-                    </span>
+                    {badgeText != null && (
+                      <span className="inline-flex items-center rounded-full bg-primary px-2.5 py-1 text-[0.6rem] sm:text-[0.65rem] font-bold tracking-wide text-primary-foreground shadow-soft border border-accent/40">
+                        {badgeText}
+                      </span>
+                    )}
                   </div>
                   <div className="absolute inset-x-0 bottom-0 z-10 p-5 sm:p-6">
                     <h2 className="font-display text-xl leading-tight font-semibold text-primary-foreground sm:text-2xl">

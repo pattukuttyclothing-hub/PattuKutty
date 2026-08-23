@@ -19,7 +19,10 @@ export function Collections() {
 
         <div className="mt-10 grid grid-cols-2 items-stretch gap-3 sm:mt-12 sm:gap-6 lg:grid-cols-4 lg:gap-8">
           {categories.map((c, i) => {
-            const subCount = Array.isArray(c.subs) ? c.subs.length : 0;
+            const designCount =
+              c.designCount ??
+              c.design_count ??
+              c.subs.reduce((sum, s) => sum + (s.designCount || 0), 0);
             return (
               <Reveal key={c.id} delay={stagger(i, 80)} className="flex h-full">
                 <Link
@@ -44,9 +47,9 @@ export function Collections() {
                   {/* gold sheen sweep */}
                   <div className="pointer-events-none absolute inset-0 translate-x-[-120%] bg-gradient-to-r from-transparent via-accent/25 to-transparent transition-transform duration-[1100ms] ease-out group-hover:translate-x-[120%]" />
 
-                  {subCount > 0 ? (
+                  {designCount > 0 ? (
                     <span className="absolute top-2.5 left-2.5 z-10 rounded-full border border-accent/40 bg-background/85 px-2.5 py-1 text-[0.58rem] font-bold tracking-[0.12em] text-primary uppercase backdrop-blur-sm sm:top-4 sm:left-4 sm:text-[0.62rem]">
-                      {subCount} styles
+                      {designCount} {designCount === 1 ? "design" : "designs"}
                     </span>
                   ) : null}
 

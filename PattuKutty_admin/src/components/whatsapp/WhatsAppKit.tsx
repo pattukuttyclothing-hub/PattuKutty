@@ -31,7 +31,7 @@ export function StatCard({
         </p>
         {icon ? <span className="text-primary">{icon}</span> : null}
       </div>
-      <p className="font-display mt-2 text-2xl font-semibold text-foreground">{value}</p>
+      <p className="font-display tabular-nums mt-2 text-2xl font-bold tracking-tight text-foreground">{value}</p>
       {hint ? <p className="mt-1 text-[0.7rem] text-muted-foreground">{hint}</p> : null}
     </div>
   );

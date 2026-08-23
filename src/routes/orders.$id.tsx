@@ -23,7 +23,7 @@ import { StatusBadge } from "@/components/shared/Badge";
 import { storeInfo, waLink } from "@/data/boutique";
 import { inr } from "@/lib/cart";
 import { useAuth } from "@/lib/auth";
-import { useOrders, type Order } from "@/lib/orders";
+import { mapOrder, useOrders, type Order } from "@/lib/orders";
 import {
   blueDartTrackingUrl,
   courier,
@@ -35,7 +35,7 @@ import {
 } from "@/lib/tracking";
 import { addReview, listReviewsForOrder, type Review } from "@/lib/reviews";
 import type { CancellationResult, TrackingData } from "@/lib/api/orders";
-import { fetchOrderTracking } from "@/lib/api/orders";
+import { fetchOrderById, fetchOrderTracking } from "@/lib/api/orders";
 
 /** Cancels an order via the backend API */
 async function cancelOrderApi(orderId: string, reason: string): Promise<CancellationResult> {
@@ -340,22 +340,36 @@ function ReviewPanel({ order }: { order: Order }) {
 function OrderTrackingPage() {
   const { id } = Route.useParams();
   const { find, loading, refresh } = useOrders();
-
   const { user, ready } = useAuth();
-  const order = find(id);
+
+  const [directOrder, setDirectOrder] = useState<Order | null>(null);
+  const [directLoading, setDirectLoading] = useState(false);
+
+  const order = find(id) || directOrder;
 
   const [copiedPayment, setCopiedPayment] = useState(false);
   const [liveTracking, setLiveTracking] = useState<TrackingData | null>(null);
   const [trackingLoading, setTrackingLoading] = useState(false);
 
   useEffect(() => {
-    if (!user || !order) return;
+    if (find(id)) return;
+    setDirectLoading(true);
+    fetchOrderById(id)
+      .then((ord: any) => {
+        if (ord) setDirectOrder(mapOrder(ord));
+      })
+      .catch(() => setDirectOrder(null))
+      .finally(() => setDirectLoading(false));
+  }, [id, find]);
+
+  useEffect(() => {
+    if (!order) return;
     setTrackingLoading(true);
     fetchOrderTracking(order.id)
       .then((data) => setLiveTracking(data))
       .catch(() => setLiveTracking(null))
       .finally(() => setTrackingLoading(false));
-  }, [user, order?.id]);
+  }, [order?.id]);
 
   if (!ready || loading) {
     return (

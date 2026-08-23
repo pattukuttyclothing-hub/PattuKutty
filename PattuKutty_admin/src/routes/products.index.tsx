@@ -9,7 +9,7 @@ import { isProductSoldOut, useAdmin, type AdminProduct } from "@/lib/admin-store
 import { uid } from "@/lib/format";
 
 
-const title = "Products — Butterflies Tailoring Admin";
+const title = "Products — Pattu Kutty Admin";
 const description =
   "Every design shown on the storefront, with live availability per size, grouped by category.";
 
@@ -142,24 +142,27 @@ function ProductsPage() {
           >
             All ({products.length})
           </button>
-          {categories.map((c) => (
-            <button
-              key={c.id}
-              type="button"
-              onClick={() => {
-                setCat(c.id);
-                setSub("all");
-              }}
-              className={`flex items-center gap-2 rounded-full border py-1.5 pr-4 pl-1.5 text-xs font-semibold transition-colors ${
-                cat === c.id
-                  ? "border-primary bg-primary text-primary-foreground"
-                  : "border-border bg-card text-foreground"
-              }`}
-            >
-              <img src={c.image} alt="" className="h-7 w-7 rounded-full object-cover" />
-              {c.name}
-            </button>
-          ))}
+          {categories.map((c) => {
+            const count = products.filter((p) => p.category === c.id).length;
+            return (
+              <button
+                key={c.id}
+                type="button"
+                onClick={() => {
+                  setCat(c.id);
+                  setSub("all");
+                }}
+                className={`flex items-center gap-2 rounded-full border py-1.5 pr-4 pl-1.5 text-xs font-semibold transition-colors ${
+                  cat === c.id
+                    ? "border-primary bg-primary text-primary-foreground"
+                    : "border-border bg-card text-foreground"
+                }`}
+              >
+                <img src={c.image} alt="" className="h-7 w-7 rounded-full object-cover" />
+                {c.name} ({count})
+              </button>
+            );
+          })}
           <label className="ml-auto flex items-center gap-2 rounded-full border border-border bg-card px-4 py-2">
             <Search className="h-4 w-4 text-muted-foreground" />
             <input
@@ -182,19 +185,22 @@ function ProductsPage() {
             >
               All styles
             </button>
-            {subs.map((s) => (
-              <button
-                key={s.id}
-                type="button"
-                onClick={() => setSub(s.id)}
-                className={`flex items-center gap-2 rounded-full border py-1 pr-3.5 pl-1 text-[0.7rem] font-medium ${
-                  sub === s.id ? "border-primary text-primary" : "border-border text-muted-foreground"
-                }`}
-              >
-                <img src={s.images[0]} alt="" className="h-6 w-6 rounded-full object-cover" />
-                {s.name}
-              </button>
-            ))}
+            {subs.map((s) => {
+              const count = products.filter((p) => p.category === cat && p.sub === s.id).length;
+              return (
+                <button
+                  key={s.id}
+                  type="button"
+                  onClick={() => setSub(s.id)}
+                  className={`flex items-center gap-2 rounded-full border py-1 pr-3.5 pl-1 text-[0.7rem] font-medium ${
+                    sub === s.id ? "border-primary text-primary" : "border-border text-muted-foreground"
+                  }`}
+                >
+                  <img src={s.images[0]} alt="" className="h-6 w-6 rounded-full object-cover" />
+                  {s.name} ({count})
+                </button>
+              );
+            })}
           </div>
         ) : null}
 

@@ -1,5 +1,6 @@
 export type OrderStatus =
   | "placed"
+  | "confirmed"
   | "measuring"
   | "stitching"
   | "quality-check"
@@ -49,7 +50,8 @@ export const doorstepSteps: {
     stage: "boutique",
   },
   {
-    id: "measuring",
+    // Admin uses "confirmed" — maps to this Measurements Confirmed step
+    id: "confirmed",
     label: "Measurements Confirmed",
     hint: "Our tailor confirmed your fit and fabric.",
     scanStatus: "Order confirmed at boutique",
@@ -57,7 +59,7 @@ export const doorstepSteps: {
     stage: "boutique",
   },
   {
-    id: "stitching",
+    id: "measuring",
     label: "In Stitching",
     hint: "Cutting, stitching and hand work in progress.",
     scanStatus: "In production",
@@ -65,8 +67,8 @@ export const doorstepSteps: {
     stage: "boutique",
   },
   {
-    id: "quality-check",
-    label: "Final Finishing",
+    id: "stitching",
+    label: "Quality Check",
     hint: "Pressing, piping and quality check done.",
     scanStatus: "Quality check cleared",
     offsetHours: 30,
@@ -178,9 +180,25 @@ export const orderSteps = doorstepSteps;
 export const getStepsForOrder = (deliveryType?: DeliveryType) =>
   deliveryType === "store_pickup" ? pickupSteps : doorstepSteps;
 
-export const stepIndex = (status: OrderStatus, steps = doorstepSteps) => {
-  const idx = steps.findIndex((s) => s.id === status);
-  return idx < 0 ? 0 : idx;
+/**
+ * Maps a status string (from DB or admin) to the index in the steps array.
+ * Admin stages (confirmed, packed, shipped, delivered) all have direct
+ * matching IDs in doorstepSteps now. Legacy aliases are kept for safety.
+ */
+export const stepIndex = (status: OrderStatus | string, steps = doorstepSteps) => {
+  const clean = String(status || "").toLowerCase();
+  const idx = steps.findIndex((s) => s.id === clean);
+  if (idx >= 0) return idx;
+  // Legacy / alias mapping
+  if (clean === "measurements_confirmed") {
+    const i = steps.findIndex((s) => s.id === "confirmed" || s.id === "measuring");
+    return i >= 0 ? i : 0;
+  }
+  if (clean === "quality-check") {
+    const i = steps.findIndex((s) => s.id === "stitching" || s.id === "quality-check");
+    return i >= 0 ? i : 0;
+  }
+  return 0;
 };
 
 export const stepFor = (status: OrderStatus, steps = doorstepSteps) =>
@@ -188,12 +206,15 @@ export const stepFor = (status: OrderStatus, steps = doorstepSteps) =>
 
 const hoursSince = (iso: string) => (Date.now() - new Date(iso).getTime()) / 3_600_000;
 
+/**
+ * Returns the status to display on the customer timeline.
+ * Admin-set stages always win — no time-based auto-advance override.
+ */
 export function derivedStatus(createdAt: string, stored: OrderStatus, deliveryType?: DeliveryType): OrderStatus {
-  const steps = getStepsForOrder(deliveryType);
-  const elapsed = hoursSince(createdAt);
-  let live: OrderStatus = "placed";
-  for (const step of steps) if (elapsed >= step.offsetHours) live = step.id;
-  return stepIndex(stored, steps) > stepIndex(live, steps) ? stored : live;
+  // Any stage other than the initial "placed" is admin-controlled — always honour it verbatim.
+  if (stored !== "placed") return stored;
+  // For brand-new "placed" orders we also just show "placed" — no auto-advance.
+  return "placed";
 }
 
 export function buildScans(

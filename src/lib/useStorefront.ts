@@ -12,7 +12,6 @@ import {
 import {
   fetchCategories,
   fetchFeaturedProducts,
-  fetchHeroBanners,
   fetchProductById,
   fetchProductsBySubCategory,
   fetchReels,
@@ -50,7 +49,7 @@ const seedBannersAsHeroBanners: HeroBanner[] = seedHeroBanners.map((b) => ({
 // ────────────────────────────────────────────────────────────────────────────
 
 export function useCategories(): Category[] {
-  const { data, isError } = useQuery({
+  const { data, isError, isSuccess } = useQuery({
     queryKey: ["categories"],
     queryFn: fetchCategories,
     placeholderData: seedCategories,
@@ -58,18 +57,29 @@ export function useCategories(): Category[] {
     refetchOnWindowFocus: true,
   });
 
-  if (isError || !data || !Array.isArray(data) || data.length === 0) {
-    return seedCategories;
-  }
+  // rawData is only set when the API has returned a successful, non-empty response.
+  // When using placeholder seed data (before first fetch), rawData is null.
+  const rawData = isSuccess && !isError && Array.isArray(data) && data.length > 0 ? data : null;
+  // Track whether we have live data from the backend (not placeholder seed)
+  const hasLiveData = rawData !== null;
 
-  // Preserve canonical 4 boutique categories and imported Cloudinary image assets
   return seedCategories.map((seedCat) => {
-    const matched = (data as any[]).find(
-      (d) => d.id === seedCat.id || d.slug === seedCat.id || d.name?.toLowerCase().includes(seedCat.name.toLowerCase())
-    );
-    if (!matched) return seedCat;
-    const validImage = typeof matched.image === "string" && matched.image.startsWith("http") ? matched.image : seedCat.image;
-    const backendSubs = matched.sub_categories || matched.subs || [];
+    const matched = rawData
+      ? (rawData as any[]).find(
+          (d) =>
+            d.id === seedCat.id ||
+            d.slug === seedCat.id ||
+            d.name?.toLowerCase().includes(seedCat.name.toLowerCase())
+        )
+      : null;
+
+    const validImage =
+      typeof matched?.image === "string" && matched.image.startsWith("http")
+        ? matched.image
+        : seedCat.image;
+
+    const backendSubs = matched?.sub_categories || matched?.subs || [];
+
     const enrichedSubs = seedCat.subs.map((seedSub) => {
       const matchedSub = backendSubs.find(
         (s: any) =>
@@ -77,39 +87,46 @@ export function useCategories(): Category[] {
           s.slug === seedSub.id ||
           s.name?.toLowerCase() === seedSub.name.toLowerCase()
       );
-      const rawCount = matchedSub ? (matchedSub.designCount ?? matchedSub.design_count) : undefined;
+
+      // Only use real DB counts, never fall back to seed/mock product counts.
+      // -1 is used as a sentinel meaning "no live data yet — hide badge".
+      const finalCount: number = hasLiveData
+        ? (matchedSub != null
+            ? (typeof matchedSub.designCount === "number"
+                ? matchedSub.designCount
+                : typeof matchedSub.design_count === "number"
+                  ? matchedSub.design_count
+                  : typeof matchedSub.product_count === "number"
+                    ? matchedSub.product_count
+                    : 0)
+            : 0)
+        : -1; // sentinel: placeholder phase — hide badge
+
       return {
         ...seedSub,
-        ...(typeof rawCount === "number"
-          ? { designCount: rawCount, design_count: rawCount }
-          : {}),
+        designCount: finalCount,
+        design_count: finalCount,
       };
     });
 
+    const totalCategoryCount: number = hasLiveData
+      ? enrichedSubs.reduce((sum, s) => sum + Math.max(0, s.designCount ?? 0), 0)
+      : -1;
 
     return {
       ...seedCat,
       name: seedCat.name,
-      blurb: matched.blurb || seedCat.blurb,
+      blurb: matched?.blurb || seedCat.blurb,
       image: validImage,
       subs: enrichedSubs,
+      designCount: totalCategoryCount,
+      design_count: totalCategoryCount,
     };
   });
 }
 
 export function useHeroBanners(): HeroBanner[] {
-  const { data, isError } = useQuery({
-    queryKey: ["heroBanners"],
-    queryFn: fetchHeroBanners,
-    staleTime: 0,
-    refetchOnWindowFocus: true,
-  });
-
-  if (isError || !data || !Array.isArray(data) || data.length === 0) {
-    return seedBannersAsHeroBanners;
-  }
-
-  return data as HeroBanner[];
+  return seedBannersAsHeroBanners;
 }
 
 export function useFeaturedProducts(): Product[] {

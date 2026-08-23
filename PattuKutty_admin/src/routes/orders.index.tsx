@@ -5,7 +5,7 @@ import { OrderCard } from "@/components/admin/cards";
 import { useAdmin, doorstepStages, pickupStages, type OrderStage, type DeliveryType } from "@/lib/admin-store";
 
 
-const title = "Orders — Butterflies Tailoring Admin";
+const title = "Orders — Pattu Kutty Admin";
 const description =
   "Every storefront order with payment status, items and the stitching stage the customer sees.";
 

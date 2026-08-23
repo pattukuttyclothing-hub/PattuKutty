@@ -5,8 +5,10 @@ import { adminLogin } from "@/lib/api/auth";
 import { toast } from "sonner";
 import { storeInfo } from "@/data/boutique";
 
-const title = "Admin Login — Butterflies Tailoring";
-const description = "Sign in to access the Butterflies Tailoring Admin Console.";
+import logoHeader from "@/assets/LOGO -Header.png";
+
+const title = "Admin Login — Pattu Kutty";
+const description = "Sign in to access the Pattu Kutty Admin Console.";
 
 type Search = { next?: string | undefined; returnTo?: string | undefined };
 
@@ -72,19 +74,17 @@ function AdminLoginPage() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4 py-12">
       <div className="w-full max-w-md space-y-6">
-        <div className="text-center">
-          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-primary text-2xl text-primary-foreground shadow-soft">
-            ✦
-          </div>
-          <h1 className="font-display mt-4 text-2xl font-semibold text-foreground">
+        <div className="text-center flex flex-col items-center">
+          <img src={logoHeader} alt="Pattu Kutty Logo" className="h-16 w-auto object-contain mb-2" />
+          <h1 className="font-display text-2xl font-bold text-primary">
             {storeInfo.name}
           </h1>
-          <p className="mt-1 text-xs tracking-[0.15em] text-muted-foreground uppercase">
+          <p className="mt-1 text-xs tracking-[0.18em] font-medium text-accent uppercase">
             Admin Console Sign In
           </p>
         </div>
 
-        <div className="rounded-3xl border border-border bg-card p-6 shadow-soft sm:p-8">
+        <div className="rounded-3xl border border-border bg-card p-6 shadow-lift sm:p-8">
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <label className="mb-1.5 block text-xs font-semibold text-foreground">
@@ -97,7 +97,7 @@ function AdminLoginPage() {
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="admin@butterfliestailoring.com"
+                  placeholder="admin@pattukutty.com"
                   className="w-full rounded-2xl border border-border bg-background py-3 pr-4 pl-10 text-sm text-foreground outline-none transition-colors placeholder:text-muted-foreground focus:border-primary"
                 />
               </div>

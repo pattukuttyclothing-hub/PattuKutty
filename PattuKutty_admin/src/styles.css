@@ -5,22 +5,20 @@
 @custom-variant dark (&:is(.dark *));
 
 /*
- * Design system definition.
- *
- * The @theme inline block maps CSS custom properties to Tailwind utility
- * classes (e.g. --color-primary -> bg-primary, text-primary).
- *
- * The :root and .dark blocks define the actual color values using oklch.
- * All colors MUST use oklch format.
- *
- * To add a new semantic color:
- * 1. Add the variable to :root (light value) and .dark (dark value)
- * 2. Register it in @theme inline as --color-<name>: var(--<name>)
+ * ---------------------------------------------------------------------------
+ * PATTU KUTTY ADMIN — DESIGN SYSTEM
+ * ---------------------------------------------------------------------------
+ * Palette sampled directly from the Pattu Kutty brand logo:
+ *   cream   #F7E2CD  — embroidered canvas background
+ *   maroon  #951A1F  — silk thread figure / wordmark / primary
+ *   deep    #6B0E15  — shadow side of the thread
+ *   gold    #C9A24C  — zari accents, hairlines
+ * ---------------------------------------------------------------------------
  */
 
 @theme inline {
-  --font-display: "Playfair Display", Georgia, serif;
-  --font-sans: "Poppins", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Cormorant Garamond", "Playfair Display", Georgia, serif;
+  --font-sans: "Jost", "Poppins", ui-sans-serif, system-ui, sans-serif;
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
@@ -35,7 +33,9 @@
   --color-wa-chat: var(--wa-chat);
   --color-wa-tick: var(--wa-tick);
   --color-maroon: var(--maroon);
+  --color-maroon-deep: var(--maroon-deep);
   --color-gold: var(--gold);
+  --color-gold-soft: var(--gold-soft);
   --color-cream: var(--cream);
 
   --color-background: var(--background);
@@ -71,15 +71,21 @@
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
+
+  --ease-silk: cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 :root {
-  --radius: 1rem;
-  /* Butterflies Tailoring palette */
-  --cream: oklch(0.985 0.011 60);
-  --blush: oklch(0.955 0.026 4);
-  --maroon: oklch(0.352 0.116 3.6);
-  --gold: oklch(0.755 0.111 87.5);
+  --radius: 0.9rem;
+
+  /* ── Brand tones (sampled from the Pattu Kutty logo) ── */
+  --cream: oklch(0.955 0.024 68);
+  --blush: oklch(0.972 0.014 62);
+  --maroon: oklch(0.436 0.158 25.1);
+  --maroon-deep: oklch(0.298 0.108 24);
+  --gold: oklch(0.731 0.114 84.8);
+  --gold-soft: oklch(0.883 0.06 88);
+
   /* WhatsApp channel brand colours (preview fidelity only) */
   --wa: oklch(0.762 0.176 152.5);
   --wa-deep: oklch(0.44 0.09 175);
@@ -87,85 +93,90 @@
   --wa-chat: oklch(0.955 0.02 95);
   --wa-tick: oklch(0.66 0.13 232);
 
-  --background: var(--cream);
-  --foreground: var(--maroon);
+  --background: oklch(0.985 0.01 72);
+  --foreground: oklch(0.268 0.075 24);
   --card: oklch(1 0 0);
-  --card-foreground: var(--maroon);
-  --popover: oklch(1 0 0);
-  --popover-foreground: var(--maroon);
-  --primary: oklch(0.505 0.184 5.5);
-  --primary-foreground: oklch(0.99 0.008 60);
-  --secondary: var(--blush);
-  --secondary-foreground: var(--maroon);
-  --muted: oklch(0.965 0.014 40);
-  --muted-foreground: oklch(0.53 0.045 5);
+  --card-foreground: oklch(0.268 0.075 24);
+  --popover: oklch(0.995 0.004 70);
+  --popover-foreground: oklch(0.268 0.075 24);
+  --primary: var(--maroon);
+  --primary-foreground: oklch(0.985 0.012 70);
+  --secondary: var(--cream);
+  --secondary-foreground: var(--maroon-deep);
+  --muted: oklch(0.962 0.014 66);
+  --muted-foreground: oklch(0.505 0.048 30);
   --accent: var(--gold);
-  --accent-foreground: oklch(0.28 0.08 40);
-  --destructive: oklch(0.577 0.245 27.325);
+  --accent-foreground: oklch(0.268 0.075 24);
+  --destructive: oklch(0.552 0.208 27);
   --destructive-foreground: oklch(0.99 0 0);
-  --border: oklch(0.912 0.024 8);
-  --input: oklch(0.912 0.024 8);
-  --ring: oklch(0.505 0.184 5.5);
-  --chart-1: oklch(0.505 0.184 5.5);
-  --chart-2: oklch(0.755 0.111 87.5);
-  --chart-3: oklch(0.352 0.116 3.6);
-  --chart-4: oklch(0.828 0.189 84.429);
-  --chart-5: oklch(0.769 0.188 70.08);
-  --sidebar: var(--cream);
-  --sidebar-foreground: var(--maroon);
-  --sidebar-primary: oklch(0.505 0.184 5.5);
-  --sidebar-primary-foreground: oklch(0.99 0.008 60);
-  --sidebar-accent: var(--blush);
-  --sidebar-accent-foreground: var(--maroon);
-  --sidebar-border: oklch(0.912 0.024 8);
-  --sidebar-ring: oklch(0.505 0.184 5.5);
+  --border: oklch(0.905 0.022 62);
+  --input: oklch(0.905 0.022 62);
+  --ring: var(--gold);
+  --chart-1: var(--maroon);
+  --chart-2: var(--gold);
+  --chart-3: var(--maroon-deep);
+  --chart-4: oklch(0.828 0.12 84);
+  --chart-5: oklch(0.62 0.09 40);
+  --sidebar: var(--blush);
+  --sidebar-foreground: var(--maroon-deep);
+  --sidebar-primary: var(--maroon);
+  --sidebar-primary-foreground: oklch(0.985 0.012 70);
+  --sidebar-accent: var(--cream);
+  --sidebar-accent-foreground: var(--maroon-deep);
+  --sidebar-border: oklch(0.905 0.022 62);
+  --sidebar-ring: var(--gold);
 
   --gradient-gold: linear-gradient(
     90deg,
     transparent,
-    var(--gold) 20%,
-    var(--gold) 80%,
+    var(--gold) 18%,
+    var(--gold-soft) 50%,
+    var(--gold) 82%,
     transparent
   );
-  --gradient-rani: linear-gradient(135deg, oklch(0.505 0.184 5.5), oklch(0.42 0.14 4));
-  --shadow-soft: 0 10px 40px -12px oklch(0.352 0.116 3.6 / 0.18);
-  --shadow-lift: 0 24px 60px -18px oklch(0.352 0.116 3.6 / 0.35);
+  --gradient-rani: linear-gradient(135deg, var(--maroon), var(--maroon-deep));
+  --gradient-cream: linear-gradient(180deg, var(--background), var(--cream));
+  --shadow-soft: 0 8px 30px -14px oklch(0.298 0.108 24 / 0.28);
+  --shadow-lift: 0 26px 60px -22px oklch(0.298 0.108 24 / 0.42);
+  --shadow-gold: 0 0 0 1px oklch(0.731 0.114 84.8 / 0.45);
 }
 
-
 .dark {
-  --background: oklch(0.129 0.042 264.695);
-  --foreground: oklch(0.984 0.003 247.858);
-  --card: oklch(0.208 0.042 265.755);
-  --card-foreground: oklch(0.984 0.003 247.858);
-  --popover: oklch(0.208 0.042 265.755);
-  --popover-foreground: oklch(0.984 0.003 247.858);
-  --primary: oklch(0.929 0.013 255.508);
-  --primary-foreground: oklch(0.208 0.042 265.755);
-  --secondary: oklch(0.279 0.041 260.031);
-  --secondary-foreground: oklch(0.984 0.003 247.858);
-  --muted: oklch(0.279 0.041 260.031);
-  --muted-foreground: oklch(0.704 0.04 256.788);
-  --accent: oklch(0.279 0.041 260.031);
-  --accent-foreground: oklch(0.984 0.003 247.858);
-  --destructive: oklch(0.704 0.191 22.216);
-  --destructive-foreground: oklch(0.984 0.003 247.858);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.551 0.027 264.364);
-  --chart-1: oklch(0.488 0.243 264.376);
-  --chart-2: oklch(0.696 0.17 162.48);
-  --chart-3: oklch(0.769 0.188 70.08);
-  --chart-4: oklch(0.627 0.265 303.9);
-  --chart-5: oklch(0.645 0.246 16.439);
-  --sidebar: oklch(0.208 0.042 265.755);
-  --sidebar-foreground: oklch(0.984 0.003 247.858);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.984 0.003 247.858);
-  --sidebar-accent: oklch(0.279 0.041 260.031);
-  --sidebar-accent-foreground: oklch(0.984 0.003 247.858);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.551 0.027 264.364);
+  --background: oklch(0.185 0.052 22);
+  --foreground: oklch(0.955 0.018 70);
+  --card: oklch(0.235 0.062 22);
+  --card-foreground: oklch(0.955 0.018 70);
+  --popover: oklch(0.235 0.062 22);
+  --popover-foreground: oklch(0.955 0.018 70);
+  --primary: oklch(0.66 0.15 28);
+  --primary-foreground: oklch(0.15 0.04 22);
+  --secondary: oklch(0.275 0.068 23);
+  --secondary-foreground: oklch(0.955 0.018 70);
+  --muted: oklch(0.275 0.068 23);
+  --muted-foreground: oklch(0.755 0.032 60);
+  --accent: var(--gold);
+  --accent-foreground: oklch(0.185 0.052 22);
+  --destructive: oklch(0.68 0.19 25);
+  --destructive-foreground: oklch(0.99 0 0);
+  --border: oklch(0.883 0.098 91.7 / 16%);
+  --input: oklch(0.883 0.098 91.7 / 20%);
+  --ring: var(--gold);
+  --chart-1: oklch(0.66 0.15 28);
+  --chart-2: var(--gold);
+  --chart-3: oklch(0.79 0.1 70);
+  --chart-4: oklch(0.55 0.12 20);
+  --chart-5: oklch(0.86 0.07 88);
+  --sidebar: oklch(0.235 0.062 22);
+  --sidebar-foreground: oklch(0.955 0.018 70);
+  --sidebar-primary: oklch(0.66 0.15 28);
+  --sidebar-primary-foreground: oklch(0.15 0.04 22);
+  --sidebar-accent: oklch(0.275 0.068 23);
+  --sidebar-accent-foreground: oklch(0.955 0.018 70);
+  --sidebar-border: oklch(0.883 0.098 91.7 / 16%);
+  --sidebar-ring: var(--gold);
+
+  --shadow-soft: 0 8px 30px -14px oklch(0 0 0 / 0.6);
+  --shadow-lift: 0 26px 60px -22px oklch(0 0 0 / 0.7);
 }
 
 @layer base {
@@ -176,127 +187,101 @@
   body {
     background-color: var(--color-background);
     color: var(--color-foreground);
-  }
-}
-
-@layer base {
-  body {
     font-family: var(--font-sans);
+    font-feature-settings: "rlig" 1, "calt" 1;
+    -webkit-tap-highlight-color: transparent;
   }
-  h1,
-  h2,
-  h3,
-  h4,
-  .font-display {
+
+  h1, h2, h3, h4, h5, h6 {
     font-family: var(--font-display);
   }
-  html {
-    scroll-behavior: smooth;
-    scroll-padding-top: 5rem;
-  }
-}
 
-@utility gold-divider {
-  height: 1px;
-  width: 100%;
-  background-image: var(--gradient-rani);
-  background-image: var(--gradient-gold);
-}
-
-@utility shadow-soft {
-  box-shadow: var(--shadow-soft);
-}
-
-@utility shadow-lift {
-  box-shadow: var(--shadow-lift);
-}
-
-@utility text-balance-pretty {
-  text-wrap: pretty;
-}
-
-@utility card-lift {
-  transition:
-    transform 0.5s cubic-bezier(0.22, 1, 0.36, 1),
-    box-shadow 0.5s ease;
-  &:hover {
-    transform: translateY(-8px);
-    box-shadow: var(--shadow-lift);
-  }
-}
-
-@utility no-scrollbar {
-  scrollbar-width: none;
-  &::-webkit-scrollbar {
-    display: none;
-  }
-}
-
-@keyframes marquee-x {
-  from {
-    transform: translateX(0);
-  }
-  to {
-    transform: translateX(-50%);
-  }
-}
-
-@utility seal-stamp {
-  transform: rotate(-8deg);
-  border: 3px double currentColor;
-  letter-spacing: 0.18em;
-}
-
-/* ---------- form fields ---------- */
-@utility input {
-  display: block;
-  width: 100%;
-  border-radius: var(--radius-md);
-  border: 1px solid var(--color-border);
-  background-color: var(--color-card);
-  padding: 0.7rem 0.9rem;
-  font-size: 0.9rem;
-  line-height: 1.4;
-  color: var(--color-foreground);
-  transition:
-    border-color 0.2s ease,
-    box-shadow 0.2s ease,
-    background-color 0.2s ease;
-  &::placeholder {
-    color: var(--color-muted-foreground);
-  }
-  &:hover {
-    border-color: color-mix(in oklab, var(--color-primary) 40%, transparent);
-  }
-  &:focus,
-  &:focus-visible {
+  /* Form control design system for all inputs, textareas & selects */
+  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]),
+  select,
+  textarea,
+  .input {
+    display: block;
+    width: 100%;
+    border-radius: var(--radius-xl);
+    border: 1px solid var(--color-border);
+    background-color: var(--color-card);
+    padding: 0.65rem 1rem;
+    font-family: var(--font-sans);
+    font-size: 0.875rem;
+    line-height: 1.35;
+    color: var(--color-foreground);
+    box-shadow: 0 1px 2px 0 oklch(0.298 0.108 24 / 0.04);
     outline: none;
+    transition: border-color 0.2s var(--ease-silk), box-shadow 0.2s var(--ease-silk), background-color 0.2s var(--ease-silk);
+  }
+
+  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]):hover,
+  select:hover,
+  textarea:hover,
+  .input:hover {
+    border-color: oklch(0.731 0.114 84.8 / 0.7);
+  }
+
+  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]):focus,
+  select:focus,
+  textarea:focus,
+  .input:focus {
     border-color: var(--color-primary);
-    box-shadow: 0 0 0 3px color-mix(in oklab, var(--color-primary) 16%, transparent);
+    box-shadow: 0 0 0 3px oklch(0.436 0.158 25.1 / 0.18);
+    background-color: var(--color-card);
+  }
+
+  input::placeholder,
+  textarea::placeholder,
+  .input::placeholder {
+    color: var(--color-muted-foreground);
+    opacity: 0.65;
+  }
+
+  select {
+    appearance: none;
+    -webkit-appearance: none;
+    background-image: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIGZpbGw9Im5vbmUiIHZpZXdCb3g9IjAgMCAyMCAyMCI+PHBhdGggc3Ryb2tlPSIjOTUxQTFGIiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiIHN0cm9rZS13aWR0aD0iMS41IiBkPSJNNiA4bDQgNCA0LTQiLz48L3N2Zz4=");
+    background-position: right 0.75rem center;
+    background-repeat: no-repeat;
+    background-size: 1.25em 1.25em;
+    padding-right: 2.5rem;
+  }
+
+  input[type="date"]::-webkit-calendar-picker-indicator {
+    filter: invert(18%) sepia(85%) saturate(2200%) hue-rotate(338deg) brightness(85%) contrast(95%);
+    cursor: pointer;
   }
 }
 
-/* Cards that should invite attention on hover (spec / detail tiles) */
-@utility attn-card {
-  transition:
-    background-color 0.3s ease,
-    border-color 0.3s ease,
-    transform 0.3s ease,
-    box-shadow 0.3s ease;
-  &:hover {
-    background-color: var(--color-secondary);
-    border-color: color-mix(in oklab, var(--color-primary) 45%, transparent);
-    transform: translateY(-3px);
-    box-shadow: var(--shadow-soft);
-  }
+/* Custom scrollbars matching customer site */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: oklch(0.436 0.158 25.1 / 0.2);
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: oklch(0.436 0.158 25.1 / 0.4);
 }
 
-@utility overlay-scrim {
-  background-image: linear-gradient(
-    to top,
-    oklch(0.24 0.09 4 / 0.92) 0%,
-    oklch(0.24 0.09 4 / 0.72) 38%,
-    oklch(0.24 0.09 4 / 0.12) 72%,
-    transparent 100%
-  );
+/*
+ * Brand Number Font Rules (matching customer storefront)
+ * Ensures all numbers, stat counters, prices, and metrics display using
+ * the customer site's signature Cormorant Garamond serif lining figures.
+ */
+.tabular-nums,
+[class*="tabular-nums"],
+.num-font,
+[data-number] {
+  font-family: var(--font-display) !important;
+  font-variant-numeric: lining-nums tabular-nums !important;
+  font-feature-settings: "lnum" 1, "tnum" 1, "onum" 0 !important;
 }
+

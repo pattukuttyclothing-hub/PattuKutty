@@ -17,7 +17,7 @@ import {
   type Audience,
 } from "@/lib/whatsapp-notify";
 
-const title = "Send WhatsApp campaign — Butterflies Tailoring Admin";
+const title = "Send WhatsApp campaign — Pattu Kutty Admin";
 const description =
   "Preview the WhatsApp message, choose the audience and send the design out to customers.";
 

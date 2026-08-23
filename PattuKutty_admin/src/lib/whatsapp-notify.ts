@@ -137,7 +137,7 @@ export const discountPct = (price: number, mrp: number) =>
   mrp > price ? Math.round(((mrp - price) / mrp) * 100) : 0;
 
 export const itemLink = (item: PublishedItem) =>
-  `https://butterfliestailoring.in/designs/${item.id}`;
+  `https://pattukutty.in/designs/${item.id}`;
 
 /* ----------------------------------------------------------------- audiences */
 

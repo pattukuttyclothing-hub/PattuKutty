@@ -6,7 +6,7 @@ import { isProductSoldOut, useAdmin, type RequestStatus } from "@/lib/admin-stor
 import { storeInfo } from "@/data/boutique";
 import { inr } from "@/lib/format";
 
-const title = "Admin Dashboard — Butterflies Tailoring";
+const title = "Admin Dashboard — Pattu Kutty";
 const description =
   "Control the storefront catalogue, quote custom design requests and move orders through stitching and handover.";
 
@@ -152,7 +152,7 @@ function Dashboard() {
                   <Icon className="h-4 w-4" />
                 </span>
                 <span className="min-w-0">
-                  <span className="font-display block text-xl font-semibold text-foreground">
+                  <span className="font-display tabular-nums block text-2xl font-bold tracking-tight text-primary">
                     {s.value}
                   </span>
                   <span className="block text-xs font-medium text-foreground">{s.label}</span>

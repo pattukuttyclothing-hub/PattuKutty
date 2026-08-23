@@ -7,7 +7,7 @@ import { useAdmin } from "@/lib/admin-store";
 import { inr } from "@/lib/format";
 import { discountPct, itemById, itemLink, publishedItemsFrom } from "@/lib/whatsapp-notify";
 
-const title = "Review design before notifying — Butterflies Tailoring Admin";
+const title = "Review design before notifying — Pattu Kutty Admin";
 const description =
   "Check the design or offer details, pricing and store link before sending it out as a WhatsApp campaign.";
 

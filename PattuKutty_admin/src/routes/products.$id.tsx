@@ -20,13 +20,13 @@ import { inr } from "@/lib/format";
 export const Route = createFileRoute("/products/$id")({
   head: () => ({
     meta: [
-      { title: "Edit design — Butterflies Tailoring Admin" },
+      { title: "Edit design — Pattu Kutty Admin" },
       {
         name: "description",
         content:
           "Edit photos, sizes, stock and pricing for a design before it reaches the storefront.",
       },
-      { property: "og:title", content: "Edit design — Butterflies Tailoring Admin" },
+      { property: "og:title", content: "Edit design — Pattu Kutty Admin" },
       {
         property: "og:description",
         content: "Photos, sizes, stock and pricing for one design.",

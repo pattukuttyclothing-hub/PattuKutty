@@ -135,6 +135,8 @@ export type Category = {
   blurb: string;
   image: string;
   subs: SubCategory[];
+  designCount?: number;
+  design_count?: number;
 };
 
 export const categories: Category[] = [

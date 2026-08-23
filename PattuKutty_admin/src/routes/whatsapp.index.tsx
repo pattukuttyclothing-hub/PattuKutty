@@ -15,7 +15,7 @@ import {
   useCampaigns,
 } from "@/lib/whatsapp-notify";
 
-const title = "WhatsApp Studio — Butterflies Tailoring Admin";
+const title = "WhatsApp Studio — Pattu Kutty Admin";
 const description =
   "Promote designs and offers on WhatsApp, preview the exact message customers receive, and track reach, clicks and orders district by district.";
 

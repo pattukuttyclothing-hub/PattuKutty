@@ -74,6 +74,10 @@ function OrdersPage() {
                 const paid = o.paymentStatus === "paid";
                 const isPickup = o.deliveryType === "store_pickup";
 
+                const orderNo = o.orderNo || (o as any).order_no || `OR-${o.id.slice(-6).toUpperCase()}`;
+                const dateIso = o.createdAt || (o as any).created_at || new Date().toISOString();
+                const expectedIso = o.expectedDelivery || (o as any).expected_delivery || dateIso;
+
                 return (
                   <Link
                     key={o.id}
@@ -126,7 +130,7 @@ function OrdersPage() {
 
                     <div className="absolute inset-x-0 bottom-0 z-10 p-4">
                       <p className="text-[0.6rem] tracking-[0.22em] text-primary-foreground/70 uppercase">
-                        #{o.orderNo} · {fmtDate(o.createdAt)}
+                        #{orderNo} · {fmtDate(dateIso)}
                       </p>
                       <div className="mt-1 flex items-start justify-between gap-3">
                         <h2 className="font-display truncate text-lg leading-tight font-semibold text-primary-foreground">
@@ -144,7 +148,7 @@ function OrdersPage() {
                         {isPickup ? (
                           <><Store className="h-3.5 w-3.5" /> Store Pickup · Gandhipuram</>
                         ) : (
-                          <><Truck className="h-3.5 w-3.5" /> {o.status === "delivered" ? `Delivered on ${fmtDate(o.expectedDelivery)}` : `Expected by ${fmtDate(o.expectedDelivery)} · ${courier.name}`}</>
+                          <><Truck className="h-3.5 w-3.5" /> {o.status === "delivered" ? `Delivered on ${fmtDate(expectedIso)}` : `Expected by ${fmtDate(expectedIso)} · ${courier.name}`}</>
                         )}
                       </p>
 

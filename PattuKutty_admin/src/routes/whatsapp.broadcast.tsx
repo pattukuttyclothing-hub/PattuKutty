@@ -7,7 +7,7 @@ import { AudiencePicker, WhatsAppPreview } from "@/components/whatsapp/WhatsAppK
 import { imagePools } from "@/data/boutique";
 import { ALL_CUSTOMERS, sendCustomCampaign, type Audience } from "@/lib/whatsapp-notify";
 
-const title = "Custom WhatsApp broadcast — Butterflies Tailoring Admin";
+const title = "Custom WhatsApp broadcast — Pattu Kutty Admin";
 const description =
   "Compose a freeform WhatsApp broadcast with your own title, message and cover image, then send it to a chosen audience.";
 

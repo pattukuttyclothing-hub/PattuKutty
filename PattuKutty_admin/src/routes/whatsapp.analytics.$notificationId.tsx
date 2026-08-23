@@ -15,7 +15,7 @@ import {
   useCampaigns,
 } from "@/lib/whatsapp-notify";
 
-const title = "Campaign report — Butterflies Tailoring Admin";
+const title = "Campaign report — Pattu Kutty Admin";
 const description =
   "Per-campaign WhatsApp report: delivery and click funnels, orders attributed and a district-wise visitor breakdown.";
 

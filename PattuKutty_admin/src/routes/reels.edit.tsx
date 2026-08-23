@@ -9,7 +9,7 @@ import { useAdmin, type ReelItem } from "@/lib/admin-store";
 import { inr } from "@/lib/format";
 
 
-const title = "Editing the Reels Section — Butterflies Tailoring Admin";
+const title = "Editing the Reels Section — Pattu Kutty Admin";
 const description =
   "Reorder, add, edit or remove the reels shown in the storefront What We Stitch carousel.";
 

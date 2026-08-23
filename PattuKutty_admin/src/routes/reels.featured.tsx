@@ -14,7 +14,7 @@ import {
 import { useAdmin } from "@/lib/admin-store";
 import { inr } from "@/lib/format";
 
-const title = "Editing Featured Designs — Butterflies Tailoring Admin";
+const title = "Editing Featured Designs — Pattu Kutty Admin";
 const description =
   "Choose which designs are featured on the customer landing page and set the order they appear in.";
 

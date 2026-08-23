@@ -5,7 +5,7 @@
  */
 
 export const storeInfo = {
-  name: "Butterflies Tailoring",
+  name: "Pattu Kutty",
   tagline: "Coimbatore's fastest ladies dress designer",
   phone: "+91 93455 20768",
   whatsapp: "919345520768",

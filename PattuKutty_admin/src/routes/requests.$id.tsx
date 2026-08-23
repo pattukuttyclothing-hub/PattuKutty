@@ -13,13 +13,13 @@ import { statusTone } from "./requests.index";
 export const Route = createFileRoute("/requests/$id")({
   head: () => ({
     meta: [
-      { title: "Request detail — Butterflies Tailoring Admin" },
+      { title: "Request detail — Pattu Kutty Admin" },
       {
         name: "description",
         content:
           "Review a customer's custom design specification and send back a GST-split price quotation.",
       },
-      { property: "og:title", content: "Request detail — Butterflies Tailoring Admin" },
+      { property: "og:title", content: "Request detail — Pattu Kutty Admin" },
       {
         property: "og:description",
         content: "Customer specification, voice note and quotation builder.",
@@ -194,7 +194,7 @@ function RequestDetail() {
       const cleanPhone = (r.customerPhone || "").replace(/[^0-9]/g, "");
       const primaryImg = (r.referenceImages && r.referenceImages[0]) || "";
       const imgText = primaryImg && primaryImg.startsWith("http") ? `\n\n📷 *Design Reference Photo*:\n${primaryImg}` : "";
-      const fallbackWaText = `*Butterflies Tailoring — Quotation for ${r.requestNo || "CR"}*\n\nHello ${r.customerName},\nOur designer has reviewed your design specification and prepared a quotation:\n\n📌 *Design Name*: ${name.trim()}\n✂️ *Stitching Price*: ₹${price.toLocaleString("en-IN")}\n🧾 *GST (5%)*: ₹${gst.toLocaleString("en-IN")}\n🚚 *Delivery*: ${deliveryFee === 0 ? "Store Pickup (Free)" : `₹${deliveryFee} (Doorstep Delivery)`}\n💰 *Total Payable*: ₹${total.toLocaleString("en-IN")}\n📅 *Handover Ready By*: ${fmtDate(readyBy)}${imgText}\n\nPlease review and confirm your order at Butterflies Tailoring. ✨`;
+      const fallbackWaText = `*Pattu Kutty — Quotation for ${r.requestNo || "CR"}*\n\nHello ${r.customerName},\nOur designer has reviewed your design specification and prepared a quotation:\n\n📌 *Design Name*: ${name.trim()}\n✂️ *Stitching Price*: ₹${price.toLocaleString("en-IN")}\n🧾 *GST (5%)*: ₹${gst.toLocaleString("en-IN")}\n🚚 *Delivery*: ${deliveryFee === 0 ? "Store Pickup (Free)" : `₹${deliveryFee} (Doorstep Delivery)`}\n💰 *Total Payable*: ₹${total.toLocaleString("en-IN")}\n📅 *Handover Ready By*: ${fmtDate(readyBy)}${imgText}\n\nPlease review and confirm your order at Pattu Kutty. ✨`;
       const fallbackWaUrl = cleanPhone ? `https://wa.me/${cleanPhone}?text=${encodeURIComponent(fallbackWaText)}` : undefined;
       const waLinkToUse = res?.whatsapp?.waLink || fallbackWaUrl;
 
@@ -244,7 +244,7 @@ function RequestDetail() {
       const cleanPhone = (r.customerPhone || "").replace(/[^0-9]/g, "");
       const primaryImg = (r.referenceImages && r.referenceImages[0]) || "";
       const imgText = primaryImg && primaryImg.startsWith("http") ? `\n\n📷 *Design Reference Photo*:\n${primaryImg}` : "";
-      const fallbackWaText = `*Butterflies Tailoring — Quotation for ${r.requestNo || "CR"}*\n\nHello ${r.customerName},\nOur designer has prepared a quotation for your design:\n\n📌 *Design Name*: ${r.quote?.name || requestDisplayName}\n💰 *Total Payable*: ₹${total.toLocaleString("en-IN")}\n📅 *Handover Ready By*: ${fmtDate(readyBy)}${imgText}\n\nPlease review and confirm your order. ✨`;
+      const fallbackWaText = `*Pattu Kutty — Quotation for ${r.requestNo || "CR"}*\n\nHello ${r.customerName},\nOur designer has prepared a quotation for your design:\n\n📌 *Design Name*: ${r.quote?.name || requestDisplayName}\n💰 *Total Payable*: ₹${total.toLocaleString("en-IN")}\n📅 *Handover Ready By*: ${fmtDate(readyBy)}${imgText}\n\nPlease review and confirm your order. ✨`;
       const fallbackWaUrl = cleanPhone ? `https://wa.me/${cleanPhone}?text=${encodeURIComponent(fallbackWaText)}` : undefined;
       const waLinkToUse = res?.whatsapp?.waLink || fallbackWaUrl;
 
@@ -304,7 +304,7 @@ function RequestDetail() {
 
       const cleanPhone = (r.customerPhone || "").replace(/[^0-9]/g, "");
       if (cleanPhone) {
-        const waText = `Hello ${r.customerName},\n\nYour Custom Design Request (${r.requestNo || "CR"}) has been cancelled by Butterflies Tailoring.\n\nReason: ${rejectReason.trim()}\n\nNote: The reference design photo media has been dispatched directly to your WhatsApp inbox.\n\nThank you for choosing Butterflies Tailoring.`;
+        const waText = `Hello ${r.customerName},\n\nYour Custom Design Request (${r.requestNo || "CR"}) has been cancelled by Pattu Kutty.\n\nReason: ${rejectReason.trim()}\n\nNote: The reference design photo media has been dispatched directly to your WhatsApp inbox.\n\nThank you for choosing Pattu Kutty.`;
         const waUrl = `https://wa.me/${cleanPhone}?text=${encodeURIComponent(waText)}`;
         window.open(waUrl, "_blank");
       }

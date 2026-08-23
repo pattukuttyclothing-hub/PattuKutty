@@ -9,6 +9,7 @@ import {
   Scissors,
   Truck,
 } from "lucide-react";
+import logoHeader from "@/assets/LOGO -Header.png";
 import { storeInfo } from "@/data/boutique";
 import { fetchBlueDartHealthAdmin, type BlueDartHealthResult } from "@/lib/api/orders";
 
@@ -71,19 +72,25 @@ export function AdminShell({ children }: { children: ReactNode }) {
   return (
     <div className="min-h-screen bg-background">
       {/* Icon rail — visual navigation, no heavy text */}
-      <aside className="fixed inset-y-0 left-0 z-40 flex w-[76px] flex-col items-center gap-2 border-r border-border bg-card py-5 transition-[width] duration-200 lg:w-[212px] lg:items-stretch lg:px-3">
-        <Link to="/" className="mb-3 flex min-w-0 items-center gap-3 px-1">
-          <span className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl bg-primary text-lg text-primary-foreground">
-            ✦
-          </span>
-          <span className="hidden min-w-0 lg:block">
-            <span className="font-display block truncate text-sm leading-tight font-semibold text-foreground">
-              {storeInfo.name}
+      <aside className="fixed inset-y-0 left-0 z-40 flex w-[76px] flex-col items-center gap-2 border-r border-border/80 bg-card py-4 transition-[width] duration-200 lg:w-[220px] lg:items-stretch lg:px-4">
+        <Link to="/" className="mb-4 block rounded-2xl p-1 transition-opacity hover:opacity-90">
+          <div className="hidden lg:flex flex-col items-start gap-1.5 px-1">
+            <img
+              src={logoHeader}
+              alt="Pattu Kutty Logo"
+              className="h-10 w-auto object-contain shrink-0 max-w-[170px]"
+            />
+            <span className="inline-flex items-center gap-1 rounded-full border border-primary/25 bg-secondary px-2.5 py-0.5 text-[0.58rem] font-semibold tracking-[0.2em] text-primary uppercase shadow-sm">
+              ✦ Admin Portal
             </span>
-            <span className="block text-[0.62rem] tracking-[0.18em] text-muted-foreground uppercase">
-              Admin
-            </span>
-          </span>
+          </div>
+          <div className="flex lg:hidden items-center justify-center">
+            <img
+              src={logoHeader}
+              alt="Pattu Kutty Logo"
+              className="h-9 w-auto object-contain shrink-0"
+            />
+          </div>
         </Link>
 
         {nav.map((n) => {
@@ -123,7 +130,7 @@ export function AdminShell({ children }: { children: ReactNode }) {
         </div>
       </aside>
 
-      <div className="pl-[76px] lg:pl-[212px]">{children}</div>
+      <div className="pl-[76px] lg:pl-[220px]">{children}</div>
     </div>
   );
 }

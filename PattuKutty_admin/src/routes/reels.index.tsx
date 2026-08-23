@@ -8,7 +8,7 @@ import {
 } from "@/components/admin/StorefrontSections";
 import { useAdmin } from "@/lib/admin-store";
 
-const title = "Reels & Featured Design — Butterflies Tailoring Admin";
+const title = "Reels & Featured Design — Pattu Kutty Admin";
 const description =
   "Live preview of the storefront reels carousel and featured designs, with editing controls for both.";
 

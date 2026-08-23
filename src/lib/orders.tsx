@@ -128,17 +128,42 @@ function normalizeOrderItem(it: Record<string, unknown>): CartItem {
   return item;
 }
 
-function mapOrder(row: Row): Order {
-  const createdAt = String(row["created_at"] ?? new Date().toISOString());
-  const shipping = ((row["shipping_address"] as ShippingAddress) ?? {}) as ShippingAddress;
-  const deliveryType = (row["delivery_type"] === "store_pickup" || row["fulfilment"] === "store_pickup" ? "store_pickup" : "doorstep") as DeliveryType;
-  const storedStatus = String(row["status"] ?? "placed") as OrderStatus;
+export function mapOrder(row: Row): Order {
+  if (!row || typeof row !== "object") return row as unknown as Order;
+  const createdAt = String(
+    row["created_at"] ?? row["createdAt"] ?? row["created_at_utc"] ?? new Date().toISOString()
+  );
+  const rawId = String(row["id"] ?? `ord-${Date.now()}`);
+  const orderNo = String(
+    row["order_no"] ??
+    row["orderNo"] ??
+    row["order_number"] ??
+    `OR-${rawId.slice(-6).toUpperCase()}`
+  );
+  const shipping = ((row["shipping_address"] ?? row["shipping"] ?? {}) as ShippingAddress);
+  const deliveryType = (
+    row["delivery_type"] === "store_pickup" ||
+    row["fulfilment"] === "store_pickup" ||
+    row["deliveryType"] === "store_pickup"
+      ? "store_pickup"
+      : "doorstep"
+  ) as DeliveryType;
+
+  const storedStatus = String(
+    row["stage"] ?? row["status"] ?? row["order_status"] ?? "placed"
+  ) as OrderStatus;
+
   const status = derivedStatus(createdAt, storedStatus, deliveryType);
-  const awb = String(row["awb"] ?? "");
-  const paymentRef = (row["razorpay_payment_id"] as string) || (row["payment_ref"] as string) || (row["payment_id"] as string) || (row["paymentMethod"] === "razorpay" ? `pay_${row["id"]}` : undefined);
+  const awb = String(row["awb"] ?? row["tracking_awb"] ?? "");
+  const paymentRef =
+    (row["razorpay_payment_id"] as string) ||
+    (row["payment_ref"] as string) ||
+    (row["payment_id"] as string) ||
+    (row["paymentRef"] as string) ||
+    (row["payment_method"] === "razorpay" || row["paymentMethod"] === "razorpay" ? `pay_${rawId}` : undefined);
 
   let rawList: Record<string, unknown>[] = [];
-  const rawItems = row["items"];
+  const rawItems = row["items"] ?? row["order_items"];
   if (Array.isArray(rawItems)) {
     rawList = rawItems as Record<string, unknown>[];
   } else if (typeof rawItems === "string") {
@@ -153,29 +178,29 @@ function mapOrder(row: Row): Order {
 
   const itemsSubtotal = items.reduce((sum, item) => sum + item.price * item.qty, 0);
   const subtotal = Number(row["subtotal"] ?? (itemsSubtotal > 0 ? itemsSubtotal : 0));
-  const delivery = Number(row["delivery_fee"] ?? row["delivery"] ?? 0);
-  const total = Number(row["total"] ?? row["total_amount"] ?? (subtotal + delivery));
+  const delivery = Number(row["delivery_fee"] ?? row["delivery"] ?? row["deliveryFee"] ?? 0);
+  const total = Number(row["total"] ?? row["total_amount"] ?? row["totalPayable"] ?? (subtotal + delivery));
 
   return {
-    id: String(row["id"]),
-    orderNo: String(row["order_no"] ?? `OR-${String(row["id"]).slice(-6).toUpperCase()}`),
+    id: rawId,
+    orderNo,
     createdAt,
     items,
     subtotal,
     delivery,
     total,
     shipping,
-    notes: (row["notes"] as string | null) ?? null,
-    paymentMethod: String(row["payment_method"]) === "cod" ? "cod" : "razorpay",
-    paymentStatus: String(row["payment_status"] ?? "pending") as Order["paymentStatus"],
+    notes: typeof row["notes"] === "string" ? row["notes"] : typeof row["customer_notes"] === "string" ? row["customer_notes"] : null,
+    paymentMethod: String(row["payment_method"] ?? row["paymentMethod"]) === "cod" ? "cod" : "razorpay",
+    paymentStatus: String(row["payment_status"] ?? row["paymentStatus"] ?? "pending") as Order["paymentStatus"],
     paymentRef,
     status,
     deliveryType,
     awb,
     trackingUrl: awb ? blueDartTrackingUrl(awb) : undefined,
     scans: buildScans(createdAt, status, shipping?.city ?? "Coimbatore", shipping?.state ?? "TN", deliveryType),
-    custom: Boolean(row["is_custom"]),
-    requestId: (row["request_id"] as string | null) ?? null,
+    custom: Boolean(row["is_custom"] ?? row["custom"]),
+    requestId: typeof row["request_id"] === "string" ? row["request_id"] : typeof row["requestId"] === "string" ? row["requestId"] : null,
     expectedDelivery: expectedDeliveryDate(createdAt, deliveryType).toISOString(),
   };
 }
@@ -197,39 +222,47 @@ export function OrdersProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   const refresh = useCallback(async () => {
-    if (!user) {
-      setOrders([]);
-      setLoading(false);
-      return;
-    }
     setLoading(true);
     try {
-      const { fetchCustomerOrders } = await import("./api/orders");
-      const liveOrders = await fetchCustomerOrders();
-      if (Array.isArray(liveOrders)) {
-        setOrders(liveOrders);
-      } else {
-        const { data } = await supabase
-          .from("orders")
-          .select("*")
-          .order("created_at", { ascending: false });
-        if (data) setOrders((data as Row[]).map(mapOrder));
+      if (user) {
+        const { fetchCustomerOrders } = await import("./api/orders");
+        const liveOrders = await fetchCustomerOrders();
+        if (Array.isArray(liveOrders)) {
+          // Always use live data, even if empty (empty = no orders yet)
+          const mapped = liveOrders.map(mapOrder);
+          setOrders(mapped);
+          try {
+            // Update cache with fresh data so it reflects latest status
+            localStorage.setItem("pk_customer_orders", JSON.stringify(mapped));
+          } catch {}
+          return;
+        }
       }
+      // Not logged in — clear orders
+      setOrders([]);
     } catch (err) {
-      console.warn("[Orders] Order refresh error:", err);
-      /* Fallback to local store */
+      console.warn("[Orders] Order refresh error — falling back to cache:", err);
+      // Only use stale localStorage as last resort when network fails
+      const saved = typeof window !== "undefined" ? localStorage.getItem("pk_customer_orders") : null;
+      if (saved) {
+        try {
+          const parsed = JSON.parse(saved);
+          if (Array.isArray(parsed)) setOrders(parsed.map(mapOrder));
+        } catch {}
+      }
     } finally {
       setLoading(false);
     }
   }, [user]);
 
   useEffect(() => {
-    if (!ready || !user) return;
+    if (!ready) return;
     void refresh();
 
+    // Poll every 15 seconds so status updates from admin appear promptly
     const interval = window.setInterval(() => {
       void refresh();
-    }, 10000);
+    }, 15_000);
 
     return () => window.clearInterval(interval);
   }, [ready, user, refresh]);

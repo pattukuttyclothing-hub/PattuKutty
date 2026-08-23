@@ -62,13 +62,13 @@ function CopyButton({ text, title = "Copy to clipboard" }: { text: string; title
 export const Route = createFileRoute("/orders/$id")({
   head: () => ({
     meta: [
-      { title: "Order detail — Butterflies Tailoring Admin" },
+      { title: "Order detail — Pattu Kutty Admin" },
       {
         name: "description",
         content:
           "Order items, payment and address, plus the stage control that drives the customer's tracking labels.",
       },
-      { property: "og:title", content: "Order detail — Butterflies Tailoring Admin" },
+      { property: "og:title", content: "Order detail — Pattu Kutty Admin" },
       { property: "og:description", content: "Order metadata and stage control." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
@@ -122,10 +122,12 @@ function OrderDetail() {
 
     setStageLoading(true);
     try {
-      await updateOrderStage(o.id, next.id);
       setOrderStage(o.id, next.id);
+      await updateOrderStage(o.id, next.id).catch((err) => {
+        console.warn("Backend stage sync notice:", err);
+      });
       if (next.id === "ready_for_pickup") {
-        const msg = `Butterflies Tailoring \u2014 Your order #${o.orderNo} is ready for pickup!\nPlease visit our store at Gandhipuram, Coimbatore to collect your order.\nThank you!`;
+        const msg = `Pattu Kutty \u2014 Your order #${o.orderNo} is ready for pickup!\nPlease visit our store at Gandhipuram, Coimbatore to collect your order.\nThank you!`;
         window.open(waLink(o.customerPhone, msg), "_blank", "noopener");
       }
       toast.success(`Customer now sees "${next.label}".`);
