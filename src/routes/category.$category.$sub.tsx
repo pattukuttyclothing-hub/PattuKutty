@@ -5,7 +5,7 @@ import { ProductCard } from "@/components/boutique/ProductCard";
 import { findCategory, findSub } from "@/data/boutique";
 import { subCopy } from "@/data/copy";
 import { useProductsBySubCategory } from "@/lib/useStorefront";
-import { abs, breadcrumbJsonLd, seoTitle, socialMeta } from "@/lib/seo";
+import { abs, breadcrumbJsonLd, seoDescription, seoTitle, socialMeta } from "@/lib/seo";
 
 export const Route = createFileRoute("/category/$category/$sub")({
   head: ({ params }) => {
