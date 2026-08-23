@@ -16,7 +16,7 @@ import {
 } from "@/data/aeo";
 import { abs, breadcrumbJsonLd, seoDescription, seoTitle, socialMeta } from "@/lib/seo";
 
-const title = seoTitle("About Pattu Kutty", "Coimbatore");
+const title = seoTitle("About Pattu Kutty — Custom Clothing, Coimbatore", undefined, "");
 const description = seoDescription(ENTITY_SUMMARY);
 
 export const Route = createFileRoute("/about")({
