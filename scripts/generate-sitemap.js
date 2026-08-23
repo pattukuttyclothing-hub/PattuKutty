@@ -5,7 +5,8 @@ import { fileURLToPath } from "url";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const BASE_URL = "https://pattukutty.com";
+const BASE_URL = (process.env.SITE_URL || "https://pattukuttyclothing.com").replace(/\/$/, "");
+const API_URL = (process.env.SITEMAP_API_URL || "http://localhost:3001/api/v1").replace(/\/$/, "");
 
 const categories = [
   {
@@ -34,7 +35,7 @@ const staticProductIds = categories.flatMap((cat) =>
 
 async function fetchDynamicProductIds() {
   try {
-    const res = await fetch("http://localhost:3001/api/v1/storefront/products");
+    const res = await fetch(`${API_URL}/storefront/products`);
     if (res.ok) {
       const json = await res.json();
       if (json.success && Array.isArray(json.data)) {
