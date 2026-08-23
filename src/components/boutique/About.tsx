@@ -1,5 +1,6 @@
 import { MapPin, Sparkles } from "lucide-react";
 import { aboutBadges, aboutImage, storeInfo, waLink } from "@/data/boutique";
+import { ENTITY_DEFINITION } from "@/data/aeo";
 import { Reveal, stagger } from "@/components/shared/Reveal";
 import { LotusMotif, FloralMotif } from "./Motifs";
 
