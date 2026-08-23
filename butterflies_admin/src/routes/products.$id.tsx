@@ -7,6 +7,8 @@ import { ProductGallery } from "@/components/shared/ProductGallery";
 import {
   categories,
   findCategory,
+  getPermittedSizesForCategory,
+  isSareeCategory,
   sizeOptions,
   subName,
   type SizeOption,
@@ -520,12 +522,14 @@ function ProductEditor() {
             </label>
           </Section>
 
-          <Section title="Sizes & independent stock">
+          <Section title={isSareeCategory(draft?.category, draft?.sub) ? "Saree specifications & stock" : "Sizes & independent stock"}>
             <p className="text-xs text-muted-foreground">
-              Select sizes for this design and specify the stock quantity available for each size independently.
+              {isSareeCategory(draft?.category, draft?.sub)
+                ? "Select saree specifications for this product and set stock quantity."
+                : "Select sizes for this design and specify the stock quantity available for each size independently."}
             </p>
             <div className="flex flex-wrap gap-2">
-              {sizeOptions.map((s) => (
+              {getPermittedSizesForCategory(draft?.category, draft?.sub).map((s) => (
                 <button
                   key={s}
                   type="button"

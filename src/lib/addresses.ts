@@ -20,12 +20,21 @@ const map = (row: Row): SavedAddress => ({
 });
 
 export async function listAddresses(): Promise<SavedAddress[]> {
-  const { data } = await supabase
-    .from("addresses")
-    .select("*")
-    .order("is_default", { ascending: false })
-    .order("created_at", { ascending: false });
-  return ((data ?? []) as Row[]).map(map);
+  try {
+    const { data, error } = await supabase
+      .from("addresses")
+      .select("*")
+      .order("is_default", { ascending: false })
+      .order("created_at", { ascending: false });
+    if (error) {
+      console.warn("[Addresses] Unable to fetch addresses:", error.message);
+      return [];
+    }
+    return ((data ?? []) as Row[]).map(map);
+  } catch (err) {
+    console.warn("[Addresses] Network or connection error fetching addresses:", err);
+    return [];
+  }
 }
 
 export async function saveAddress(

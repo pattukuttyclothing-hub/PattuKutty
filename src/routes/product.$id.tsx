@@ -4,7 +4,7 @@ import { ArrowLeft, AlertCircle, Heart, MessageCircle, Minus, Plus, ShoppingBag,
 import { PageShell, PageHeader } from "@/components/shared/Page";
 import { ProductGallery } from "@/components/shared/ProductGallery";
 import { ProductCard } from "@/components/boutique/ProductCard";
-import { findCategory, findProduct, findSub, type Product } from "@/data/boutique";
+import { findCategory, findProduct, findSub, isSareeCategory, type Product } from "@/data/boutique";
 import { fetchProductById } from "@/lib/api/catalogue";
 import { abs, absImage, BRAND, breadcrumbJsonLd, seoDescription, seoTitle, socialMeta } from "@/lib/seo";
 import { inr, orderWaLink, useCart } from "@/lib/cart";
@@ -288,11 +288,11 @@ function ProductPage() {
                 {activeProduct.description}
               </p>
 
-              {/* Size Selection */}
+              {/* Size / Variation Selection */}
               <div className="mt-8">
                 <div className="flex items-center justify-between">
                   <label className="text-xs font-semibold tracking-[0.12em] text-foreground uppercase">
-                    Select Size
+                    {isSareeCategory(activeProduct.category, activeProduct.sub) ? "Option / Specification" : "Select Size"}
                   </label>
                   <button
                     type="button"

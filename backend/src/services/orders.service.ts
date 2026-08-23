@@ -493,6 +493,11 @@ export class OrdersService {
    * Calculates authoritative price/tax/delivery from DB, sets payment_method = "cod", payment_status = "pending", stage = "placed".
    */
   static async placeCODOrder(customerId: string, payload: PlaceOrderPayload) {
+    if (!customerId || typeof customerId !== "string" || !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(customerId)) {
+      const err = new Error("Invalid or missing customer identity for order placement.") as Error & { statusCode: number };
+      err.statusCode = 400;
+      throw err;
+    }
     const codPayload = { ...payload, paymentMethod: "cod", payment_method: "cod" };
     const calc = await this.calculateAuthoritativeOrder(customerId, codPayload);
 
@@ -509,6 +514,11 @@ export class OrdersService {
    * Places a Cash-on-Delivery (COD) or standard order.
    */
   static async placeOrder(customerId: string, payload: PlaceOrderPayload) {
+    if (!customerId || typeof customerId !== "string" || !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(customerId)) {
+      const err = new Error("Invalid or missing customer identity for order placement.") as Error & { statusCode: number };
+      err.statusCode = 400;
+      throw err;
+    }
     const calc = await this.calculateAuthoritativeOrder(customerId, payload);
     calc.orderPayload.payment_method = payload.paymentMethod || payload.payment_method || "cod";
     calc.orderPayload.payment_status = "pending";
@@ -518,10 +528,18 @@ export class OrdersService {
   }
 
   static async getCustomerOrders(customerId: string) {
+    if (!customerId || typeof customerId !== "string" || !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(customerId)) {
+      return [];
+    }
     return await OrdersRepository.getOrdersByCustomer(customerId);
   }
 
   static async getCustomerOrderById(id: string, customerId: string) {
+    if (!customerId || typeof customerId !== "string" || !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(customerId)) {
+      const err = new Error("Order not found");
+      (err as unknown as { statusCode: number }).statusCode = 404;
+      throw err;
+    }
     const order = await OrdersRepository.getOrderByIdCustomer(id, customerId);
     if (!order) {
       const err = new Error("Order not found");

@@ -295,6 +295,22 @@ export type Product = {
   description: string;
 };
 
+export const sareeSizes = ["Free Size (5.5m + Blouse)", "With Running Blouse", "Without Blouse", "6.3m Grand Pallu"];
+export const stitchedSizes = ["XS", "S", "M", "L", "XL", "XXL"];
+
+export function isSareeCategory(categoryId: string, subId?: string): boolean {
+  if (categoryId === "sarees") return true;
+  if (categoryId === "half-saree" && subId === "pattu-pudavai") return true;
+  return false;
+}
+
+export function getSizesForCategory(categoryId: string, subId?: string): string[] {
+  if (isSareeCategory(categoryId, subId)) {
+    return sareeSizes;
+  }
+  return stitchedSizes;
+}
+
 const defaultSizes = ["XS", "S", "M", "L", "XL"];
 
 const nameBits = ["Signature", "Heritage", "Studio", "Festive", "Couture", "Classic"];
@@ -306,9 +322,11 @@ export const products: Product[] = categories.flatMap((cat) =>
       const imgs = rotate(sub.images, i);
       const base = 1499 + sIdx * 1800 + i * 950 + (cat.id === "half-saree" ? 5200 : 0);
       const price = base;
-      const variants: SizeVariant[] = defaultSizes.map((s, si) => ({
+      const isUnstitched = isSareeCategory(cat.id, sub.id);
+      const categorySizes = isUnstitched ? ["Free Size (5.5m + Blouse)"] : defaultSizes;
+      const variants: SizeVariant[] = categorySizes.map((s, si) => ({
         size: s,
-        available: (sIdx + i + si) % 5 !== 0,
+        available: isUnstitched ? true : (sIdx + i + si) % 5 !== 0,
       }));
       const availableCount = variants.filter((v) => v.available).length;
       return {
@@ -320,7 +338,7 @@ export const products: Product[] = categories.flatMap((cat) =>
         images: imgs.slice(0, 4),
         category: cat.id,
         sub: sub.id,
-        sizes: defaultSizes,
+        sizes: categorySizes,
         variants,
         deliveryCharge: 0,
         soldOut: availableCount === 0,

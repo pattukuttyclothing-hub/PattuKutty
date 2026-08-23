@@ -148,7 +148,7 @@ export function Carousel3D<T>({
             <div
               key={i}
               // Only the active slide is reachable by keyboard / screen readers.
-              {...(isActive ? {} : { inert: "" as unknown as boolean })}
+              inert={!isActive ? true : undefined}
               aria-hidden={isActive ? undefined : true}
               role="group"
               aria-roledescription="slide"

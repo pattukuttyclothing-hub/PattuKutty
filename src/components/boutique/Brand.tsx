@@ -1,15 +1,14 @@
-import lockupAsset from "@/assets/pattu-kutty-lockup.png.asset.json";
-import lockupLightAsset from "@/assets/pattu-kutty-lockup-light.png.asset.json";
-import lockupGoldAsset from "@/assets/pattu-kutty-lockup-gold.png.asset.json";
-import markAsset from "@/assets/pattu-kutty-mark.png.asset.json";
-import markGoldAsset from "@/assets/pattu-kutty-mark-gold.png.asset.json";
+import logoHeader from "@/assets/LOGO -Header.png";
+import logoFooter from "@/assets/Logo Footer.png";
 
 export const brandAssets = {
-  lockup: lockupAsset.url,
-  lockupLight: lockupLightAsset.url,
-  lockupGold: lockupGoldAsset.url,
-  mark: markAsset.url,
-  markGold: markGoldAsset.url,
+  header: logoHeader,
+  footer: logoFooter,
+  lockup: logoHeader,
+  lockupLight: logoHeader,
+  lockupGold: logoFooter,
+  mark: logoHeader,
+  markGold: logoFooter,
 };
 
 /**

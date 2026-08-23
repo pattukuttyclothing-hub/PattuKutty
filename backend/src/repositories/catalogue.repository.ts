@@ -985,8 +985,11 @@ export class CatalogueRepository {
           throw new Error(`Failed to insert product variants: ${variantErr.message}`);
         }
       } else {
-        // Default size seeding
-        const defaultSizes = ["S", "M", "L"];
+        // Category-driven default size seeding
+        const catSlug = String(payload.category_id || payload.category || "");
+        const subSlug = String(payload.sub_category_id || payload.sub || "");
+        const isSaree = catSlug === "sarees" || (catSlug === "half-saree" && subSlug === "pattu-pudavai");
+        const defaultSizes = isSaree ? ["Free Size (5.5m + Blouse)"] : ["S", "M", "L"];
         const { error: defaultVarErr } = await db.from("product_variants").insert(
           defaultSizes.map((size) => ({
             product_id: product.id,

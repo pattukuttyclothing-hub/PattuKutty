@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { Loader2, Lock, Mail, Phone, User as UserIcon } from "lucide-react";
+import { Eye, EyeOff, Loader2, Lock, Mail, Phone, User as UserIcon } from "lucide-react";
 import { toast } from "sonner";
 import { PageHeader, PageShell } from "@/components/shared/Page";
 import { LotusMotif } from "@/components/boutique/Motifs";
@@ -37,16 +37,23 @@ export const Route = createFileRoute("/auth")({
 
 function Field({
   icon,
+  action,
   ...props
-}: React.InputHTMLAttributes<HTMLInputElement> & { icon: React.ReactNode }) {
+}: React.InputHTMLAttributes<HTMLInputElement> & {
+  icon: React.ReactNode;
+  action?: React.ReactNode;
+}) {
   return (
     <label className="block">
       <span className="relative flex items-center">
         <span className="pointer-events-none absolute left-4 text-muted-foreground">{icon}</span>
         <input
           {...props}
-          className="w-full rounded-2xl border border-border bg-background py-3.5 pr-4 pl-11 text-sm text-foreground outline-none transition-colors placeholder:text-muted-foreground focus:border-primary"
+          className={`w-full rounded-2xl border border-border bg-background py-3.5 pl-11 text-sm text-foreground outline-none transition-colors placeholder:text-muted-foreground focus:border-primary ${
+            action ? "pr-11" : "pr-4"
+          }`}
         />
+        {action ? <span className="absolute right-3.5 flex items-center">{action}</span> : null}
       </span>
     </label>
   );
@@ -60,6 +67,7 @@ function AuthPage() {
   const [mode, setMode] = useState<"signin" | "signup">("signin");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [fullName, setFullName] = useState("");
   const [phone, setPhone] = useState("");
   const [busy, setBusy] = useState(false);
@@ -177,13 +185,28 @@ function AuthPage() {
               />
               <Field
                 icon={<Lock className="h-4 w-4" />}
-                type="password"
+                type={showPassword ? "text" : "password"}
                 placeholder="Password"
                 autoComplete={mode === "signin" ? "current-password" : "new-password"}
                 minLength={6}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
+                action={
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword((prev) => !prev)}
+                    className="p-1 text-muted-foreground transition-colors hover:text-foreground focus:outline-none"
+                    aria-label={showPassword ? "Hide password" : "Show password"}
+                    title={showPassword ? "Hide password" : "Show password"}
+                  >
+                    {showPassword ? (
+                      <EyeOff className="h-4 w-4 shrink-0" />
+                    ) : (
+                      <Eye className="h-4 w-4 shrink-0" />
+                    )}
+                  </button>
+                }
               />
 
               {error ? (

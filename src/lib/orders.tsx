@@ -78,23 +78,92 @@ export type NewOrder = {
 
 type Row = Record<string, unknown>;
 
+function normalizeOrderItem(it: Record<string, unknown>): CartItem {
+  const name = String(
+    it["name"] ||
+    it["product_name_snapshot"] ||
+    it["title"] ||
+    it["product_name"] ||
+    "Custom Designer Item"
+  );
+  const size = String(
+    it["size"] ||
+    it["size_snapshot"] ||
+    it["variant"] ||
+    "Free Size"
+  );
+  const qty = Math.max(1, Number(it["qty"] ?? it["quantity"] ?? 1));
+  const price = Number(
+    it["price"] ??
+    it["unit_price"] ??
+    it["price_override"] ??
+    0
+  );
+  const image = String(
+    it["image"] ||
+    it["image_url_snapshot"] ||
+    it["image_url"] ||
+    it["hero_image_url"] ||
+    "https://images.unsplash.com/photo-1610030469983-98e550d6193c?w=900&auto=format&fit=crop&q=80"
+  );
+  const id = String(it["id"] || it["variant_id"] || it["product_id"] || `item-${Date.now()}`);
+  const customReqId = (it["customRequestId"] || it["custom_request_id"]) as string | undefined;
+
+  const item: CartItem = {
+    key: String(it["key"] || `${id}-${size}`),
+    id,
+    name,
+    price,
+    size,
+    colour: String(it["colour"] || it["colour_snapshot"] || "Design Colour"),
+    qty,
+    image,
+    isCustom: Boolean(it["isCustom"] || it["is_custom"]),
+  };
+
+  if (customReqId) {
+    item.customRequestId = customReqId;
+  }
+
+  return item;
+}
+
 function mapOrder(row: Row): Order {
-  const createdAt = String(row["created_at"]);
-  const shipping = (row["shipping_address"] ?? {}) as ShippingAddress;
+  const createdAt = String(row["created_at"] ?? new Date().toISOString());
+  const shipping = ((row["shipping_address"] as ShippingAddress) ?? {}) as ShippingAddress;
   const deliveryType = (row["delivery_type"] === "store_pickup" || row["fulfilment"] === "store_pickup" ? "store_pickup" : "doorstep") as DeliveryType;
   const storedStatus = String(row["status"] ?? "placed") as OrderStatus;
   const status = derivedStatus(createdAt, storedStatus, deliveryType);
   const awb = String(row["awb"] ?? "");
   const paymentRef = (row["razorpay_payment_id"] as string) || (row["payment_ref"] as string) || (row["payment_id"] as string) || (row["paymentMethod"] === "razorpay" ? `pay_${row["id"]}` : undefined);
 
+  let rawList: Record<string, unknown>[] = [];
+  const rawItems = row["items"];
+  if (Array.isArray(rawItems)) {
+    rawList = rawItems as Record<string, unknown>[];
+  } else if (typeof rawItems === "string") {
+    try {
+      const parsed = JSON.parse(rawItems);
+      if (Array.isArray(parsed)) rawList = parsed as Record<string, unknown>[];
+    } catch {
+      rawList = [];
+    }
+  }
+  const items: CartItem[] = rawList.map(normalizeOrderItem);
+
+  const itemsSubtotal = items.reduce((sum, item) => sum + item.price * item.qty, 0);
+  const subtotal = Number(row["subtotal"] ?? (itemsSubtotal > 0 ? itemsSubtotal : 0));
+  const delivery = Number(row["delivery_fee"] ?? row["delivery"] ?? 0);
+  const total = Number(row["total"] ?? row["total_amount"] ?? (subtotal + delivery));
+
   return {
     id: String(row["id"]),
     orderNo: String(row["order_no"] ?? `OR-${String(row["id"]).slice(-6).toUpperCase()}`),
     createdAt,
-    items: (row["items"] ?? []) as CartItem[],
-    subtotal: Number(row["subtotal"] ?? 0),
-    delivery: Number(row["delivery_fee"] ?? 0),
-    total: Number(row["total"] ?? 0),
+    items,
+    subtotal,
+    delivery,
+    total,
     shipping,
     notes: (row["notes"] as string | null) ?? null,
     paymentMethod: String(row["payment_method"]) === "cod" ? "cod" : "razorpay",
@@ -104,7 +173,7 @@ function mapOrder(row: Row): Order {
     deliveryType,
     awb,
     trackingUrl: awb ? blueDartTrackingUrl(awb) : undefined,
-    scans: buildScans(createdAt, status, shipping.city ?? "Coimbatore", shipping.state ?? "TN", deliveryType),
+    scans: buildScans(createdAt, status, shipping?.city ?? "Coimbatore", shipping?.state ?? "TN", deliveryType),
     custom: Boolean(row["is_custom"]),
     requestId: (row["request_id"] as string | null) ?? null,
     expectedDelivery: expectedDeliveryDate(createdAt, deliveryType).toISOString(),
@@ -137,16 +206,17 @@ export function OrdersProvider({ children }: { children: ReactNode }) {
     try {
       const { fetchCustomerOrders } = await import("./api/orders");
       const liveOrders = await fetchCustomerOrders();
-      if (liveOrders && liveOrders.length > 0) {
+      if (Array.isArray(liveOrders)) {
         setOrders(liveOrders);
       } else {
         const { data } = await supabase
           .from("orders")
           .select("*")
           .order("created_at", { ascending: false });
-        if (data && data.length > 0) setOrders((data as Row[]).map(mapOrder));
+        if (data) setOrders((data as Row[]).map(mapOrder));
       }
-    } catch {
+    } catch (err) {
+      console.warn("[Orders] Order refresh error:", err);
       /* Fallback to local store */
     } finally {
       setLoading(false);
@@ -154,9 +224,15 @@ export function OrdersProvider({ children }: { children: ReactNode }) {
   }, [user]);
 
   useEffect(() => {
-    if (!ready) return;
+    if (!ready || !user) return;
     void refresh();
-  }, [ready, refresh]);
+
+    const interval = window.setInterval(() => {
+      void refresh();
+    }, 10000);
+
+    return () => window.clearInterval(interval);
+  }, [ready, user, refresh]);
 
   const place = useCallback(
     async (o: NewOrder) => {

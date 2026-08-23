@@ -219,7 +219,8 @@ function ReviewPanel({ order }: { order: Order }) {
   const [title, setTitle] = useState("");
   const [body, setBody] = useState("");
   const [busy, setBusy] = useState(false);
-  const [productId, setProductId] = useState(order.items[0]?.id ?? "");
+  const itemsList = order.items ?? [];
+  const [productId, setProductId] = useState(itemsList[0]?.id ?? "");
 
   useEffect(() => {
     void listReviewsForOrder(order.id).then((rows) => {
@@ -233,7 +234,7 @@ function ReviewPanel({ order }: { order: Order }) {
     if (!user) return;
     setBusy(true);
     try {
-      const item = order.items.find((i) => i.id === productId) ?? order.items[0];
+      const item = itemsList.find((i) => i.id === productId) ?? itemsList[0];
       const created = await addReview({
         userId: user.id,
         orderId: order.id,
@@ -271,13 +272,13 @@ function ReviewPanel({ order }: { order: Order }) {
           <p className="text-sm font-medium text-foreground">
             How did we stitch it? Your review helps other brides & mums.
           </p>
-          {order.items.length > 1 ? (
+          {itemsList.length > 1 ? (
             <select
               value={productId}
               onChange={(e) => setProductId(e.target.value)}
               className="w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm text-foreground outline-none focus:border-primary"
             >
-              {order.items.map((i) => (
+              {itemsList.map((i) => (
                 <option key={i.key} value={i.id}>
                   {i.name}
                 </option>
@@ -590,18 +591,30 @@ function OrderTrackingPage() {
             <div className="rounded-3xl border border-border bg-card p-6 shadow-soft">
               <h2 className="font-display text-lg font-semibold text-foreground">Items in Order</h2>
               <div className="mt-4 divide-y divide-border">
-                {order.items.map((it, i) => (
-                  <div key={i} className="flex items-center gap-4 py-3 first:pt-0 last:pb-0">
-                    <img loading="lazy" src={it.image} alt="" className="h-16 w-14 rounded-xl object-cover" />
-                    <div className="min-w-0 flex-1">
-                      <p className="text-sm font-semibold text-foreground truncate">{it.name}</p>
-                      <p className="text-xs text-muted-foreground">
-                        Size {it.size} · Qty {it.qty}
-                      </p>
+                {(order.items ?? []).map((it, i) => {
+                  const name = it.name || (it as any).product_name_snapshot || "Custom Designer Wear";
+                  const size = it.size || (it as any).size_snapshot || "Standard";
+                  const qty = Math.max(1, Number(it.qty || (it as any).quantity || 1));
+                  const unitPrice = Number(it.price ?? (it as any).unit_price ?? 0);
+                  const img =
+                    it.image ||
+                    (it as any).image_url_snapshot ||
+                    (it as any).image_url ||
+                    "https://images.unsplash.com/photo-1610030469983-98e550d6193c?w=900&auto=format&fit=crop&q=80";
+
+                  return (
+                    <div key={i} className="flex items-center gap-4 py-3 first:pt-0 last:pb-0">
+                      <img loading="lazy" src={img} alt={name} className="h-16 w-14 rounded-xl object-cover" />
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm font-semibold text-foreground truncate">{name}</p>
+                        <p className="text-xs text-muted-foreground">
+                          Size {size} · Qty {qty}
+                        </p>
+                      </div>
+                      <span className="text-sm font-semibold text-foreground">{inr(unitPrice * qty)}</span>
                     </div>
-                    <span className="text-sm font-semibold text-foreground">{inr(it.price * it.qty)}</span>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
 

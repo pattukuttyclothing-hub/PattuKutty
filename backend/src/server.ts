@@ -18,24 +18,36 @@ app.use(helmet());
 app.use(
   cors({
     origin: (origin, callback) => {
-      // Allow requests with no origin (e.g. mobile apps, curl) or any localhost/127.0.0.1 dev server
-      if (!origin || /^http:\/\/(localhost|127\.0\.0\.1):\d+$/.test(origin)) {
+      // Allow requests with no origin (e.g. mobile apps, curl)
+      if (!origin) return callback(null, true);
+
+      // 1. Allow localhost/127.0.0.1 dev servers
+      if (/^http:\/\/(localhost|127\.0\.0\.1):\d+$/.test(origin)) {
         return callback(null, true);
       }
-      return callback(new Error("CORS policy error: Origin not allowed"));
+
+      // 2. Allow origins specified in ALLOWED_ORIGINS env var (comma-separated or "*")
+      if (env.ALLOWED_ORIGINS) {
+        const allowedList = env.ALLOWED_ORIGINS.split(",").map((item) => item.trim());
+        if (allowedList.includes("*") || allowedList.includes(origin)) {
+          return callback(null, true);
+        }
+      }
+
+      return callback(new Error(`CORS policy error: Origin ${origin} not allowed`));
     },
     credentials: true,
   })
 );
 app.use(
   express.json({
-    limit: "10mb",
+    limit: "50mb",
     verify: (req, _res, buf) => {
       (req as unknown as { rawBody?: Buffer }).rawBody = buf;
     },
   })
 );
-app.use(express.raw({ type: ["image/*", "application/octet-stream"], limit: "20mb" }));
+app.use(express.raw({ type: ["image/*", "video/*", "audio/*", "application/octet-stream"], limit: "100mb" }));
 
 // ── DEV LOGGING MIDDLEWARE (Comment out lines 35-43 in production) ────
 app.use((req, res, next) => {

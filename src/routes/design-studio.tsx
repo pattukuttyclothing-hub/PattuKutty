@@ -131,14 +131,13 @@ function DesignStudio() {
           if (!created || !created.id) {
             throw new Error("Design request submission failed. Valid request ID missing.");
           }
+          setSubmitting(false);
           setSubmittedSpec(spec);
           setDone(created.id);
         })
         .catch((err: unknown) => {
           const message = err instanceof Error ? err.message : "Unable to submit your request. Please try again.";
           setErrorMsg(message);
-        })
-        .finally(() => {
           setSubmitting(false);
         });
     });

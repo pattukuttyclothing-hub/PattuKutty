@@ -1,7 +1,7 @@
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 
-const SUPABASE_URL = (import.meta.env["VITE_SUPABASE_URL"] as string) || "https://your-supabase-project.supabase.co";
-const SUPABASE_ANON_KEY = (import.meta.env["VITE_SUPABASE_ANON_KEY"] as string) || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.dummy_anon_key";
+const SUPABASE_URL = (import.meta.env["VITE_SUPABASE_URL"] as string) || "";
+const SUPABASE_ANON_KEY = (import.meta.env["VITE_SUPABASE_ANON_KEY"] as string) || "";
 
 const isServer = typeof window === "undefined";
 

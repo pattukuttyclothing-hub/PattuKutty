@@ -69,7 +69,8 @@ function OrdersPage() {
                 const step = stepFor(o.status, steps);
                 const idx = stepIndex(o.status, steps);
                 const pct = ((idx + 1) / steps.length) * 100;
-                const imgs = o.items.map((it) => it.image).filter(Boolean);
+                const itemsList = o.items ?? [];
+                const imgs = itemsList.map((it) => it.image).filter(Boolean);
                 const paid = o.paymentStatus === "paid";
                 const isPickup = o.deliveryType === "store_pickup";
 
@@ -83,7 +84,7 @@ function OrdersPage() {
                     {imgs.length ? (
                       <AutoImageFade
                         images={imgs}
-                        alt={o.items[0]?.name ?? "Your order"}
+                        alt={itemsList[0]?.name ?? "Your order"}
                         className="absolute inset-0 h-full w-full"
                         interval={9000}
                         showDots={false}
@@ -129,8 +130,8 @@ function OrdersPage() {
                       </p>
                       <div className="mt-1 flex items-start justify-between gap-3">
                         <h2 className="font-display truncate text-lg leading-tight font-semibold text-primary-foreground">
-                          {o.items[0]?.name}
-                          {o.items.length > 1 ? ` + ${o.items.length - 1} more` : ""}
+                          {itemsList[0]?.name ?? "Order"}
+                          {itemsList.length > 1 ? ` + ${itemsList.length - 1} more` : ""}
                         </h2>
                         <span className="shrink-0 rounded-full bg-accent/90 px-3 py-1 text-[0.6rem] font-semibold tracking-[0.12em] text-accent-foreground uppercase">
                           {step.label}

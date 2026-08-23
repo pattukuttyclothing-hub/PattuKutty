@@ -182,9 +182,42 @@ export const findSub = (categoryId: string, subId: string) =>
 export const subName = (subId: string) =>
   categories.flatMap((c) => c.subs).find((s) => s.id === subId)?.name ?? subId;
 
-/** product_variants.size CHECK list */
-export const sizeOptions = ["XS", "S", "M", "L", "XL", "XXL", "Free Size"] as const;
-export type SizeOption = (typeof sizeOptions)[number];
+/** product_variants.size options */
+export const sareeSizeOptions = [
+  "Free Size (5.5m + Blouse)",
+  "With Running Blouse",
+  "Without Blouse",
+  "6.3m Grand Pallu",
+] as const;
+
+export const stitchedSizeOptions = ["XS", "S", "M", "L", "XL", "XXL"] as const;
+
+export const sizeOptions = [
+  "XS",
+  "S",
+  "M",
+  "L",
+  "XL",
+  "XXL",
+  "Free Size (5.5m + Blouse)",
+  "With Running Blouse",
+  "Without Blouse",
+  "6.3m Grand Pallu",
+] as const;
+export type SizeOption = string;
+
+export function isSareeCategory(categoryId?: string, subId?: string): boolean {
+  if (categoryId === "sarees") return true;
+  if (categoryId === "half-saree" && subId === "pattu-pudavai") return true;
+  return false;
+}
+
+export function getPermittedSizesForCategory(categoryId?: string, subId?: string): readonly string[] {
+  if (isSareeCategory(categoryId, subId)) {
+    return sareeSizeOptions;
+  }
+  return stitchedSizeOptions;
+}
 
 /** colours table */
 export const colourSwatches = [

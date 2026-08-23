@@ -100,16 +100,64 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signUp = useCallback(
     async (email: string, password: string, fullName: string, phone: string) => {
-      const { data, error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          emailRedirectTo: `${window.location.origin}/auth`,
-          data: { full_name: fullName, phone },
-        },
-      });
-      if (error) return { error: error.message };
-      return { needsConfirmation: !data.session };
+      try {
+        const cleanPhone = phone.trim();
+        if (cleanPhone) {
+          const { data: existingPhone } = await supabase
+            .from("customers")
+            .select("id")
+            .eq("phone", cleanPhone)
+            .maybeSingle();
+
+          if (existingPhone) {
+            return {
+              error:
+                "An account with this phone number already exists. Please sign in instead.",
+            };
+          }
+        }
+
+        const { data, error } = await supabase.auth.signUp({
+          email,
+          password,
+          options: {
+            emailRedirectTo: `${window.location.origin}/auth`,
+            data: { full_name: fullName, phone: cleanPhone },
+          },
+        });
+
+        if (error) {
+          if (error.message?.toLowerCase().includes("database error saving new user")) {
+            return {
+              error:
+                "An account with this email or phone number already exists. Please sign in instead.",
+            };
+          }
+          if ((error as any).status === 429 || error.message?.toLowerCase().includes("rate limit")) {
+            return {
+              error:
+                "Too many signup requests sent in a short time. Please wait a minute and try again.",
+            };
+          }
+          return { error: error.message };
+        }
+
+        if (data?.user?.id) {
+          try {
+            await supabase.from("customers").upsert({
+              id: data.user.id,
+              full_name: fullName.trim() || null,
+              phone: cleanPhone || null,
+              updated_at: new Date().toISOString(),
+            });
+          } catch {
+            /* profile insert catch */
+          }
+        }
+        return { needsConfirmation: !data.session };
+      } catch (err: any) {
+        return { error: err?.message || "An unexpected error occurred during signup." };
+      }
     },
     [],
   );

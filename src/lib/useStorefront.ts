@@ -54,7 +54,8 @@ export function useCategories(): Category[] {
     queryKey: ["categories"],
     queryFn: fetchCategories,
     placeholderData: seedCategories,
-    staleTime: 5 * 60 * 1000,
+    staleTime: 0,
+    refetchOnWindowFocus: true,
   });
 
   if (isError || !data || !Array.isArray(data) || data.length === 0) {
@@ -100,47 +101,15 @@ export function useHeroBanners(): HeroBanner[] {
   const { data, isError } = useQuery({
     queryKey: ["heroBanners"],
     queryFn: fetchHeroBanners,
-    staleTime: 10 * 60 * 1000,
-    gcTime: 30 * 60 * 1000,
+    staleTime: 0,
+    refetchOnWindowFocus: true,
   });
 
   if (isError || !data || !Array.isArray(data) || data.length === 0) {
     return seedBannersAsHeroBanners;
   }
 
-  const validBanners = (data as any[])
-    .filter((b) => b && (b.image_url || b.image || b.desktop_image_url || b.mobile_image_url))
-    .map((b) => {
-      const baseImg = (typeof b.image_url === "string" && b.image_url.startsWith("http"))
-        ? b.image_url
-        : (typeof b.image === "string" && b.image.startsWith("http"))
-          ? b.image
-          : (seedBannersAsHeroBanners[0]?.image_url ?? "");
-
-      const desktopImg = (typeof b.desktop_image_url === "string" && b.desktop_image_url.startsWith("http"))
-        ? b.desktop_image_url
-        : baseImg;
-
-      const tabletImg = (typeof b.tablet_image_url === "string" && b.tablet_image_url.startsWith("http"))
-        ? b.tablet_image_url
-        : desktopImg;
-
-      const mobileImg = (typeof b.mobile_image_url === "string" && b.mobile_image_url.startsWith("http"))
-        ? b.mobile_image_url
-        : baseImg;
-
-      return {
-        id: b.id || "hb-1",
-        image_url: baseImg,
-        desktop_image_url: desktopImg,
-        tablet_image_url: tabletImg,
-        mobile_image_url: mobileImg,
-        cta_label: b.cta_label || b.cta || "Explore Collections",
-        cta_link: b.cta_link || "#collections",
-      };
-    });
-
-  return validBanners.length > 0 ? validBanners : seedBannersAsHeroBanners;
+  return data as HeroBanner[];
 }
 
 export function useFeaturedProducts(): Product[] {
@@ -150,7 +119,8 @@ export function useFeaturedProducts(): Product[] {
     // Seed data is only a pre-fetch placeholder; a real (even empty) API
     // response always wins so the storefront never masks backend state.
     placeholderData: seedFeaturedProducts,
-    staleTime: 1 * 60 * 1000,
+    staleTime: 0,
+    refetchOnWindowFocus: true,
   });
   return isError ? [] : (data ?? []);
 }
@@ -173,7 +143,8 @@ export function useReels(): ReelItem[] {
       return [];
     },
     placeholderData: seedReels as unknown as ReelItem[],
-    staleTime: 2 * 60 * 1000,
+    staleTime: 0,
+    refetchOnWindowFocus: true,
   });
   return isError
     ? (seedReels as unknown as ReelItem[])
