@@ -54,10 +54,10 @@ export function About() {
         <div className="min-w-0 lg:pl-2 lg:pt-6">
           <Reveal>
             <p className="text-xs font-medium tracking-[0.28em] text-primary uppercase">
-              Our Story
+              About the brand
             </p>
             <h2 className="font-display mt-3 text-[1.75rem] leading-tight font-semibold text-foreground sm:text-4xl">
-              {storeInfo.name}
+              Who is Pattu Kutty, and what do they do?
             </h2>
             <p className="mt-1.5 text-sm text-accent-foreground/80 italic">"{storeInfo.tagline}"</p>
             <FloralMotif className="mt-4 h-5 w-28 text-accent" />
@@ -65,21 +65,18 @@ export function About() {
 
           <div className="mt-5 space-y-4 text-[0.9rem] leading-relaxed text-muted-foreground sm:mt-6 sm:text-base">
             {[
+              <>{ENTITY_DEFINITION}</>,
               <>
-                Pattu Kutty has become Coimbatore's go-to studio for women who need beautiful
-                clothes in a hurry. Selected designs are ready in{" "}
-                <span className="font-medium text-foreground">one hour</span>, and almost everything
-                else can be delivered{" "}
-                <span className="font-medium text-foreground">the next day</span>.
+                Pattu Kutty customizes any women's garment to an exact requirement — custom silk
+                sarees, bridal wear and kalyana pattu sarees, designer blouses, bridal lehengas,
+                half sarees, pattu pavadai and frocks. Selected designs are stitched in{" "}
+                <span className="font-medium text-foreground">as fast as one hour</span>, and most
+                other garments are ready <span className="font-medium text-foreground">the next day</span>.
               </>,
               <>
-                We specialise in custom designer blouses, bridal lehengas, half sarees and pattu
-                pavadai — cut for perfect fitting and finished with the kind of detail you usually
-                only see on couture pieces.
-              </>,
-              <>
-                From brides in Gandhipuram to NRI families visiting for a week of weddings, our team
-                is built for tight timelines without cutting corners on finishing.
+                The studio is in Pappanaicken Palayam, Coimbatore, near Gandhipuram, and finished
+                garments are shipped to customers across India — including brides working to tight
+                wedding timelines and NRI families visiting for a single week of functions.
               </>,
             ].map((node, i) => (
               <Reveal key={i} delay={stagger(i, 100)}>
