@@ -19,6 +19,7 @@ export type Database = {
           address_type: string
           city: string
           created_at: string
+          customer_id: string
           full_name: string
           id: string
           is_default: boolean
@@ -28,13 +29,13 @@ export type Database = {
           phone: string
           pincode: string
           state: string
-          user_id?: string
-          customer_id?: string
+          updated_at: string
         }
         Insert: {
           address_type?: string
           city: string
           created_at?: string
+          customer_id: string
           full_name: string
           id?: string
           is_default?: boolean
@@ -44,13 +45,13 @@ export type Database = {
           phone: string
           pincode: string
           state: string
-          user_id?: string
-          customer_id?: string
+          updated_at?: string
         }
         Update: {
           address_type?: string
           city?: string
           created_at?: string
+          customer_id?: string
           full_name?: string
           id?: string
           is_default?: boolean
@@ -60,117 +61,11 @@ export type Database = {
           phone?: string
           pincode?: string
           state?: string
-          user_id?: string
-          customer_id?: string
-        }
-        Relationships: []
-      }
-      orders: {
-        Row: {
-          awb: string
-          created_at: string
-          delivery_fee: number
-          expected_delivery: string | null
-          id: string
-          is_custom: boolean
-          items: Json
-          notes: string | null
-          order_no: string
-          payment_method: string
-          payment_status: string
-          razorpay_order_id: string | null
-          razorpay_payment_id: string | null
-          request_id: string | null
-          scans: Json
-          shipping_address: Json
-          status: string
-          subtotal: number
-          total: number
-          updated_at: string
-          user_id: string
-        }
-        Insert: {
-          awb?: string
-          created_at?: string
-          delivery_fee?: number
-          expected_delivery?: string | null
-          id?: string
-          is_custom?: boolean
-          items?: Json
-          notes?: string | null
-          order_no?: string
-          payment_method?: string
-          payment_status?: string
-          razorpay_order_id?: string | null
-          razorpay_payment_id?: string | null
-          request_id?: string | null
-          scans?: Json
-          shipping_address?: Json
-          status?: string
-          subtotal?: number
-          total?: number
           updated_at?: string
-          user_id: string
-        }
-        Update: {
-          awb?: string
-          created_at?: string
-          delivery_fee?: number
-          expected_delivery?: string | null
-          id?: string
-          is_custom?: boolean
-          items?: Json
-          notes?: string | null
-          order_no?: string
-          payment_method?: string
-          payment_status?: string
-          razorpay_order_id?: string | null
-          razorpay_payment_id?: string | null
-          request_id?: string | null
-          scans?: Json
-          shipping_address?: Json
-          status?: string
-          subtotal?: number
-          total?: number
-          updated_at?: string
-          user_id?: string
         }
         Relationships: []
       }
       customers: {
-        Row: {
-          created_at: string
-          full_name: string
-          id: string
-          phone: string
-          city: string | null
-          district: string | null
-          wa_opt_in: boolean
-          updated_at: string
-        }
-        Insert: {
-          created_at?: string
-          full_name?: string
-          id: string
-          phone?: string
-          city?: string | null
-          district?: string | null
-          wa_opt_in?: boolean
-          updated_at?: string
-        }
-        Update: {
-          created_at?: string
-          full_name?: string
-          id?: string
-          phone?: string
-          city?: string | null
-          district?: string | null
-          wa_opt_in?: boolean
-          updated_at?: string
-        }
-        Relationships: []
-      }
-      profiles: {
         Row: {
           created_at: string
           full_name: string | null
@@ -194,18 +89,90 @@ export type Database = {
         }
         Relationships: []
       }
+      orders: {
+        Row: {
+          awb: string | null
+          created_at: string
+          customer_id: string
+          delivery_fee: number
+          delivery_type: string
+          id: string
+          is_custom: boolean
+          items: Json
+          notes: string | null
+          order_no: string | null
+          payment_method: string
+          payment_ref: string | null
+          payment_status: string
+          razorpay_order_id: string | null
+          razorpay_payment_id: string | null
+          request_id: string | null
+          shipping_address: Json
+          status: string
+          subtotal: number
+          total: number
+          updated_at: string
+        }
+        Insert: {
+          awb?: string | null
+          created_at?: string
+          customer_id: string
+          delivery_fee?: number
+          delivery_type?: string
+          id?: string
+          is_custom?: boolean
+          items?: Json
+          notes?: string | null
+          order_no?: string | null
+          payment_method?: string
+          payment_ref?: string | null
+          payment_status?: string
+          razorpay_order_id?: string | null
+          razorpay_payment_id?: string | null
+          request_id?: string | null
+          shipping_address?: Json
+          status?: string
+          subtotal?: number
+          total?: number
+          updated_at?: string
+        }
+        Update: {
+          awb?: string | null
+          created_at?: string
+          customer_id?: string
+          delivery_fee?: number
+          delivery_type?: string
+          id?: string
+          is_custom?: boolean
+          items?: Json
+          notes?: string | null
+          order_no?: string | null
+          payment_method?: string
+          payment_ref?: string | null
+          payment_status?: string
+          razorpay_order_id?: string | null
+          razorpay_payment_id?: string | null
+          request_id?: string | null
+          shipping_address?: Json
+          status?: string
+          subtotal?: number
+          total?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       reviews: {
         Row: {
           author_name: string | null
           body: string | null
           created_at: string
           id: string
-          order_id: string | null
           photos: Json
           product_id: string
           product_name: string | null
           rating: number
           title: string | null
+          updated_at: string
           user_id: string
         }
         Insert: {
@@ -213,12 +180,12 @@ export type Database = {
           body?: string | null
           created_at?: string
           id?: string
-          order_id?: string | null
           photos?: Json
           product_id: string
           product_name?: string | null
           rating?: number
           title?: string | null
+          updated_at?: string
           user_id: string
         }
         Update: {
@@ -226,23 +193,15 @@ export type Database = {
           body?: string | null
           created_at?: string
           id?: string
-          order_id?: string | null
           photos?: Json
           product_id?: string
           product_name?: string | null
           rating?: number
           title?: string | null
+          updated_at?: string
           user_id?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "reviews_order_id_fkey"
-            columns: ["order_id"]
-            isOneToOne: false
-            referencedRelation: "orders"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
     }
     Views: {

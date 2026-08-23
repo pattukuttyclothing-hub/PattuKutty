@@ -1,8 +1,10 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { ChevronLeft, ChevronRight, PenLine, Quote, Star } from "lucide-react";
-import { useTestimonials } from "@/lib/useStorefront";
+import { useFeaturedProducts, useTestimonials } from "@/lib/useStorefront";
 import { usePersistentState, uid } from "@/lib/persist";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useAuth, useAuthGate } from "@/lib/auth";
+import { addReview } from "@/lib/reviews";
 import { Modal } from "@/components/shared/Dialogs";
 import { Reveal, stagger } from "@/components/shared/Reveal";
 import { SectionHeading } from "./Motifs";
@@ -97,6 +99,10 @@ export function Reviews() {
   const [page, setPage] = useState(0);
   const [open, setOpen] = useState(false);
 
+  const { user, profile } = useAuth();
+  const gate = useAuthGate();
+  const products = useFeaturedProducts();
+
   const { value: mine, setValue: setMine } = usePersistentState<ReviewCard[]>(
     "pattukutty.local-reviews",
     [],
@@ -105,7 +111,19 @@ export function Reviews() {
   const [name, setName] = useState("");
   const [rating, setRating] = useState(5);
   const [quote, setQuote] = useState("");
+  const [productId, setProductId] = useState("");
   const [saved, setSaved] = useState(false);
+  const [sending, setSending] = useState(false);
+  const [error, setError] = useState("");
+
+  // Prefill the reviewer name from the signed-in profile.
+  useEffect(() => {
+    if (profile?.full_name && !name) setName(profile.full_name);
+  }, [profile?.full_name]);
+
+  useEffect(() => {
+    if (!productId && products.length > 0) setProductId(products[0]!.id);
+  }, [products, productId]);
 
   const reviews: ReviewCard[] = useMemo(
     () => [...mine.map((m) => ({ ...m, mine: true })), ...fetched],
@@ -119,21 +137,47 @@ export function Reviews() {
       ? reviews.reduce((sum, r) => sum + (r.rating || 0), 0) / reviews.length
       : 0;
 
-  const canSubmit = name.trim().length > 1 && quote.trim().length > 4;
+  const canSubmit =
+    name.trim().length > 1 && quote.trim().length > 4 && productId.length > 0 && !sending;
 
-  const submit = () => {
-    if (!canSubmit) return;
-    const initials = name
-      .trim()
+  /** Sign-in gated: opens the write-review modal only for logged-in customers. */
+  const openWriter = () => {
+    gate(() => setOpen(true), { reason: "Sign in to write a review", next: "/#reviews" });
+  };
+
+  const submit = async () => {
+    if (!canSubmit || !user) return;
+    setSending(true);
+    setError("");
+
+    const cleanName = name.trim();
+    const initials = cleanName
       .split(/\s+/)
       .slice(0, 2)
       .map((w) => w[0]?.toUpperCase() ?? "")
       .join("");
+
+    const created = await addReview({
+      userId: user.id,
+      productId,
+      productName: products.find((p) => p.id === productId)?.name ?? "",
+      authorName: cleanName,
+      rating,
+      title: `${rating} star review`,
+      body: quote.trim(),
+    });
+
+    setSending(false);
+
+    if (!created) {
+      setError("We couldn't post your review just now. Please try again in a moment.");
+      return;
+    }
+
     setMine([
-      { id: uid("rev-local"), name: name.trim(), initials, rating, quote: quote.trim() },
+      { id: created.id || uid("rev-local"), name: cleanName, initials, rating, quote: quote.trim() },
       ...mine,
     ]);
-    setName("");
     setQuote("");
     setRating(5);
     setPage(0);
@@ -141,6 +185,7 @@ export function Reviews() {
     setOpen(false);
     window.setTimeout(() => setSaved(false), 4000);
   };
+
 
   return (
     <section id="reviews" className="relative overflow-hidden bg-background py-20 lg:py-28">
@@ -180,7 +225,7 @@ export function Reviews() {
             </div>
             <button
               type="button"
-              onClick={() => setOpen(true)}
+              onClick={openWriter}
               className="group col-span-2 inline-flex items-center justify-center gap-2 rounded-full bg-primary px-6 py-3 text-xs font-semibold tracking-[0.12em] text-primary-foreground uppercase shadow-soft transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lift sm:col-span-1"
             >
               <PenLine className="h-4 w-4 transition-transform duration-300 group-hover:-rotate-12" />
@@ -267,16 +312,40 @@ export function Reviews() {
             </button>
             <button
               type="button"
-              onClick={submit}
+              onClick={() => void submit()}
               disabled={!canSubmit}
               className="rounded-full bg-primary px-6 py-2.5 text-xs font-semibold tracking-[0.12em] text-primary-foreground uppercase shadow-soft transition-transform duration-300 hover:scale-[1.03] disabled:opacity-40 disabled:hover:scale-100"
             >
-              Post review
+              {sending ? "Posting…" : "Post review"}
             </button>
           </>
         }
       >
         <div className="space-y-5">
+          <div>
+            <label
+              htmlFor="review-product"
+              className="text-[0.65rem] font-semibold tracking-[0.18em] text-muted-foreground uppercase"
+            >
+              Which outfit are you reviewing?
+            </label>
+            <select
+              id="review-product"
+              value={productId}
+              onChange={(e) => setProductId(e.target.value)}
+              className="mt-2 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm text-foreground outline-none transition-colors focus:border-gold"
+            >
+              {products.length === 0 ? <option value="">Loading designs…</option> : null}
+              {products.map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.name}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {error ? <p className="text-xs font-medium text-destructive">{error}</p> : null}
+
           <div>
             <label className="text-[0.65rem] font-semibold tracking-[0.18em] text-muted-foreground uppercase">
               Your rating

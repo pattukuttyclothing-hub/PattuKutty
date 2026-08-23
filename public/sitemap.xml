@@ -3,334 +3,334 @@
 
   <!-- ── Homepage ───────────────────────────────────── -->
   <url>
-    <loc>https://pattukutty.com/</loc>
+    <loc>https://pattukuttyclothing.com/</loc>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
   </url>
 
   <!-- ── Category: half-saree ──────────────────────── -->
   <url>
-    <loc>https://pattukutty.com/category/half-saree/</loc>
+    <loc>https://pattukuttyclothing.com/category/half-saree/</loc>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://pattukutty.com/category/half-saree/half-saree-classic</loc>
+    <loc>https://pattukuttyclothing.com/category/half-saree/half-saree-classic</loc>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://pattukutty.com/category/half-saree/lehenga</loc>
+    <loc>https://pattukuttyclothing.com/category/half-saree/lehenga</loc>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://pattukutty.com/category/half-saree/pattu-pudavai</loc>
+    <loc>https://pattukuttyclothing.com/category/half-saree/pattu-pudavai</loc>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <!-- ── Category: frocks ──────────────────────── -->
   <url>
-    <loc>https://pattukutty.com/category/frocks/</loc>
+    <loc>https://pattukuttyclothing.com/category/frocks/</loc>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://pattukutty.com/category/frocks/normal-frocks</loc>
+    <loc>https://pattukuttyclothing.com/category/frocks/normal-frocks</loc>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://pattukutty.com/category/frocks/wedding-frocks</loc>
+    <loc>https://pattukuttyclothing.com/category/frocks/wedding-frocks</loc>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://pattukutty.com/category/frocks/designer-frocks</loc>
+    <loc>https://pattukuttyclothing.com/category/frocks/designer-frocks</loc>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <!-- ── Category: sarees ──────────────────────── -->
   <url>
-    <loc>https://pattukutty.com/category/sarees/</loc>
+    <loc>https://pattukuttyclothing.com/category/sarees/</loc>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://pattukutty.com/category/sarees/silk-sarees</loc>
+    <loc>https://pattukuttyclothing.com/category/sarees/silk-sarees</loc>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://pattukutty.com/category/sarees/fancy-sarees</loc>
+    <loc>https://pattukuttyclothing.com/category/sarees/fancy-sarees</loc>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://pattukutty.com/category/sarees/designer-sarees</loc>
+    <loc>https://pattukuttyclothing.com/category/sarees/designer-sarees</loc>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <!-- ── Category: blouses ──────────────────────── -->
   <url>
-    <loc>https://pattukutty.com/category/blouses/</loc>
+    <loc>https://pattukuttyclothing.com/category/blouses/</loc>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://pattukutty.com/category/blouses/bridal-blouses</loc>
+    <loc>https://pattukuttyclothing.com/category/blouses/bridal-blouses</loc>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://pattukutty.com/category/blouses/pattern-blouses</loc>
+    <loc>https://pattukuttyclothing.com/category/blouses/pattern-blouses</loc>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://pattukutty.com/category/blouses/designer-blouses</loc>
+    <loc>https://pattukuttyclothing.com/category/blouses/designer-blouses</loc>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
 
   <!-- ── Product Detail Pages ───────────────────────── -->
   <url>
-    <loc>https://pattukutty.com/product/half-saree-classic-1</loc>
+    <loc>https://pattukuttyclothing.com/product/half-saree-classic-1</loc>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://pattukutty.com/product/half-saree-classic-2</loc>
+    <loc>https://pattukuttyclothing.com/product/half-saree-classic-2</loc>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://pattukutty.com/product/half-saree-classic-3</loc>
+    <loc>https://pattukuttyclothing.com/product/half-saree-classic-3</loc>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://pattukutty.com/product/half-saree-classic-4</loc>
+    <loc>https://pattukuttyclothing.com/product/half-saree-classic-4</loc>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://pattukutty.com/product/lehenga-1</loc>
+    <loc>https://pattukuttyclothing.com/product/lehenga-1</loc>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://pattukutty.com/product/lehenga-2</loc>
+    <loc>https://pattukuttyclothing.com/product/lehenga-2</loc>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://pattukutty.com/product/lehenga-3</loc>
+    <loc>https://pattukuttyclothing.com/product/lehenga-3</loc>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://pattukutty.com/product/lehenga-4</loc>
+    <loc>https://pattukuttyclothing.com/product/lehenga-4</loc>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://pattukutty.com/product/pattu-pudavai-1</loc>
+    <loc>https://pattukuttyclothing.com/product/pattu-pudavai-1</loc>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://pattukutty.com/product/pattu-pudavai-2</loc>
+    <loc>https://pattukuttyclothing.com/product/pattu-pudavai-2</loc>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://pattukutty.com/product/pattu-pudavai-3</loc>
+    <loc>https://pattukuttyclothing.com/product/pattu-pudavai-3</loc>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://pattukutty.com/product/pattu-pudavai-4</loc>
+    <loc>https://pattukuttyclothing.com/product/pattu-pudavai-4</loc>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://pattukutty.com/product/normal-frocks-1</loc>
+    <loc>https://pattukuttyclothing.com/product/normal-frocks-1</loc>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://pattukutty.com/product/normal-frocks-2</loc>
+    <loc>https://pattukuttyclothing.com/product/normal-frocks-2</loc>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://pattukutty.com/product/normal-frocks-3</loc>
+    <loc>https://pattukuttyclothing.com/product/normal-frocks-3</loc>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://pattukutty.com/product/normal-frocks-4</loc>
+    <loc>https://pattukuttyclothing.com/product/normal-frocks-4</loc>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://pattukutty.com/product/wedding-frocks-1</loc>
+    <loc>https://pattukuttyclothing.com/product/wedding-frocks-1</loc>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://pattukutty.com/product/wedding-frocks-2</loc>
+    <loc>https://pattukuttyclothing.com/product/wedding-frocks-2</loc>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://pattukutty.com/product/wedding-frocks-3</loc>
+    <loc>https://pattukuttyclothing.com/product/wedding-frocks-3</loc>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://pattukutty.com/product/wedding-frocks-4</loc>
+    <loc>https://pattukuttyclothing.com/product/wedding-frocks-4</loc>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://pattukutty.com/product/designer-frocks-1</loc>
+    <loc>https://pattukuttyclothing.com/product/designer-frocks-1</loc>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://pattukutty.com/product/designer-frocks-2</loc>
+    <loc>https://pattukuttyclothing.com/product/designer-frocks-2</loc>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://pattukutty.com/product/designer-frocks-3</loc>
+    <loc>https://pattukuttyclothing.com/product/designer-frocks-3</loc>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://pattukutty.com/product/designer-frocks-4</loc>
+    <loc>https://pattukuttyclothing.com/product/designer-frocks-4</loc>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://pattukutty.com/product/silk-sarees-1</loc>
+    <loc>https://pattukuttyclothing.com/product/silk-sarees-1</loc>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://pattukutty.com/product/silk-sarees-2</loc>
+    <loc>https://pattukuttyclothing.com/product/silk-sarees-2</loc>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://pattukutty.com/product/silk-sarees-3</loc>
+    <loc>https://pattukuttyclothing.com/product/silk-sarees-3</loc>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://pattukutty.com/product/silk-sarees-4</loc>
+    <loc>https://pattukuttyclothing.com/product/silk-sarees-4</loc>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://pattukutty.com/product/fancy-sarees-1</loc>
+    <loc>https://pattukuttyclothing.com/product/fancy-sarees-1</loc>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://pattukutty.com/product/fancy-sarees-2</loc>
+    <loc>https://pattukuttyclothing.com/product/fancy-sarees-2</loc>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://pattukutty.com/product/fancy-sarees-3</loc>
+    <loc>https://pattukuttyclothing.com/product/fancy-sarees-3</loc>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://pattukutty.com/product/fancy-sarees-4</loc>
+    <loc>https://pattukuttyclothing.com/product/fancy-sarees-4</loc>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://pattukutty.com/product/designer-sarees-1</loc>
+    <loc>https://pattukuttyclothing.com/product/designer-sarees-1</loc>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://pattukutty.com/product/designer-sarees-2</loc>
+    <loc>https://pattukuttyclothing.com/product/designer-sarees-2</loc>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://pattukutty.com/product/designer-sarees-3</loc>
+    <loc>https://pattukuttyclothing.com/product/designer-sarees-3</loc>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://pattukutty.com/product/designer-sarees-4</loc>
+    <loc>https://pattukuttyclothing.com/product/designer-sarees-4</loc>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://pattukutty.com/product/bridal-blouses-1</loc>
+    <loc>https://pattukuttyclothing.com/product/bridal-blouses-1</loc>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://pattukutty.com/product/bridal-blouses-2</loc>
+    <loc>https://pattukuttyclothing.com/product/bridal-blouses-2</loc>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://pattukutty.com/product/bridal-blouses-3</loc>
+    <loc>https://pattukuttyclothing.com/product/bridal-blouses-3</loc>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://pattukutty.com/product/bridal-blouses-4</loc>
+    <loc>https://pattukuttyclothing.com/product/bridal-blouses-4</loc>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://pattukutty.com/product/pattern-blouses-1</loc>
+    <loc>https://pattukuttyclothing.com/product/pattern-blouses-1</loc>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://pattukutty.com/product/pattern-blouses-2</loc>
+    <loc>https://pattukuttyclothing.com/product/pattern-blouses-2</loc>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://pattukutty.com/product/pattern-blouses-3</loc>
+    <loc>https://pattukuttyclothing.com/product/pattern-blouses-3</loc>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://pattukutty.com/product/pattern-blouses-4</loc>
+    <loc>https://pattukuttyclothing.com/product/pattern-blouses-4</loc>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://pattukutty.com/product/designer-blouses-1</loc>
+    <loc>https://pattukuttyclothing.com/product/designer-blouses-1</loc>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://pattukutty.com/product/designer-blouses-2</loc>
+    <loc>https://pattukuttyclothing.com/product/designer-blouses-2</loc>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://pattukutty.com/product/designer-blouses-3</loc>
+    <loc>https://pattukuttyclothing.com/product/designer-blouses-3</loc>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://pattukutty.com/product/designer-blouses-4</loc>
+    <loc>https://pattukuttyclothing.com/product/designer-blouses-4</loc>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>

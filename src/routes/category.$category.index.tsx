@@ -4,34 +4,21 @@ import { PageHeader, PageSection, PageShell } from "@/components/shared/Page";
 import { Reveal, stagger } from "@/components/shared/Reveal";
 import { AutoImageFade } from "@/components/shared/AutoImageFade";
 import { findCategory, type CategoryId } from "@/data/boutique";
+import { categoryCopy } from "@/data/copy";
 import { useCategories } from "@/lib/useStorefront";
+import { abs, breadcrumbJsonLd, socialMeta } from "@/lib/seo";
 
 export const Route = createFileRoute("/category/$category/")({
   head: ({ params }) => {
     const cat = findCategory(params.category);
-    const title = `${cat?.name ?? "Collection"} Styles — Pattu Kutty Coimbatore`;
-    const description = `Choose a ${cat?.name ?? "boutique"} style — ${cat?.subs
-      .map((s) => s.name)
-      .join(", ")} — custom stitched to your measurements in Coimbatore.`;
+    const path = `/category/${params.category}/`;
+    const title = `${cat?.name ?? "Collection"} — Custom Stitched in Coimbatore | Pattu Kutty`;
+    const description =
+      categoryCopy[cat?.id ?? ""]?.meta ??
+      `Custom ${cat?.name ?? "boutique"} stitched to your measurements in Coimbatore — 1-hour express option, delivery across India.`;
     return {
-      meta: [
-        { title },
-        { name: "description", content: description },
-        { property: "og:title", content: title },
-        { property: "og:description", content: description },
-        { property: "og:type", content: "website" },
-        { property: "og:url", content: `https://pattukutty.com/category/${params.category}/` },
-        { name: "twitter:card", content: "summary_large_image" },
-        ...(cat
-          ? [
-              { property: "og:image", content: cat.image },
-              { name: "twitter:image", content: cat.image },
-            ]
-          : []),
-      ],
-      links: [
-        { rel: "canonical", href: `https://pattukutty.com/category/${params.category}/` },
-      ],
+      meta: socialMeta({ title, description, path, image: cat?.image ?? null }),
+      links: [{ rel: "canonical", href: abs(path) }],
     };
   },
   loader: ({ params }) => {
@@ -47,30 +34,16 @@ function CategoryPage() {
   const categoriesList = useCategories();
   const cat = categoriesList.find((c) => c.id === categoryId) ?? findCategory(categoryId)!;
 
-  const breadcrumbJsonLd = {
-    "@context": "https://schema.org",
-    "@type": "BreadcrumbList",
-    "itemListElement": [
-      {
-        "@type": "ListItem",
-        "position": 1,
-        "name": "Home",
-        "item": "https://pattukutty.com/"
-      },
-      {
-        "@type": "ListItem",
-        "position": 2,
-        "name": cat.name,
-        "item": `https://pattukutty.com/category/${cat.id}`
-      }
-    ]
-  };
+  const crumbsJsonLd = breadcrumbJsonLd([
+    { name: "Home", path: "/" },
+    { name: cat.name, path: `/category/${cat.id}/` },
+  ]);
 
   return (
     <PageShell>
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }}
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(crumbsJsonLd) }}
       />
       <PageHeader
         eyebrow="Step 1 of 2 · Pick a style"

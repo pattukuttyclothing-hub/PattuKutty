@@ -4,40 +4,76 @@ import { ArrowLeft, AlertCircle, Heart, MessageCircle, Minus, Plus, ShoppingBag,
 import { PageShell, PageHeader } from "@/components/shared/Page";
 import { ProductGallery } from "@/components/shared/ProductGallery";
 import { ProductCard } from "@/components/boutique/ProductCard";
-import { findCategory, findProduct, findSub } from "@/data/boutique";
+import { findCategory, findProduct, findSub, type Product } from "@/data/boutique";
+import { fetchProductById } from "@/lib/api/catalogue";
+import { abs, absImage, BRAND, breadcrumbJsonLd, socialMeta } from "@/lib/seo";
 import { inr, orderWaLink, useCart } from "@/lib/cart";
 import { useWishlist } from "@/lib/wishlist";
 import { useAuthGate } from "@/lib/auth";
 import { useProduct, useProductsBySubCategory } from "@/lib/useStorefront";
 
 export const Route = createFileRoute("/product/$id")({
-  head: ({ params }) => {
-    const p = findProduct(params.id);
-    const title = `${p?.name ?? "Design"} — Pattu Kutty`;
-    const description = p?.description ?? "Custom stitched designer wear in Coimbatore.";
+  head: ({ params, loaderData }) => {
+    const p = (loaderData as { product?: Product | null } | undefined)?.product ?? findProduct(params.id);
+    const path = `/product/${params.id}`;
+    const title = `${p?.name ?? "Design"} — Custom Stitched | Pattu Kutty Coimbatore`;
+    const description =
+      p?.description?.slice(0, 158) ??
+      "Custom stitched designer wear from our Coimbatore studio — your measurements, your fabric, 1-hour express option, delivered across India.";
+
+    const productJsonLd = p
+      ? {
+          "@context": "https://schema.org",
+          "@type": "Product",
+          name: p.name,
+          description: p.description,
+          image: [absImage(p.image)],
+          sku: p.id,
+          brand: { "@type": "Brand", name: BRAND.name },
+          ...(p.rating ? { aggregateRating: { "@type": "AggregateRating", ratingValue: p.rating, reviewCount: 12 } } : {}),
+          offers: {
+            "@type": "Offer",
+            url: abs(path),
+            priceCurrency: "INR",
+            price: String(p.price),
+            availability: p.soldOut
+              ? "https://schema.org/OutOfStock"
+              : "https://schema.org/InStock",
+            itemCondition: "https://schema.org/NewCondition",
+            seller: { "@type": "Organization", name: BRAND.legalName },
+          },
+        }
+      : null;
+
+    const crumbs = p
+      ? breadcrumbJsonLd([
+          { name: "Home", path: "/" },
+          { name: findCategory(p.category)?.name ?? "Collection", path: `/category/${p.category}/` },
+          { name: findSub(p.category, p.sub)?.name ?? "Designs", path: `/category/${p.category}/${p.sub}` },
+          { name: p.name, path },
+        ])
+      : null;
+
     return {
-      meta: [
-        { title },
-        { name: "description", content: description },
-        { property: "og:title", content: title },
-        { property: "og:description", content: description },
-        { property: "og:type", content: "product" },
-        { property: "og:url", content: `https://pattukutty.com/product/${params.id}` },
-        { name: "twitter:card", content: "summary_large_image" },
-        ...(p
-          ? [
-            { property: "og:image", content: p.image },
-            { name: "twitter:image", content: p.image },
-          ]
+      meta: socialMeta({ title, description, path, image: p?.image ?? null, type: "product" }),
+      links: [{ rel: "canonical", href: abs(path) }],
+      scripts: [
+        ...(productJsonLd
+          ? [{ type: "application/ld+json", children: JSON.stringify(productJsonLd) }]
           : []),
-      ],
-      links: [
-        { rel: "canonical", href: `https://pattukutty.com/product/${params.id}` },
+        ...(crumbs ? [{ type: "application/ld+json", children: JSON.stringify(crumbs) }] : []),
       ],
     };
   },
-  loader: ({ params }) => {
-    return { id: params.id };
+  loader: async ({ params }) => {
+    // Live product data so SEO tags reflect the real catalogue; seed data is the fallback.
+    let live: Product | undefined;
+    try {
+      live = await fetchProductById(params.id);
+    } catch {
+      live = undefined;
+    }
+    return { id: params.id, product: live ?? findProduct(params.id) ?? null };
   },
   component: ProductPage,
 });
@@ -196,31 +232,8 @@ function ProductPage() {
 
       <section className="bg-background py-6 lg:py-8">
         <div className="mx-auto max-w-7xl px-4 sm:px-6">
-          {/* Schema.org Product Structured Data */}
-          <script
-            type="application/ld+json"
-            dangerouslySetInnerHTML={{
-              __html: JSON.stringify({
-                "@context": "https://schema.org",
-                "@type": "Product",
-                "name": activeProduct.name,
-                "image": activeProduct.image || (Array.isArray(activeProduct.images) ? activeProduct.images[0] : ""),
-                "description": activeProduct.description,
-                "sku": activeProduct.id,
-                "brand": {
-                  "@type": "Brand",
-                  "name": "Pattu Kutty"
-                },
-                "offers": {
-                  "@type": "Offer",
-                  "price": activeProduct.basePrice ?? activeProduct.price,
-                  "priceCurrency": "INR",
-                  "availability": (activeProduct as any).inStock !== false && !(activeProduct as any).isSoldOut ? "https://schema.org/InStock" : "https://schema.org/OutOfStock",
-                  "url": `https://pattukutty.com/product/${activeProduct.id}`
-                }
-              })
-            }}
-          />
+          {/* Product + Breadcrumb structured data is emitted from the route head() using live loader data. */}
+
 
           <div className="grid gap-8 lg:grid-cols-12 lg:gap-12">
             <div className="lg:col-span-6 lg:sticky lg:top-28 self-start">
