@@ -55,7 +55,7 @@ export const Route = createFileRoute("/product/$id")({
       : null;
 
     return {
-      meta: socialMeta({ title, description, path, image: p?.image, type: "product" }),
+      meta: socialMeta({ title, description, path, image: p?.image ?? null, type: "product" }),
       links: [{ rel: "canonical", href: abs(path) }],
       scripts: [
         ...(productJsonLd
