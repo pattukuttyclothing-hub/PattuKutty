@@ -12,7 +12,8 @@
     "format": "prettier --write .",
     "test": "vitest run",
     "test:watch": "vitest",
-    "sitemap": "node scripts/generate-sitemap.js"
+    "sitemap": "node scripts/generate-sitemap.js",
+    "seo:smoke": "node scripts/seo-smoke.js"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
