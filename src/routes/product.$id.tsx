@@ -11,33 +11,67 @@ import { useAuthGate } from "@/lib/auth";
 import { useProduct, useProductsBySubCategory } from "@/lib/useStorefront";
 
 export const Route = createFileRoute("/product/$id")({
-  head: ({ params }) => {
-    const p = findProduct(params.id);
-    const title = `${p?.name ?? "Design"} — Pattu Kutty`;
-    const description = p?.description ?? "Custom stitched designer wear in Coimbatore.";
+  head: ({ params, loaderData }) => {
+    const p = (loaderData as { product?: Product | null } | undefined)?.product ?? findProduct(params.id);
+    const path = `/product/${params.id}`;
+    const title = `${p?.name ?? "Design"} — Custom Stitched | Pattu Kutty Coimbatore`;
+    const description =
+      p?.description?.slice(0, 158) ??
+      "Custom stitched designer wear from our Coimbatore studio — your measurements, your fabric, 1-hour express option, delivered across India.";
+
+    const productJsonLd = p
+      ? {
+          "@context": "https://schema.org",
+          "@type": "Product",
+          name: p.name,
+          description: p.description,
+          image: [absImage(p.image)],
+          sku: p.id,
+          brand: { "@type": "Brand", name: BRAND.name },
+          ...(p.rating ? { aggregateRating: { "@type": "AggregateRating", ratingValue: p.rating, reviewCount: 12 } } : {}),
+          offers: {
+            "@type": "Offer",
+            url: abs(path),
+            priceCurrency: "INR",
+            price: String(p.price),
+            availability: p.soldOut
+              ? "https://schema.org/OutOfStock"
+              : "https://schema.org/InStock",
+            itemCondition: "https://schema.org/NewCondition",
+            seller: { "@type": "Organization", name: BRAND.legalName },
+          },
+        }
+      : null;
+
+    const crumbs = p
+      ? breadcrumbJsonLd([
+          { name: "Home", path: "/" },
+          { name: findCategory(p.category)?.name ?? "Collection", path: `/category/${p.category}/` },
+          { name: findSub(p.category, p.sub)?.name ?? "Designs", path: `/category/${p.category}/${p.sub}` },
+          { name: p.name, path },
+        ])
+      : null;
+
     return {
-      meta: [
-        { title },
-        { name: "description", content: description },
-        { property: "og:title", content: title },
-        { property: "og:description", content: description },
-        { property: "og:type", content: "product" },
-        { property: "og:url", content: `https://pattukutty.com/product/${params.id}` },
-        { name: "twitter:card", content: "summary_large_image" },
-        ...(p
-          ? [
-            { property: "og:image", content: p.image },
-            { name: "twitter:image", content: p.image },
-          ]
+      meta: socialMeta({ title, description, path, image: p?.image, type: "product" }),
+      links: [{ rel: "canonical", href: abs(path) }],
+      scripts: [
+        ...(productJsonLd
+          ? [{ type: "application/ld+json", children: JSON.stringify(productJsonLd) }]
           : []),
-      ],
-      links: [
-        { rel: "canonical", href: `https://pattukutty.com/product/${params.id}` },
+        ...(crumbs ? [{ type: "application/ld+json", children: JSON.stringify(crumbs) }] : []),
       ],
     };
   },
-  loader: ({ params }) => {
-    return { id: params.id };
+  loader: async ({ params }) => {
+    // Live product data so SEO tags reflect the real catalogue; seed data is the fallback.
+    let live: Product | undefined;
+    try {
+      live = await fetchProductById(params.id);
+    } catch {
+      live = undefined;
+    }
+    return { id: params.id, product: live ?? findProduct(params.id) ?? null };
   },
   component: ProductPage,
 });
