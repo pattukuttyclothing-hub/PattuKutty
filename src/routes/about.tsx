@@ -14,9 +14,9 @@ import {
   serviceJsonLd,
   categoryProductJsonLd,
 } from "@/data/aeo";
-import { abs, breadcrumbJsonLd, seoDescription, seoTitle, socialMeta } from "@/lib/seo";
+import { abs, breadcrumbJsonLd, seoDescription, socialMeta } from "@/lib/seo";
 
-const title = seoTitle("About Pattu Kutty — Custom Clothing, Coimbatore", undefined, "");
+const title = "About Pattu Kutty — Custom Clothing in Coimbatore";
 const description = seoDescription(ENTITY_SUMMARY);
 
 export const Route = createFileRoute("/about")({
