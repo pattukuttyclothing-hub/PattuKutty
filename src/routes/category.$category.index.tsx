@@ -34,24 +34,10 @@ function CategoryPage() {
   const categoriesList = useCategories();
   const cat = categoriesList.find((c) => c.id === categoryId) ?? findCategory(categoryId)!;
 
-  const breadcrumbJsonLd = {
-    "@context": "https://schema.org",
-    "@type": "BreadcrumbList",
-    "itemListElement": [
-      {
-        "@type": "ListItem",
-        "position": 1,
-        "name": "Home",
-        "item": "https://pattukutty.com/"
-      },
-      {
-        "@type": "ListItem",
-        "position": 2,
-        "name": cat.name,
-        "item": `https://pattukutty.com/category/${cat.id}`
-      }
-    ]
-  };
+  const crumbsJsonLd = breadcrumbJsonLd([
+    { name: "Home", path: "/" },
+    { name: cat.name, path: `/category/${cat.id}/` },
+  ]);
 
   return (
     <PageShell>
