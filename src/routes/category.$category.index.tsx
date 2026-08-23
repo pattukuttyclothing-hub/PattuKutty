@@ -6,7 +6,7 @@ import { AutoImageFade } from "@/components/shared/AutoImageFade";
 import { findCategory, type CategoryId } from "@/data/boutique";
 import { categoryCopy } from "@/data/copy";
 import { useCategories } from "@/lib/useStorefront";
-import { abs, socialMeta } from "@/lib/seo";
+import { abs, breadcrumbJsonLd, socialMeta } from "@/lib/seo";
 
 export const Route = createFileRoute("/category/$category/")({
   head: ({ params }) => {
@@ -43,7 +43,7 @@ function CategoryPage() {
     <PageShell>
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }}
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(crumbsJsonLd) }}
       />
       <PageHeader
         eyebrow="Step 1 of 2 · Pick a style"
