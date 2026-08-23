@@ -42,30 +42,11 @@ function SubCategoryPage() {
       ? `${sub.blurb}`
       : `${sub.blurb} — ${items.length} design${items.length === 1 ? "" : "s"}, each stitched to your measurements.`;
 
-  const breadcrumbJsonLd = {
-    "@context": "https://schema.org",
-    "@type": "BreadcrumbList",
-    "itemListElement": [
-      {
-        "@type": "ListItem",
-        "position": 1,
-        "name": "Home",
-        "item": "https://pattukutty.com/"
-      },
-      {
-        "@type": "ListItem",
-        "position": 2,
-        "name": cat.name,
-        "item": `https://pattukutty.com/category/${cat.id}`
-      },
-      {
-        "@type": "ListItem",
-        "position": 3,
-        "name": sub.name,
-        "item": `https://pattukutty.com/category/${cat.id}/${sub.id}`
-      }
-    ]
-  };
+  const crumbsJsonLd = breadcrumbJsonLd([
+    { name: "Home", path: "/" },
+    { name: cat.name, path: `/category/${cat.id}/` },
+    { name: sub.name, path: `/category/${cat.id}/${sub.id}` },
+  ]);
 
   return (
     <PageShell>
