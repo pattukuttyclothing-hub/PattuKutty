@@ -4,7 +4,9 @@ import { ArrowLeft, AlertCircle, Heart, MessageCircle, Minus, Plus, ShoppingBag,
 import { PageShell, PageHeader } from "@/components/shared/Page";
 import { ProductGallery } from "@/components/shared/ProductGallery";
 import { ProductCard } from "@/components/boutique/ProductCard";
-import { findCategory, findProduct, findSub } from "@/data/boutique";
+import { findCategory, findProduct, findSub, type Product } from "@/data/boutique";
+import { fetchProductById } from "@/lib/api/catalogue";
+import { abs, absImage, BRAND, breadcrumbJsonLd, socialMeta } from "@/lib/seo";
 import { inr, orderWaLink, useCart } from "@/lib/cart";
 import { useWishlist } from "@/lib/wishlist";
 import { useAuthGate } from "@/lib/auth";
