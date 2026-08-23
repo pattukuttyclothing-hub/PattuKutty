@@ -47,7 +47,7 @@ export const seoTitle = (name: string, qualifier?: string, brand = BRAND.name) =
     `${name} | ${brand}`,
     name,
   ];
-  return candidates.find((c) => c.length <= TITLE_MAX) ?? clamp(candidates[2], TITLE_MAX);
+  return candidates.find((c) => c.length <= TITLE_MAX) ?? clamp(name, TITLE_MAX);
 };
 
 export const seoDescription = (text: string) => clamp(text, DESC_MAX);
