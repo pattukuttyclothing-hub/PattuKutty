@@ -8,6 +8,13 @@
     <priority>1.0</priority>
   </url>
 
+  <!-- ── About / AEO entity page ─────────────────── -->
+  <url>
+    <loc>https://pattukuttyclothing.com/about</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.9</priority>
+  </url>
+
   <!-- ── Category: half-saree ──────────────────────── -->
   <url>
     <loc>https://pattukuttyclothing.com/category/half-saree/</loc>

@@ -11,6 +11,7 @@ import { useEffect, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
 import { BRAND, OG_IMAGE, SITE_URL } from "../lib/seo";
+import { ENTITY_DEFINITION } from "../data/aeo";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { AuthProvider } from "../lib/auth";
 import { CartProvider } from "../lib/cart";
@@ -129,6 +130,17 @@ function RootShell({ children }: { children: ReactNode }) {
         url: SITE_URL,
         logo: `${SITE_URL}/favicon.png`,
         image: OG_IMAGE,
+        description: ENTITY_DEFINITION,
+        telephone: BRAND.phone,
+        address: {
+          "@type": "PostalAddress",
+          streetAddress: BRAND.street,
+          addressLocality: BRAND.city,
+          addressRegion: "Tamil Nadu",
+          postalCode: BRAND.postalCode,
+          addressCountry: "IN",
+        },
+        areaServed: { "@type": "Country", name: "India" },
         sameAs: [BRAND.instagram],
       },
       {
@@ -140,8 +152,8 @@ function RootShell({ children }: { children: ReactNode }) {
         telephone: BRAND.phone,
         priceRange: "₹₹",
         currenciesAccepted: "INR",
-        description:
-          "Women's boutique in Coimbatore specialising in custom stitched blouses, bridal lehengas, half sarees, silk sarees and any women's garment made to your measurements, with 1-hour express stitching and delivery across India.",
+        description: ENTITY_DEFINITION,
+        slogan: "Custom women's clothing in Coimbatore, stitched in as fast as 1 hour.",
         address: {
           "@type": "PostalAddress",
           streetAddress: BRAND.street,
