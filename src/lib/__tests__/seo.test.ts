@@ -11,10 +11,11 @@ import {
 
 const metaValue = (meta: ReturnType<typeof socialMeta>, key: string) => {
   const entry = meta.find(
-    (m) => (m as Record<string, string>).name === key || (m as Record<string, string>).property === key,
+    (m) => (m as Record<string, string>)["name"] === key || (m as Record<string, string>)["property"] === key,
   ) as Record<string, string> | undefined;
-  return entry?.content;
+  return entry?.["content"];
 };
+
 
 describe("seoTitle", () => {
   it("keeps the qualifier and brand when everything fits", () => {
