@@ -31,8 +31,10 @@ describe("seoTitle", () => {
   });
 
   it("drops the brand suffix when the name alone nearly fills the budget", () => {
-    const name = "Handwoven Kanchipuram Bridal Silk Saree Set";
-    expect(seoTitle(name, "Coimbatore")).toBe(name);
+    const name = "Handwoven Kanchipuram Bridal Silk Saree Collection";
+    const title = seoTitle(name, "Coimbatore");
+    expect(title).toBe(name);
+    expect(title.length).toBeLessThanOrEqual(TITLE_MAX);
   });
 
   it("never exceeds the limit even for absurdly long names", () => {

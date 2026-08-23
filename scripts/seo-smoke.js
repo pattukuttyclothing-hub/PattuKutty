@@ -44,6 +44,18 @@ const attr = (tag, name) => {
   return m ? m[1] : null;
 };
 
+/** Decode common HTML entities so length checks match what search engines see. */
+const decodeEntities = (str) =>
+  str
+    .replace(/&#x27;/g, "'")
+    .replace(/&#39;/g, "'")
+    .replace(/&quot;/g, '"')
+    .replace(/&amp;/g, "&")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&#(\d+);/g, (_, code) => String.fromCharCode(Number(code)))
+    .replace(/&#x([0-9a-f]+);/gi, (_, hex) => String.fromCharCode(parseInt(hex, 16)));
+
 function parseHead(html) {
   const metas = [...html.matchAll(/<meta\b[^>]*>/gi)].map((m) => m[0]);
   const meta = {};
@@ -217,8 +229,9 @@ async function checkPage(page) {
     seenTitles.set(title, page);
   }
 
-  // Description
-  const desc = meta["description"];
+  // Description (decode HTML entities so length matches what search engines index)
+  const rawDesc = meta["description"];
+  const desc = rawDesc ? decodeEntities(rawDesc) : null;
   if (!desc) fail(page, "missing meta description");
   else if (desc.length > DESC_MAX)
     fail(page, `description is ${desc.length} chars (max ${DESC_MAX})`);
