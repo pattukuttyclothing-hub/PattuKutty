@@ -99,6 +99,10 @@ export function Reviews() {
   const [page, setPage] = useState(0);
   const [open, setOpen] = useState(false);
 
+  const { user, profile } = useAuth();
+  const gate = useAuthGate();
+  const products = useFeaturedProducts();
+
   const { value: mine, setValue: setMine } = usePersistentState<ReviewCard[]>(
     "pattukutty.local-reviews",
     [],
@@ -107,7 +111,19 @@ export function Reviews() {
   const [name, setName] = useState("");
   const [rating, setRating] = useState(5);
   const [quote, setQuote] = useState("");
+  const [productId, setProductId] = useState("");
   const [saved, setSaved] = useState(false);
+  const [sending, setSending] = useState(false);
+  const [error, setError] = useState("");
+
+  // Prefill the reviewer name from the signed-in profile.
+  useEffect(() => {
+    if (profile?.full_name && !name) setName(profile.full_name);
+  }, [profile?.full_name]);
+
+  useEffect(() => {
+    if (!productId && products.length > 0) setProductId(products[0]!.id);
+  }, [products, productId]);
 
   const reviews: ReviewCard[] = useMemo(
     () => [...mine.map((m) => ({ ...m, mine: true })), ...fetched],
@@ -121,21 +137,47 @@ export function Reviews() {
       ? reviews.reduce((sum, r) => sum + (r.rating || 0), 0) / reviews.length
       : 0;
 
-  const canSubmit = name.trim().length > 1 && quote.trim().length > 4;
+  const canSubmit =
+    name.trim().length > 1 && quote.trim().length > 4 && productId.length > 0 && !sending;
 
-  const submit = () => {
-    if (!canSubmit) return;
-    const initials = name
-      .trim()
+  /** Sign-in gated: opens the write-review modal only for logged-in customers. */
+  const openWriter = () => {
+    gate(() => setOpen(true), { reason: "Sign in to write a review", next: "/#reviews" });
+  };
+
+  const submit = async () => {
+    if (!canSubmit || !user) return;
+    setSending(true);
+    setError("");
+
+    const cleanName = name.trim();
+    const initials = cleanName
       .split(/\s+/)
       .slice(0, 2)
       .map((w) => w[0]?.toUpperCase() ?? "")
       .join("");
+
+    const created = await addReview({
+      userId: user.id,
+      productId,
+      productName: products.find((p) => p.id === productId)?.name,
+      authorName: cleanName,
+      rating,
+      title: `${rating} star review`,
+      body: quote.trim(),
+    });
+
+    setSending(false);
+
+    if (!created) {
+      setError("We couldn't post your review just now. Please try again in a moment.");
+      return;
+    }
+
     setMine([
-      { id: uid("rev-local"), name: name.trim(), initials, rating, quote: quote.trim() },
+      { id: created.id || uid("rev-local"), name: cleanName, initials, rating, quote: quote.trim() },
       ...mine,
     ]);
-    setName("");
     setQuote("");
     setRating(5);
     setPage(0);
@@ -143,6 +185,7 @@ export function Reviews() {
     setOpen(false);
     window.setTimeout(() => setSaved(false), 4000);
   };
+
 
   return (
     <section id="reviews" className="relative overflow-hidden bg-background py-20 lg:py-28">
