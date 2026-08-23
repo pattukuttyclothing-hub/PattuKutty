@@ -61,12 +61,14 @@ function Index() {
       <Navbar />
       <main>
         <Hero />
+        <EntityAnswer />
         <Collections />
         <Customisation />
         <ReelsCarousel />
         <FeaturedProducts />
         <About />
         <Reviews />
+        <FAQ />
       </main>
       <Footer />
 
