@@ -1,8 +1,10 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { ChevronLeft, ChevronRight, PenLine, Quote, Star } from "lucide-react";
-import { useTestimonials } from "@/lib/useStorefront";
+import { useFeaturedProducts, useTestimonials } from "@/lib/useStorefront";
 import { usePersistentState, uid } from "@/lib/persist";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useAuth, useAuthGate } from "@/lib/auth";
+import { addReview } from "@/lib/reviews";
 import { Modal } from "@/components/shared/Dialogs";
 import { Reveal, stagger } from "@/components/shared/Reveal";
 import { SectionHeading } from "./Motifs";
