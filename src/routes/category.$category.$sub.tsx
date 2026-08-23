@@ -3,29 +3,22 @@ import { AlertCircle, RefreshCw, Sparkles } from "lucide-react";
 import { PageHeader, PageShell } from "@/components/shared/Page";
 import { ProductCard } from "@/components/boutique/ProductCard";
 import { findCategory, findSub } from "@/data/boutique";
+import { subCopy } from "@/data/copy";
 import { useProductsBySubCategory } from "@/lib/useStorefront";
+import { abs, breadcrumbJsonLd, socialMeta } from "@/lib/seo";
 
 export const Route = createFileRoute("/category/$category/$sub")({
   head: ({ params }) => {
     const cat = findCategory(params.category);
     const sub = findSub(params.category, params.sub);
-    const title = `${sub?.name ?? "Designs"} — ${cat?.name ?? "Collection"} | Pattu Kutty`;
-    const description = `${sub?.blurb ?? "Custom designs"} — browse our ${sub?.name ?? ""} designs, stitched to your measurements in Coimbatore with 1-hour express options.`;
-    const img = sub?.images[0];
+    const path = `/category/${params.category}/${params.sub}`;
+    const title = `${sub?.name ?? "Designs"} — ${cat?.name ?? "Collection"} in Coimbatore | Pattu Kutty`;
+    const description =
+      subCopy[sub?.id ?? ""]?.meta ??
+      `${sub?.blurb ?? "Custom designs"} — stitched to your measurements in Coimbatore, 1-hour express option, delivered across India.`;
     return {
-      meta: [
-        { title },
-        { name: "description", content: description },
-        { property: "og:title", content: title },
-        { property: "og:description", content: description },
-        { property: "og:type", content: "website" },
-        { property: "og:url", content: `https://pattukutty.com/category/${params.category}/${params.sub}` },
-        { name: "twitter:card", content: "summary_large_image" },
-        ...(img ? [{ property: "og:image", content: img }, { name: "twitter:image", content: img }] : []),
-      ],
-      links: [
-        { rel: "canonical", href: `https://pattukutty.com/category/${params.category}/${params.sub}` },
-      ],
+      meta: socialMeta({ title, description, path, image: sub?.images?.[0] ?? null }),
+      links: [{ rel: "canonical", href: abs(path) }],
     };
   },
   loader: ({ params }) => {
