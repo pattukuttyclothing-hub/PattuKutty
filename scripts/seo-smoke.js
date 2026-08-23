@@ -103,11 +103,15 @@ async function checkPage(page) {
   }
   if (ogImage) {
     const brandCard = ogImage === `${SITE_URL}/og-cover.jpg`;
+    if (page === "/" && !brandCard) {
+      fail(page, "homepage should use the branded share card /og-cover.jpg");
+    }
     if (page !== "/" && brandCard) {
-      notes.push(`${page}: falls back to the brand share card (no page-specific image)`);
+      // A catalogue page with no photo of its own shares the homepage card.
+      fail(page, "falls back to the brand share card instead of its own image");
     }
     if (!brandCard && seenImages.has(ogImage)) {
-      fail(page, `og:image is not unique, also used by ${seenImages.get(ogImage)}`);
+      notes.push(`${page}: reuses the catalogue photo also on ${seenImages.get(ogImage)}`);
     }
     seenImages.set(ogImage, page);
   }
