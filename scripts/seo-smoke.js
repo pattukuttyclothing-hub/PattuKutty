@@ -157,10 +157,12 @@ function validateProduct(node, f) {
   // Category-level entity Products (AggregateOffer, "quote on request") carry no
   // fixed price by design — only concrete product pages must state one.
   const priceOptional = offers["@type"] === "AggregateOffer";
-  if (!priceOptional && (price === undefined || price === null || price === "")) {
-    f("Product offer missing price");
+  const hasPrice = !(price === undefined || price === null || price === "");
+  if (!hasPrice) {
+    if (!priceOptional) f("Product offer missing price");
+  } else if (!/^\d+(\.\d+)?$/.test(String(price))) {
+    f(`Product offer price is malformed: "${price}"`);
   }
-  else if (!/^\d+(\.\d+)?$/.test(String(price))) f(`Product offer price is malformed: "${price}"`);
   if (offers.priceCurrency !== "INR") f("Product offer currency is not INR");
   if (!/schema\.org\/(In|OutOf)Stock/.test(offers.availability || "")) {
     f("Product offer missing/malformed availability");
