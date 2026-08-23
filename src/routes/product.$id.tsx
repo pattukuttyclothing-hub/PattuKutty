@@ -232,31 +232,8 @@ function ProductPage() {
 
       <section className="bg-background py-6 lg:py-8">
         <div className="mx-auto max-w-7xl px-4 sm:px-6">
-          {/* Schema.org Product Structured Data */}
-          <script
-            type="application/ld+json"
-            dangerouslySetInnerHTML={{
-              __html: JSON.stringify({
-                "@context": "https://schema.org",
-                "@type": "Product",
-                "name": activeProduct.name,
-                "image": activeProduct.image || (Array.isArray(activeProduct.images) ? activeProduct.images[0] : ""),
-                "description": activeProduct.description,
-                "sku": activeProduct.id,
-                "brand": {
-                  "@type": "Brand",
-                  "name": "Pattu Kutty"
-                },
-                "offers": {
-                  "@type": "Offer",
-                  "price": activeProduct.basePrice ?? activeProduct.price,
-                  "priceCurrency": "INR",
-                  "availability": (activeProduct as any).inStock !== false && !(activeProduct as any).isSoldOut ? "https://schema.org/InStock" : "https://schema.org/OutOfStock",
-                  "url": `https://pattukutty.com/product/${activeProduct.id}`
-                }
-              })
-            }}
-          />
+          {/* Product + Breadcrumb structured data is emitted from the route head() using live loader data. */}
+
 
           <div className="grid gap-8 lg:grid-cols-12 lg:gap-12">
             <div className="lg:col-span-6 lg:sticky lg:top-28 self-start">
