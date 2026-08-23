@@ -225,7 +225,7 @@ export function Reviews() {
             </div>
             <button
               type="button"
-              onClick={() => setOpen(true)}
+              onClick={openWriter}
               className="group col-span-2 inline-flex items-center justify-center gap-2 rounded-full bg-primary px-6 py-3 text-xs font-semibold tracking-[0.12em] text-primary-foreground uppercase shadow-soft transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lift sm:col-span-1"
             >
               <PenLine className="h-4 w-4 transition-transform duration-300 group-hover:-rotate-12" />
@@ -312,11 +312,11 @@ export function Reviews() {
             </button>
             <button
               type="button"
-              onClick={submit}
+              onClick={() => void submit()}
               disabled={!canSubmit}
               className="rounded-full bg-primary px-6 py-2.5 text-xs font-semibold tracking-[0.12em] text-primary-foreground uppercase shadow-soft transition-transform duration-300 hover:scale-[1.03] disabled:opacity-40 disabled:hover:scale-100"
             >
-              Post review
+              {sending ? "Posting…" : "Post review"}
             </button>
           </>
         }
