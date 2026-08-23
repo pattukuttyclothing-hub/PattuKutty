@@ -229,8 +229,9 @@ async function checkPage(page) {
     seenTitles.set(title, page);
   }
 
-  // Description
-  const desc = meta["description"];
+  // Description (decode HTML entities so length matches what search engines index)
+  const rawDesc = meta["description"];
+  const desc = rawDesc ? decodeEntities(rawDesc) : null;
   if (!desc) fail(page, "missing meta description");
   else if (desc.length > DESC_MAX)
     fail(page, `description is ${desc.length} chars (max ${DESC_MAX})`);
