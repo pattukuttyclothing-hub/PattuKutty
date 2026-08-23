@@ -17,17 +17,18 @@ export function Collections() {
           subtitle="Tap a collection to browse the designs we stitch, with photos straight from the studio."
         />
 
-        <div className="mt-10 grid grid-cols-2 gap-3 sm:mt-12 sm:gap-6 lg:grid-cols-4 lg:gap-8">
+        <div className="mt-10 grid grid-cols-2 items-stretch gap-3 sm:mt-12 sm:gap-6 lg:grid-cols-4 lg:gap-8">
           {categories.map((c, i) => {
             const subCount = Array.isArray(c.subs) ? c.subs.length : 0;
             return (
-              <Reveal key={c.id} delay={stagger(i, 80)} className="h-full">
+              <Reveal key={c.id} delay={stagger(i, 80)} className="flex h-full">
                 <Link
                   to="/category/$category"
                   params={{ category: c.id }}
                   aria-label={`${c.name} — view designs`}
-                  className="group relative flex h-full min-h-[15rem] flex-col justify-end overflow-hidden rounded-2xl bg-card text-left shadow-lift ring-1 ring-accent/15 transition-all duration-500 ease-out hover:-translate-y-1.5 hover:shadow-2xl hover:ring-accent/45 focus-visible:ring-2 focus-visible:ring-accent focus-visible:outline-none sm:rounded-3xl aspect-[3/4] sm:aspect-[3/4.2]"
+                  className="group relative flex aspect-[3/4] w-full flex-col justify-end overflow-hidden rounded-2xl bg-card text-left shadow-lift ring-1 ring-accent/15 transition-all duration-500 ease-out hover:-translate-y-1.5 hover:shadow-2xl hover:ring-accent/45 focus-visible:ring-2 focus-visible:ring-accent focus-visible:outline-none sm:rounded-3xl"
                 >
+
                   <img
                     src={
                       c.image && c.image.startsWith("http")
