@@ -6,7 +6,7 @@ import { ProductGallery } from "@/components/shared/ProductGallery";
 import { ProductCard } from "@/components/boutique/ProductCard";
 import { findCategory, findProduct, findSub, type Product } from "@/data/boutique";
 import { fetchProductById } from "@/lib/api/catalogue";
-import { abs, absImage, BRAND, breadcrumbJsonLd, socialMeta } from "@/lib/seo";
+import { abs, absImage, BRAND, breadcrumbJsonLd, seoDescription, seoTitle, socialMeta } from "@/lib/seo";
 import { inr, orderWaLink, useCart } from "@/lib/cart";
 import { useWishlist } from "@/lib/wishlist";
 import { useAuthGate } from "@/lib/auth";
@@ -16,9 +16,9 @@ export const Route = createFileRoute("/product/$id")({
   head: ({ params, loaderData }) => {
     const p = (loaderData as { product?: Product | null } | undefined)?.product ?? findProduct(params.id);
     const path = `/product/${params.id}`;
-    const title = `${p?.name ?? "Design"} — Custom Stitched | Pattu Kutty Coimbatore`;
+    const title = seoTitle(p?.name ?? "Design", "Custom Stitched");
     const description =
-      p?.description?.slice(0, 158) ??
+      (p?.description ? seoDescription(p.description) : null) ??
       "Custom stitched designer wear from our Coimbatore studio — your measurements, your fabric, 1-hour express option, delivered across India.";
 
     const productJsonLd = p
