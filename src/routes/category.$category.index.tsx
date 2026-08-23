@@ -6,13 +6,13 @@ import { AutoImageFade } from "@/components/shared/AutoImageFade";
 import { findCategory, type CategoryId } from "@/data/boutique";
 import { categoryCopy } from "@/data/copy";
 import { useCategories } from "@/lib/useStorefront";
-import { abs, breadcrumbJsonLd, socialMeta } from "@/lib/seo";
+import { abs, breadcrumbJsonLd, seoTitle, socialMeta } from "@/lib/seo";
 
 export const Route = createFileRoute("/category/$category/")({
   head: ({ params }) => {
     const cat = findCategory(params.category);
     const path = `/category/${params.category}/`;
-    const title = `${cat?.name ?? "Collection"} — Custom Stitched in Coimbatore | Pattu Kutty`;
+    const title = seoTitle(cat?.name ?? "Collection", "Custom Stitched in Coimbatore");
     const description =
       categoryCopy[cat?.id ?? ""]?.meta ??
       `Custom ${cat?.name ?? "boutique"} stitched to your measurements in Coimbatore — 1-hour express option, delivery across India.`;

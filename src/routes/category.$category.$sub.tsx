@@ -5,14 +5,14 @@ import { ProductCard } from "@/components/boutique/ProductCard";
 import { findCategory, findSub } from "@/data/boutique";
 import { subCopy } from "@/data/copy";
 import { useProductsBySubCategory } from "@/lib/useStorefront";
-import { abs, breadcrumbJsonLd, socialMeta } from "@/lib/seo";
+import { abs, breadcrumbJsonLd, seoTitle, socialMeta } from "@/lib/seo";
 
 export const Route = createFileRoute("/category/$category/$sub")({
   head: ({ params }) => {
     const cat = findCategory(params.category);
     const sub = findSub(params.category, params.sub);
     const path = `/category/${params.category}/${params.sub}`;
-    const title = `${sub?.name ?? "Designs"} — ${cat?.name ?? "Collection"} in Coimbatore | Pattu Kutty`;
+    const title = seoTitle(sub?.name ?? "Designs", "Coimbatore Boutique");
     const description =
       subCopy[sub?.id ?? ""]?.meta ??
       `${sub?.blurb ?? "Custom designs"} — stitched to your measurements in Coimbatore, 1-hour express option, delivered across India.`;

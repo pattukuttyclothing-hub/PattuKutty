@@ -12,9 +12,9 @@ import { Footer } from "@/components/boutique/Footer";
 import { storeInfo, waLink } from "@/data/boutique";
 import { abs, SITE_URL, socialMeta } from "@/lib/seo";
 
-const title = "Pattu Kutty — Custom Women's Clothing & Boutique in Coimbatore";
+const title = "Custom Women's Clothing Boutique | Pattu Kutty";
 const description =
-  "Coimbatore women's boutique for custom stitched blouses, bridal lehengas, half sarees and silk sarees. 1-hour express stitching, any design customised, delivered across India.";
+  "Coimbatore boutique for custom stitched blouses, bridal lehengas, half sarees and silk sarees. 1-hour express stitching, delivered across India.";
 
 const websiteJsonLd = {
   "@context": "https://schema.org",
