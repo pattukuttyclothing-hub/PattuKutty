@@ -24,7 +24,8 @@ const links = [
   { label: "Collections", href: "/#collections" },
   { label: "Customise", href: "/#customise" },
   { label: "Reels", href: "/#reels" },
-  { label: "About", href: "/#about" },
+  { label: "About", href: "/about" },
+  { label: "FAQ", href: "/#faq" },
   { label: "Reviews", href: "/#reviews" },
 ];
 

@@ -61,3 +61,12 @@ descriptions under 155.
   until the platform re-scrapes. The debuggers in step 4 force that refresh —
   there is no other way to speed it up.
 - Re-run steps 4 and 5 any time the share card, page titles or descriptions change.
+
+## AEO (answer-engine) checks after the domain is live
+
+- [ ] `https://pattukuttyclothing.com/llms.txt` returns the plain-text brand summary (200, `text/plain`).
+- [ ] `robots.txt` allows GPTBot, OAI-SearchBot, ChatGPT-User, PerplexityBot, ClaudeBot, Google-Extended and Applebot.
+- [ ] Google Rich Results Test on `/` and `/about` reports FAQPage, LocalBusiness/ClothingStore, Organization, Service and Product without errors.
+- [ ] Ask ChatGPT / Perplexity / Google AI Overviews: "what is Pattu Kutty", "where can I get a custom silk saree in Coimbatore", "who does 1 hour saree stitching in Coimbatore" — confirm the brand is named and the answer matches the entity definition in `src/data/aeo.ts`.
+- [ ] Confirm NAP (name, address `463, Bharathiyar Road, Pappanaicken Palayam, Coimbatore – 641037`, phone `+91 93455 20768`) matches Google Business Profile, Instagram bio and the site byte-for-byte.
+- [ ] Submit `/about` to Search Console for indexing so the entity definition is crawled first.

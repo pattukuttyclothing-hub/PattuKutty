@@ -61,6 +61,13 @@ async function main() {
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
   </url>
+
+  <!-- ── About / AEO entity page ─────────────────── -->
+  <url>
+    <loc>${BASE_URL}/about</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.9</priority>
+  </url>
 `;
 
   // Categories & Subcategories

@@ -5,7 +5,8 @@ import { BrandLockup, BrandMark } from "./Brand";
 const quickLinks = [
   { label: "Home", href: "#home" },
   { label: "Collections", href: "#collections" },
-  { label: "About", href: "#about" },
+  { label: "About", href: "/about" },
+  { label: "FAQ", href: "#faq" },
   { label: "Reviews", href: "#reviews" },
 ];
 
