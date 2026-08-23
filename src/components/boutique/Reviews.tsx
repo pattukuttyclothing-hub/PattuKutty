@@ -323,6 +323,30 @@ export function Reviews() {
       >
         <div className="space-y-5">
           <div>
+            <label
+              htmlFor="review-product"
+              className="text-[0.65rem] font-semibold tracking-[0.18em] text-muted-foreground uppercase"
+            >
+              Which outfit are you reviewing?
+            </label>
+            <select
+              id="review-product"
+              value={productId}
+              onChange={(e) => setProductId(e.target.value)}
+              className="mt-2 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm text-foreground outline-none transition-colors focus:border-gold"
+            >
+              {products.length === 0 ? <option value="">Loading designs…</option> : null}
+              {products.map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.name}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {error ? <p className="text-xs font-medium text-destructive">{error}</p> : null}
+
+          <div>
             <label className="text-[0.65rem] font-semibold tracking-[0.18em] text-muted-foreground uppercase">
               Your rating
             </label>
