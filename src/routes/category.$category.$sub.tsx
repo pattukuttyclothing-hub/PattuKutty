@@ -52,7 +52,7 @@ function SubCategoryPage() {
     <PageShell>
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }}
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(crumbsJsonLd) }}
       />
       <PageHeader
         eyebrow={`${cat.name} · Step 2 of 2`}
