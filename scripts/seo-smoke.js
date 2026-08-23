@@ -154,7 +154,12 @@ function validateProduct(node, f) {
     f(`Product offer has unexpected @type "${offers["@type"]}"`);
   }
   const price = offers.price ?? offers.lowPrice;
-  if (price === undefined || price === null || price === "") f("Product offer missing price");
+  // Category-level entity Products (AggregateOffer, "quote on request") carry no
+  // fixed price by design — only concrete product pages must state one.
+  const priceOptional = offers["@type"] === "AggregateOffer";
+  if (!priceOptional && (price === undefined || price === null || price === "")) {
+    f("Product offer missing price");
+  }
   else if (!/^\d+(\.\d+)?$/.test(String(price))) f(`Product offer price is malformed: "${price}"`);
   if (offers.priceCurrency !== "INR") f("Product offer currency is not INR");
   if (!/schema\.org\/(In|OutOf)Stock/.test(offers.availability || "")) {
@@ -268,10 +273,11 @@ async function checkPage(page) {
   }
   if (ogImage) {
     const brandCard = ogImage === `${SITE_URL}/og-cover.jpg`;
-    if (page === "/" && !brandCard) {
-      fail(page, "homepage should use the branded share card /og-cover.jpg");
+    const brandCardPages = ["/", "/about"];
+    if (brandCardPages.includes(page) && !brandCard) {
+      fail(page, "brand page should use the branded share card /og-cover.jpg");
     }
-    if (page !== "/" && brandCard) {
+    if (!brandCardPages.includes(page) && brandCard) {
       // A catalogue page with no photo of its own shares the homepage card.
       fail(page, "falls back to the brand share card instead of its own image");
     }
