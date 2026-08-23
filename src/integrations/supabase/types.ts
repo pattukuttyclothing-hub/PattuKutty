@@ -14,7 +14,195 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      addresses: {
+        Row: {
+          address_type: string
+          city: string
+          created_at: string
+          customer_id: string
+          full_name: string
+          id: string
+          is_default: boolean
+          landmark: string | null
+          line1: string
+          line2: string | null
+          phone: string
+          pincode: string
+          state: string
+          updated_at: string
+        }
+        Insert: {
+          address_type?: string
+          city: string
+          created_at?: string
+          customer_id: string
+          full_name: string
+          id?: string
+          is_default?: boolean
+          landmark?: string | null
+          line1: string
+          line2?: string | null
+          phone: string
+          pincode: string
+          state: string
+          updated_at?: string
+        }
+        Update: {
+          address_type?: string
+          city?: string
+          created_at?: string
+          customer_id?: string
+          full_name?: string
+          id?: string
+          is_default?: boolean
+          landmark?: string | null
+          line1?: string
+          line2?: string | null
+          phone?: string
+          pincode?: string
+          state?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      customers: {
+        Row: {
+          created_at: string
+          full_name: string | null
+          id: string
+          phone: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          full_name?: string | null
+          id: string
+          phone?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          full_name?: string | null
+          id?: string
+          phone?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      orders: {
+        Row: {
+          awb: string | null
+          created_at: string
+          customer_id: string
+          delivery_fee: number
+          delivery_type: string
+          id: string
+          is_custom: boolean
+          items: Json
+          notes: string | null
+          order_no: string | null
+          payment_method: string
+          payment_ref: string | null
+          payment_status: string
+          razorpay_order_id: string | null
+          razorpay_payment_id: string | null
+          request_id: string | null
+          shipping_address: Json
+          status: string
+          subtotal: number
+          total: number
+          updated_at: string
+        }
+        Insert: {
+          awb?: string | null
+          created_at?: string
+          customer_id: string
+          delivery_fee?: number
+          delivery_type?: string
+          id?: string
+          is_custom?: boolean
+          items?: Json
+          notes?: string | null
+          order_no?: string | null
+          payment_method?: string
+          payment_ref?: string | null
+          payment_status?: string
+          razorpay_order_id?: string | null
+          razorpay_payment_id?: string | null
+          request_id?: string | null
+          shipping_address?: Json
+          status?: string
+          subtotal?: number
+          total?: number
+          updated_at?: string
+        }
+        Update: {
+          awb?: string | null
+          created_at?: string
+          customer_id?: string
+          delivery_fee?: number
+          delivery_type?: string
+          id?: string
+          is_custom?: boolean
+          items?: Json
+          notes?: string | null
+          order_no?: string | null
+          payment_method?: string
+          payment_ref?: string | null
+          payment_status?: string
+          razorpay_order_id?: string | null
+          razorpay_payment_id?: string | null
+          request_id?: string | null
+          shipping_address?: Json
+          status?: string
+          subtotal?: number
+          total?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      reviews: {
+        Row: {
+          author_name: string | null
+          body: string | null
+          created_at: string
+          id: string
+          photos: Json
+          product_id: string
+          product_name: string | null
+          rating: number
+          title: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          author_name?: string | null
+          body?: string | null
+          created_at?: string
+          id?: string
+          photos?: Json
+          product_id: string
+          product_name?: string | null
+          rating?: number
+          title?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          author_name?: string | null
+          body?: string | null
+          created_at?: string
+          id?: string
+          photos?: Json
+          product_id?: string
+          product_name?: string | null
+          rating?: number
+          title?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
