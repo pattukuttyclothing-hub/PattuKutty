@@ -13,9 +13,10 @@ export const Route = createFileRoute("/category/$category/$sub")({
     const sub = findSub(params.category, params.sub);
     const path = `/category/${params.category}/${params.sub}`;
     const title = seoTitle(sub?.name ?? "Designs", "Coimbatore Boutique");
-    const description =
+    const description = seoDescription(
       subCopy[sub?.id ?? ""]?.meta ??
-      `${sub?.blurb ?? "Custom designs"} — stitched to your measurements in Coimbatore, 1-hour express option, delivered across India.`;
+        `${sub?.blurb ?? "Custom designs"} — stitched to your measurements in Coimbatore, 1-hour express option, delivered across India.`,
+    );
     return {
       meta: socialMeta({ title, description, path, image: sub?.images?.[0] ?? null }),
       links: [{ rel: "canonical", href: abs(path) }],
