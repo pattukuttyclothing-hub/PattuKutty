@@ -160,7 +160,7 @@ export function Reviews() {
     const created = await addReview({
       userId: user.id,
       productId,
-      productName: products.find((p) => p.id === productId)?.name,
+      productName: products.find((p) => p.id === productId)?.name ?? "",
       authorName: cleanName,
       rating,
       title: `${rating} star review`,
