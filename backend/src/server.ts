@@ -17,35 +17,7 @@ const app = express();
 app.use(helmet());
 app.use(
   cors({
-    origin: (origin, callback) => {
-      // Allow requests with no origin (e.g. mobile apps, curl)
-      if (!origin) return callback(null, true);
-
-      // 1. Allow localhost/127.0.0.1 dev servers
-      if (/^http:\/\/(localhost|127\.0\.0\.1):\d+$/.test(origin)) {
-        return callback(null, true);
-      }
-
-      // 2. Allow Cloudflare Workers / Pages preview/production domains (*.workers.dev, *.pages.dev)
-      if (/\.(workers\.dev|pages\.dev)$/i.test(new URL(origin).hostname)) {
-        return callback(null, true);
-      }
-
-      // 3. Allow boutique custom domains
-      if (/pattukutty/i.test(new URL(origin).hostname)) {
-        return callback(null, true);
-      }
-
-      // 4. Allow origins specified in ALLOWED_ORIGINS env var (comma-separated or "*")
-      if (env.ALLOWED_ORIGINS) {
-        const allowedList = env.ALLOWED_ORIGINS.split(",").map((item) => item.trim());
-        if (allowedList.includes("*") || allowedList.includes(origin)) {
-          return callback(null, true);
-        }
-      }
-
-      return callback(null, false);
-    },
+    origin: true, // Dynamically reflects request origin (e.g. pattukutty.pattukuttyclothing.workers.dev, localhost, etc.)
     credentials: true,
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     allowedHeaders: [
