@@ -19,7 +19,22 @@ export default {
   async fetch(request: Request, env: Record<string, unknown>, _ctx: unknown): Promise<Response> {
     applyWorkerEnv(env);
 
-    return new Promise<Response>((resolve, reject) => {
+    const origin = request.headers.get("origin") || "*";
+    const corsHeaders = {
+      "Access-Control-Allow-Origin": origin,
+      "Access-Control-Allow-Methods": "GET, POST, PUT, PATCH, DELETE, OPTIONS",
+      "Access-Control-Allow-Headers": "Content-Type, Authorization, X-File-Name, X-Bucket-Name, X-Requested-With, Accept, Origin",
+      "Access-Control-Allow-Credentials": "true",
+    };
+
+    if (request.method === "OPTIONS") {
+      return new Response(null, {
+        status: 204,
+        headers: corsHeaders,
+      });
+    }
+
+    return new Promise<Response>((resolve, _reject) => {
       (async () => {
         try {
           const url = new URL(request.url);
@@ -116,6 +131,13 @@ export default {
               }
               this.headersSent = true;
               const fullBody = Buffer.concat(bodyChunks);
+
+              // Guarantee CORS origin header on all responses
+              if (!responseHeaders.has("Access-Control-Allow-Origin")) {
+                responseHeaders.set("Access-Control-Allow-Origin", origin);
+                responseHeaders.set("Access-Control-Allow-Credentials", "true");
+              }
+
               resolve(
                 new Response(fullBody, {
                   status: this.statusCode,
@@ -129,8 +151,22 @@ export default {
 
           // Dispatch request to Express app
           app(req as any, res as any);
-        } catch (err) {
-          reject(err);
+        } catch (err: any) {
+          resolve(
+            new Response(
+              JSON.stringify({
+                success: false,
+                message: err?.message || "Internal Worker Error",
+              }),
+              {
+                status: 500,
+                headers: {
+                  "Content-Type": "application/json",
+                  ...corsHeaders,
+                },
+              },
+            ),
+          );
         }
       })();
     });

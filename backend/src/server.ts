@@ -26,7 +26,17 @@ app.use(
         return callback(null, true);
       }
 
-      // 2. Allow origins specified in ALLOWED_ORIGINS env var (comma-separated or "*")
+      // 2. Allow Cloudflare Workers / Pages preview/production domains (*.workers.dev, *.pages.dev)
+      if (/\.(workers\.dev|pages\.dev)$/i.test(new URL(origin).hostname)) {
+        return callback(null, true);
+      }
+
+      // 3. Allow boutique custom domains
+      if (/pattukutty/i.test(new URL(origin).hostname)) {
+        return callback(null, true);
+      }
+
+      // 4. Allow origins specified in ALLOWED_ORIGINS env var (comma-separated or "*")
       if (env.ALLOWED_ORIGINS) {
         const allowedList = env.ALLOWED_ORIGINS.split(",").map((item) => item.trim());
         if (allowedList.includes("*") || allowedList.includes(origin)) {
@@ -34,9 +44,20 @@ app.use(
         }
       }
 
-      return callback(new Error(`CORS policy error: Origin ${origin} not allowed`));
+      return callback(null, false);
     },
     credentials: true,
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    allowedHeaders: [
+      "Content-Type",
+      "Authorization",
+      "X-File-Name",
+      "X-Bucket-Name",
+      "X-Requested-With",
+      "Accept",
+      "Origin",
+    ],
+    exposedHeaders: ["Content-Length", "X-File-Name"],
   })
 );
 app.use(
