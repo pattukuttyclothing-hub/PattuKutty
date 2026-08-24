@@ -88,11 +88,13 @@ app.use((_req, res, next) => {
 app.use(errorHandler);
 
 // ── Start Server ──────────────────────────────────────────────────────
-const PORT = Number(env.PORT);
-app.listen(PORT, () => {
-  console.log(`\n🦋 Butterflies Tailoring API Server running on http://localhost:${PORT}`);
-  console.log(`   Environment : ${env.NODE_ENV}`);
-  console.log(`   Health Check: http://localhost:${PORT}/api/v1/health\n`);
-});
+if (!process.env.CLOUDFLARE_WORKER && process.env.NODE_ENV !== "test") {
+  const PORT = Number(env.PORT || 3001);
+  app.listen(PORT, () => {
+    console.log(`\n🦋 Butterflies Tailoring API Server running on http://localhost:${PORT}`);
+    console.log(`   Environment : ${env.NODE_ENV}`);
+    console.log(`   Health Check: http://localhost:${PORT}/api/v1/health\n`);
+  });
+}
 
 export default app;
