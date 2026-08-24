@@ -388,6 +388,7 @@ export class RequestsService {
     filePayload: { buffer: Buffer; fileName: string; mimeType: string },
     bucketType: "image" | "audio" = "image"
   ): Promise<string> {
+    const bucketName = bucketType === "audio" ? "custom-design-request-audio" : "custom-design-request-images";
     let finalMime = (filePayload.mimeType || "").split(";")[0].trim().toLowerCase();
     if (bucketType === "audio" || finalMime.startsWith("audio/")) {
       if (finalMime.includes("mp4") || finalMime.includes("m4a") || finalMime.includes("aac")) {
