@@ -26,7 +26,7 @@ export async function uploadDesignImage(file: File | Blob): Promise<string> {
   }
 
   const token = getCustomerToken();
-  const API_BASE_URL = (import.meta.env["VITE_API_BASE_URL"] as string) || "http://localhost:3001/api/v1";
+  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:3001/api/v1";
 
   const formData = new FormData();
   const fileName = (file as File).name || `design_${Date.now()}.jpg`;
@@ -70,7 +70,7 @@ export async function uploadVoiceAudio(file: Blob): Promise<string> {
   }
 
   const token = getCustomerToken();
-  const API_BASE_URL = (import.meta.env["VITE_API_BASE_URL"] as string) || "http://localhost:3001/api/v1";
+  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:3001/api/v1";
 
   const formData = new FormData();
   const ext = file.type.includes("wav") ? "wav" : file.type.includes("mp3") ? "mp3" : "webm";

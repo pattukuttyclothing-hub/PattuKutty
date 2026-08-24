@@ -1,6 +1,6 @@
 {
-  "$schema": "node_modules/wrangler/config-schema.json",
-  "name": "pattukutty-customer",
+  "$schema": "https://raw.githubusercontent.com/cloudflare/workers-sdk/main/packages/wrangler/config-schema.json",
+  "name": "pattukutty",
   "compatibility_date": "2026-08-24",
   "compatibility_flags": ["nodejs_compat"],
   "main": ".output/server/index.mjs",
