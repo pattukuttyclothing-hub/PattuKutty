@@ -45,13 +45,23 @@ function isH3SwallowedErrorBody(body: string): boolean {
 }
 
 export default {
-  async fetch(request: Request, env: unknown, ctx: unknown) {
+  async fetch(request: Request, env: any, ctx: any) {
     try {
+      if (env?.ASSETS && typeof env.ASSETS.fetch === "function") {
+        const url = new URL(request.url);
+        if (url.pathname.includes(".") || url.pathname === "/favicon.ico") {
+          const assetRes = await env.ASSETS.fetch(request);
+          if (assetRes && assetRes.status !== 404) {
+            return assetRes;
+          }
+        }
+      }
+
       const handler = await getServerEntry();
       const response = await handler.fetch(request, env, ctx);
       return await normalizeCatastrophicSsrResponse(response);
-    } catch (error) {
-      console.error(error);
+    } catch (error: any) {
+      console.error("Worker fetch exception:", error?.stack || error?.message || error);
       return new Response(renderErrorPage(), {
         status: 500,
         headers: { "content-type": "text/html; charset=utf-8" },
