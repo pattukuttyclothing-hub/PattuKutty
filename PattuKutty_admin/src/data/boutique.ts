@@ -4,16 +4,28 @@
  * same categories, sub-categories, products, colours and timelines.
  */
 
+export function formatWhatsappNumber(num: string): string {
+  const digits = num.replace(/\D/g, "");
+  if (digits.length === 10) {
+    return `91${digits}`;
+  }
+  return digits;
+}
+
+const rawWhatsapp = (typeof import.meta !== "undefined" && import.meta.env?.["VITE_WHATSAPP_NUMBER"]) || "919791712622";
+const rawPhone = (typeof import.meta !== "undefined" && import.meta.env?.["VITE_STORE_PHONE"]) || "+91 97917 12622";
+
 export const storeInfo = {
   name: "Pattu Kutty",
   tagline: "Coimbatore's fastest ladies dress designer",
-  phone: "+91 93455 20768",
-  whatsapp: "919345520768",
+  phone: rawPhone,
+  whatsapp: formatWhatsappNumber(rawWhatsapp),
   area: "Gandhipuram, Coimbatore",
 };
 
 export const waLink = (phone: string, message: string) =>
-  `https://wa.me/${phone.replace(/\D/g, "")}?text=${encodeURIComponent(message)}`;
+  `https://wa.me/${formatWhatsappNumber(phone || storeInfo.whatsapp)}?text=${encodeURIComponent(message)}`;
+
 
 /** DELIVERY + TAX RULES (store_settings) */
 export const storeSettings = { gstPercent: 5, deliveryFee: 49, freeAbove: 499 };

@@ -14,11 +14,22 @@ import hero3 from "@/assets/hero-3.jpg";
 import hero4 from "@/assets/hero-4.jpg";
 import aboutStore from "@/assets/about-store.jpg";
 
+export function formatWhatsappNumber(num: string): string {
+  const digits = num.replace(/\D/g, "");
+  if (digits.length === 10) {
+    return `91${digits}`;
+  }
+  return digits;
+}
+
+const rawWhatsapp = (typeof import.meta !== "undefined" && import.meta.env?.["VITE_WHATSAPP_NUMBER"]) || "919791712622";
+const rawPhone = (typeof import.meta !== "undefined" && import.meta.env?.["VITE_STORE_PHONE"]) || "+91 97917 12622";
+
 export const storeInfo = {
   name: "Pattu Kutty",
   tagline: "Coimbatore's fastest ladies dress designer",
-  phone: "+91 93455 20768",
-  whatsapp: "919345520768",
+  phone: rawPhone,
+  whatsapp: formatWhatsappNumber(rawWhatsapp),
   instagram: "@pattu.kutty",
   address: "463, Bharathiyar Road, Pappanaicken Palayam, Coimbatore – 641037",
   area: "Gandhipuram, Coimbatore",
@@ -30,6 +41,7 @@ export const storeInfo = {
 
 export const waLink = (message: string) =>
   `https://wa.me/${storeInfo.whatsapp}?text=${encodeURIComponent(message)}`;
+
 
 /** DELIVERY RULES — controlled by System Admin */
 export const deliveryRules = { freeAbove: 499, fee: 49 };
