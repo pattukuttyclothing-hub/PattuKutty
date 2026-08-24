@@ -31,15 +31,15 @@ function createSupabaseFetch(supabaseKey: string): typeof fetch {
 function createSupabaseClient() {
   // Read configured environment variables via Vite static replacement (no hardcoded fallbacks)
   const SUPABASE_URL =
-    import.meta.env['VITE_SUPABASE_URL'] ||
-    import.meta.env['SUPABASE_URL'] ||
+    import.meta.env.VITE_SUPABASE_URL ||
+    import.meta.env.SUPABASE_URL ||
     (typeof process !== 'undefined' ? (process.env['VITE_SUPABASE_URL'] || process.env['SUPABASE_URL']) : undefined);
 
   const SUPABASE_PUBLISHABLE_KEY =
-    import.meta.env['VITE_SUPABASE_PUBLISHABLE_KEY'] ||
-    import.meta.env['VITE_SUPABASE_ANON_KEY'] ||
-    import.meta.env['SUPABASE_PUBLISHABLE_KEY'] ||
-    import.meta.env['SUPABASE_ANON_KEY'] ||
+    import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY ||
+    import.meta.env.VITE_SUPABASE_ANON_KEY ||
+    import.meta.env.SUPABASE_PUBLISHABLE_KEY ||
+    import.meta.env.SUPABASE_ANON_KEY ||
     (typeof process !== 'undefined'
       ? process.env['VITE_SUPABASE_PUBLISHABLE_KEY'] ||
         process.env['VITE_SUPABASE_ANON_KEY'] ||
