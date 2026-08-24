@@ -1,6 +1,12 @@
 import { supabase } from "@/integrations/supabase/client";
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:3001/api/v1";
+const DEFAULT_PROD_API_URL = "https://pattukutty-backend.pattukuttyclothing.workers.dev/api/v1";
+const isBrowser = typeof window !== "undefined";
+const isLocalhost = isBrowser && /^http:\/\/(localhost|127\.0\.0\.1)/.test(window.location.origin);
+
+const API_BASE_URL =
+  import.meta.env.VITE_API_BASE_URL ||
+  (isLocalhost ? "http://localhost:3001/api/v1" : DEFAULT_PROD_API_URL);
 
 export async function apiFetch<T>(
   endpoint: string,

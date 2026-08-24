@@ -26,7 +26,12 @@ export async function uploadDesignImage(file: File | Blob): Promise<string> {
   }
 
   const token = getCustomerToken();
-  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:3001/api/v1";
+  const DEFAULT_PROD_API_URL = "https://pattukutty-backend.pattukuttyclothing.workers.dev/api/v1";
+  const isBrowser = typeof window !== "undefined";
+  const isLocalhost = isBrowser && /^http:\/\/(localhost|127\.0\.0\.1)/.test(window.location.origin);
+  const API_BASE_URL =
+    import.meta.env.VITE_API_BASE_URL ||
+    (isLocalhost ? "http://localhost:3001/api/v1" : DEFAULT_PROD_API_URL);
 
   const formData = new FormData();
   const fileName = (file as File).name || `design_${Date.now()}.jpg`;
@@ -70,7 +75,12 @@ export async function uploadVoiceAudio(file: Blob): Promise<string> {
   }
 
   const token = getCustomerToken();
-  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:3001/api/v1";
+  const DEFAULT_PROD_API_URL = "https://pattukutty-backend.pattukuttyclothing.workers.dev/api/v1";
+  const isBrowser = typeof window !== "undefined";
+  const isLocalhost = isBrowser && /^http:\/\/(localhost|127\.0\.0\.1)/.test(window.location.origin);
+  const API_BASE_URL =
+    import.meta.env.VITE_API_BASE_URL ||
+    (isLocalhost ? "http://localhost:3001/api/v1" : DEFAULT_PROD_API_URL);
 
   const formData = new FormData();
   const type = (file.type || "").toLowerCase();
