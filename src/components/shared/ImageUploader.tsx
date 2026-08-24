@@ -8,6 +8,8 @@ import { uploadDesignImage } from "@/lib/storage";
  * Reference-image uploader with a large hero preview plus thumbnail strip.
  * Uploads images directly to Supabase Storage bucket custom-design-request-images via backend API.
  */
+import { ImageCropModal } from "./ImageCropModal";
+
 export function ImageUploader({
   images,
   onChange,
@@ -27,25 +29,59 @@ export function ImageUploader({
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Crop State
+  const [pendingCropFile, setPendingCropFile] = useState<File | null>(null);
+  const [cropMode, setCropMode] = useState<"add" | "replace">("add");
+  const [pendingQueue, setPendingQueue] = useState<File[]>([]);
+
   useEffect(() => {
     if (active > images.length - 1) setActive(Math.max(0, images.length - 1));
   }, [images.length, active]);
 
-  const handleAdd = async (files: FileList | null) => {
+  const handleAddPicked = (files: FileList | null) => {
     if (!files?.length || uploading) return;
     if (images.length >= max) {
       toast.warning(`Maximum ${max} reference photos allowed. Please remove some existing photos to add new custom photos.`);
       return;
     }
+    const picked = Array.from(files).slice(0, max - images.length);
+    if (!picked.length) return;
+
+    setCropMode("add");
+    setPendingCropFile(picked[0]!);
+    setPendingQueue(picked.slice(1));
+  };
+
+  const handleReplacePicked = (files: FileList | null) => {
+    if (!files?.length || replaceIdx === null || uploading) return;
+    setCropMode("replace");
+    setPendingCropFile(files[0]!);
+  };
+
+  const processCroppedFile = async (croppedFile: File) => {
+    setPendingCropFile(null);
     setError(null);
     setUploading(true);
+
     try {
-      const picked = Array.from(files).slice(0, max - images.length);
-      const urls = await Promise.all(picked.map((f) => uploadDesignImage(f)));
-      const next = [...images, ...urls].slice(0, max);
-      onChange(next);
-      setActive(Math.min(images.length, next.length - 1));
-      toast.success("Reference photo uploaded to storage successfully.");
+      const url = await uploadDesignImage(croppedFile);
+      if (cropMode === "add") {
+        const next = [...images, url].slice(0, max);
+        onChange(next);
+        setActive(next.length - 1);
+        toast.success("Reference photo cropped & uploaded successfully.");
+
+        // Process remaining queue if any
+        if (pendingQueue.length > 0) {
+          const nextFile = pendingQueue[0]!;
+          setPendingQueue(pendingQueue.slice(1));
+          setPendingCropFile(nextFile);
+        }
+      } else {
+        onChange(images.map((im, i) => (i === replaceIdx ? url : im)));
+        setReplaceIdx(null);
+        toast.success("Photo replaced & uploaded successfully.");
+      }
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Image upload failed. Please try again.";
       setError(msg);
@@ -55,23 +91,6 @@ export function ImageUploader({
     }
   };
 
-  const handleReplace = async (files: FileList | null) => {
-    if (!files?.length || replaceIdx === null || uploading) return;
-    setError(null);
-    setUploading(true);
-    try {
-      const url = await uploadDesignImage(files[0]!);
-      onChange(images.map((im, i) => (i === replaceIdx ? url : im)));
-      setReplaceIdx(null);
-      toast.success("Photo replaced successfully.");
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : "Image upload failed. Please try again.";
-      setError(msg);
-      toast.error(msg);
-    } finally {
-      setUploading(false);
-    }
-  };
 
   const hero = images[active];
 
@@ -217,7 +236,7 @@ export function ImageUploader({
         multiple
         hidden
         onChange={(e) => {
-          void handleAdd(e.target.files);
+          handleAddPicked(e.target.files);
           e.target.value = "";
         }}
       />
@@ -227,16 +246,27 @@ export function ImageUploader({
         accept="image/*"
         hidden
         onChange={(e) => {
-          void handleReplace(e.target.files);
+          handleReplacePicked(e.target.files);
           e.target.value = "";
         }}
       />
 
       <Modal open={zoom} onClose={() => setZoom(false)} title="Reference photo" size="lg">
         {hero ? <img loading="lazy" src={hero} alt="Reference preview" className="w-full rounded-2xl" /> : null}
-
       </Modal>
+
+      {/* Interactive Crop & Resize Modal */}
+      <ImageCropModal
+        open={Boolean(pendingCropFile)}
+        file={pendingCropFile}
+        title={cropMode === "replace" ? "Crop & Adjust Replacement Photo" : "Crop & Adjust Reference Photo"}
+        aspectRatio={4 / 5}
+        onCropComplete={processCroppedFile}
+        onCancel={() => {
+          setPendingCropFile(null);
+          setPendingQueue([]);
+        }}
+      />
     </div>
   );
 }
-

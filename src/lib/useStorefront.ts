@@ -109,9 +109,15 @@ export function useCategories(): Category[] {
       };
     });
 
+    // Category-level total: prefer backend-computed total, then sum enriched subs
     const totalCategoryCount: number = hasLiveData
-      ? enrichedSubs.reduce((sum, s) => sum + Math.max(0, s.designCount ?? 0), 0)
+      ? (matched != null && typeof (matched as any).designCount === "number"
+          ? (matched as any).designCount
+          : matched != null && typeof (matched as any).design_count === "number"
+            ? (matched as any).design_count
+            : enrichedSubs.reduce((sum, s) => sum + Math.max(0, s.designCount ?? 0), 0))
       : -1;
+
 
     return {
       ...seedCat,

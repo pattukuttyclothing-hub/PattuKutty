@@ -1,4 +1,5 @@
 import { db } from "../config/db.js";
+import { env } from "../config/env.js";
 
 // ──────────────────────────────────────────────────────────────────────
 // Fallback data served when Supabase is not yet seeded / unreachable
@@ -209,51 +210,42 @@ export class CatalogueRepository {
         .select("*, sub_categories(*)")
         .order("position", { ascending: true });
 
-      if (error || !data || data.length === 0) {
-        return fallbackCategories.map((cat) => ({
-          ...cat,
-          subs: cat.subs.map((sub) => {
-            const count = fallbackProducts.filter(
-              (p) => p.sub === sub.id && p.is_active !== false
-            ).length;
-            return { ...sub, design_count: count, designCount: count };
-          }),
-        }));
-      }
+      if (error || !data) throw new Error("Failed to fetch categories");
 
-      const { data: activeProducts } = await db
+      // Fetch product counts grouped by sub_category_id — no join needed, most reliable approach.
+      // We select only the sub_category_id column of active products, then count client-side.
+      const { data: activeProducts, error: prodErr } = await db
         .from("products")
-        .select("sub_category_id, category_id, sub:sub_categories(slug)")
+        .select("sub_category_id")
         .eq("is_active", true);
+
+      // Build a count map: { [sub_category_uuid]: count }
+      const countMap: Record<string, number> = {};
+      if (!prodErr && activeProducts) {
+        for (const p of activeProducts) {
+          const subId = String(p.sub_category_id || "");
+          if (subId) countMap[subId] = (countMap[subId] ?? 0) + 1;
+        }
+      }
 
       return data.map((cat) => {
         const subCategories = cat.sub_categories || cat.subs || [];
         const enrichedSubs = subCategories.map((sub: Record<string, unknown>) => {
-          const subIdStr = String(sub.id || "");
-          const subSlugStr = String(sub.slug || "");
-
-          const dbCount = activeProducts
-            ? activeProducts.filter((p: Record<string, unknown>) => {
-                const subObj = p.sub as { slug?: string } | null;
-                const pSubId = String(p.sub_category_id || "");
-                const pSubSlug = subObj?.slug ? String(subObj.slug) : "";
-                return (
-                  (pSubId && (pSubId === subIdStr || pSubId === subSlugStr)) ||
-                  (pSubSlug && (pSubSlug === subSlugStr || pSubSlug === subIdStr))
-                );
-              }).length
-            : 0;
-
-          const fallbackCount = fallbackProducts.filter(
-            (p) => (p.sub === subIdStr || p.sub === subSlugStr) && p.is_active !== false
-          ).length;
-
-          const count = activeProducts ? dbCount : fallbackCount;
-
+          const subUuid = String(sub.id || "");
+          // Use the UUID-keyed count map — exact match, no slug mismatch possible
+          const count = !prodErr && activeProducts ? (countMap[subUuid] ?? 0) : 0;
           return { ...sub, design_count: count, designCount: count };
         });
+
+        const categoryTotal = enrichedSubs.reduce(
+          (sum: number, s: Record<string, unknown>) => sum + ((s.designCount as number) ?? 0),
+          0
+        );
+
         return {
           ...cat,
+          design_count: categoryTotal,
+          designCount: categoryTotal,
           subs: enrichedSubs,
           sub_categories: enrichedSubs,
         };
@@ -283,32 +275,48 @@ export class CatalogueRepository {
     } catch { return fallbackHeroBanners; }
   }
 
-  /** Uses featured_slots JOIN products (or falls back to top active database products) */
+  /** Uses featured_slots JOIN products, supplemented by uploaded active products */
   static async getFeaturedProducts() {
     try {
-      const { data, error } = await db
+      const { data: slotData } = await db
         .from("featured_slots")
         .select("sort_order, product:products(*, images:product_images(*))")
         .order("sort_order", { ascending: true })
         .limit(8);
 
-      let rawProducts: any[] = [];
-      if (!error && data && data.length > 0) {
-        rawProducts = data.map((row: any) => row.product).filter(Boolean);
-      } else {
-        // Fallback to top active products from products table in database
-        const { data: dbProducts } = await db
-          .from("products")
-          .select("*, images:product_images(*)")
-          .eq("is_active", true)
-          .order("created_at", { ascending: false })
-          .limit(8);
-        rawProducts = dbProducts ?? [];
+      let featuredFromSlots: any[] = [];
+      if (slotData && slotData.length > 0) {
+        featuredFromSlots = slotData
+          .map((row: any) => row.product)
+          .filter((p: any) => p && p.id && p.is_active !== false);
       }
 
+      // If fewer than 8 featured slots exist, supplement with remaining active catalogue products
+      let dbProducts: any[] = [];
+      if (featuredFromSlots.length < 8) {
+        const { data: catProducts } = await db
+          .from("products")
+          .select("*, images:product_images(*)")
+          .neq("is_active", false)
+          .order("created_at", { ascending: false })
+          .limit(12);
+        dbProducts = catProducts ?? [];
+      }
+
+      const rawProducts = [...featuredFromSlots, ...dbProducts];
       if (!rawProducts.length) return [];
 
-      return rawProducts.map((p: any) => {
+      // Deduplicate products strictly by product ID (preserving slot order)
+      const uniqueMap = new Map<string, any>();
+      for (const p of rawProducts) {
+        if (!p || !p.id) continue;
+        if (!uniqueMap.has(p.id)) {
+          uniqueMap.set(p.id, p);
+        }
+      }
+      const dedupedProducts = Array.from(uniqueMap.values()).slice(0, 8);
+
+      return dedupedProducts.map((p: any) => {
         const imgArr = Array.isArray(p.images)
           ? p.images
               .sort((a: any, b: any) => (a.sort_order ?? 0) - (b.sort_order ?? 0))
@@ -904,13 +912,15 @@ export class CatalogueRepository {
           variants: Array.isArray(productPayload.variants) ? productPayload.variants : [],
         };
       } else {
-        // Create fallback insert
-        return await this.createDraftProduct(productPayload);
+        const err = new Error(`Product not found to update (id: ${productId})`);
+        (err as unknown as { statusCode: number }).statusCode = 404;
+        throw err;
       }
     } catch (err) {
       throw err;
     }
   }
+
 
   static async createDraftProduct(payload: Record<string, unknown>) {
     try {
@@ -1167,8 +1177,75 @@ export class CatalogueRepository {
     }
   }
 
+  /** Deletes a video file from Supabase reels-section-videos storage bucket if it is a Supabase storage URL */
+  static async deleteSupabaseReelVideo(videoUrl: string | undefined | null) {
+    if (!videoUrl || typeof videoUrl !== "string" || !videoUrl.trim()) return;
+
+    const trimmedUrl = videoUrl.trim();
+
+    // Check if URL points to Supabase storage
+    const isSupabaseUrl =
+      trimmedUrl.includes("reels-section-videos") ||
+      trimmedUrl.includes("/storage/v1/object/") ||
+      (env.SUPABASE_URL && trimmedUrl.includes(env.SUPABASE_URL));
+
+    if (!isSupabaseUrl) {
+      // External/seed video URL - do not attempt bucket deletion
+      return;
+    }
+
+    try {
+      let pathInBucket = trimmedUrl;
+      if (trimmedUrl.includes("/reels-section-videos/")) {
+        pathInBucket = trimmedUrl.split("/reels-section-videos/").pop() || trimmedUrl;
+      } else if (trimmedUrl.startsWith("http://") || trimmedUrl.startsWith("https://")) {
+        const urlObj = new URL(trimmedUrl);
+        const parts = urlObj.pathname.split("/reels-section-videos/");
+        if (parts.length > 1) {
+          pathInBucket = parts[1]!;
+        } else {
+          pathInBucket = urlObj.pathname.split("/").pop() || trimmedUrl;
+        }
+      }
+
+      pathInBucket = pathInBucket.split("?")[0]!.replace(/^\/+/, "");
+      pathInBucket = decodeURIComponent(pathInBucket);
+
+      if (pathInBucket) {
+        console.log(`[Supabase Cleanup] Removing reel video from reels-section-videos storage: '${pathInBucket}'`);
+        const { error } = await db.storage
+          .from("reels-section-videos")
+          .remove([pathInBucket, `/${pathInBucket}`]);
+
+        if (error) {
+          console.error(`[Supabase Cleanup] Failed to remove '${pathInBucket}' from reels-section-videos:`, error.message);
+        } else {
+          console.log(`[Supabase Cleanup] Successfully deleted '${pathInBucket}' from reels-section-videos storage bucket.`);
+        }
+      }
+    } catch (err) {
+      console.error("[Supabase Cleanup] Exception during reel video cleanup:", err);
+    }
+  }
+
   static async updateReel(id: string, payload: Record<string, unknown>) {
     try {
+      const newVideoUrl = (payload.videoUrl || payload.video_url) as string | undefined;
+
+      if (newVideoUrl) {
+        const { data: existingReel } = await db
+          .from("reels")
+          .select("video_url")
+          .eq("id", id)
+          .single();
+
+        const oldVideoUrl = existingReel?.video_url;
+        if (oldVideoUrl && oldVideoUrl !== newVideoUrl) {
+          // Video is being replaced! Clean up old video file from Supabase storage bucket
+          await this.deleteSupabaseReelVideo(oldVideoUrl);
+        }
+      }
+
       const updateData: Record<string, unknown> = {};
       if (payload.title !== undefined) updateData.title = payload.title;
       if (payload.videoUrl !== undefined || payload.video_url !== undefined) {
@@ -1200,9 +1277,23 @@ export class CatalogueRepository {
 
   static async deleteReel(id: string) {
     try {
+      const { data: existingReel } = await db
+        .from("reels")
+        .select("video_url")
+        .eq("id", id)
+        .single();
+
+      const oldVideoUrl = existingReel?.video_url;
+      if (oldVideoUrl) {
+        // Clean up video file from Supabase storage bucket upon reel deletion
+        await this.deleteSupabaseReelVideo(oldVideoUrl);
+      }
+
       await db.from("reel_products").delete().eq("reel_id", id);
       await db.from("reels").delete().eq("id", id);
-    } catch { /* ignore */ }
+    } catch (err) {
+      console.error("[CatalogueRepository] deleteReel exception:", err);
+    }
     return true;
   }
 
@@ -1236,9 +1327,10 @@ export class CatalogueRepository {
     try {
       // Delete all existing featured slots
       await db.from("featured_slots").delete().neq("id", "00000000-0000-0000-0000-000000000000");
-      if (productIds.length > 0) {
+      const uniqueIds = Array.from(new Set(productIds));
+      if (uniqueIds.length > 0) {
         await db.from("featured_slots").insert(
-          productIds.map((pid, idx) => ({ product_id: pid, sort_order: idx }))
+          uniqueIds.map((pid, idx) => ({ product_id: pid, sort_order: idx }))
         );
       }
       return true;

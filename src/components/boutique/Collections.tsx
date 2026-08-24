@@ -20,9 +20,12 @@ export function Collections() {
         <div className="mt-10 grid grid-cols-2 items-stretch gap-3 sm:mt-12 sm:gap-6 lg:grid-cols-4 lg:gap-8">
           {categories.map((c, i) => {
             const designCount =
-              c.designCount ??
-              c.design_count ??
-              c.subs.reduce((sum, s) => sum + (s.designCount || 0), 0);
+              c.designCount != null
+                ? c.designCount
+                : c.design_count != null
+                  ? c.design_count
+                  : c.subs.reduce((sum, s) => sum + (s.designCount || 0), 0);
+
             return (
               <Reveal key={c.id} delay={stagger(i, 80)} className="flex h-full">
                 <Link

@@ -69,8 +69,9 @@ function ProductsPage() {
       badge: "",
       expressFromPrice: 2299,
       deliveryCharge: 49,
-      isActive: false,
+      isActive: true,
       soldOut: false,
+
       images: [],
       variants: (["S", "M", "L"] as const).map((size) => ({ size, available: true, stockQty: 1 })),
     };

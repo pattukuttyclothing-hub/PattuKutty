@@ -1,5 +1,5 @@
 import { useMemo, useRef, useState } from "react";
-import { Check, Search, Sparkles, Upload, X } from "lucide-react";
+import { Check, Search, Sparkles, Upload, X, Loader2, CheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
 import { categories, findSub, type CategoryId } from "@/data/boutique";
 import { useAdmin, type AdminProduct, type ReelItem } from "@/lib/admin-store";
@@ -39,6 +39,10 @@ export function AddReelDialog({ open, onClose, editing }: Props) {
   const [q, setQ] = useState("");
   const [busy, setBusy] = useState(false);
 
+  // Upload Overlay State
+  const [uploadState, setUploadState] = useState<"idle" | "uploading" | "success">("idle");
+  const [uploadingFileName, setUploadingFileName] = useState<string>("");
+
   // new-product draft
   const [nCat, setNCat] = useState<CategoryId>(categories[0]!.id);
   const [nSub, setNSub] = useState(categories[0]!.subs[0]!.id);
@@ -61,17 +65,25 @@ export function AddReelDialog({ open, onClose, editing }: Props) {
   const pickVideo = async (f?: File) => {
     if (!f) return;
     setBusy(true);
+    setUploadingFileName(f.name);
+    setUploadState("uploading");
     try {
       const res = await uploadReelVideo(f);
       setVideoUrl(res.url);
       if (!title) setTitle(f.name.replace(/\.[^.]+$/, ""));
-      toast.success(res.message || "Reel video uploaded to reels-section-videos storage successfully.");
+      setUploadState("success");
+      toast.success(res.message || "Reel video uploaded to storage successfully.");
+      setTimeout(() => {
+        setUploadState("idle");
+      }, 1800);
     } catch (err: any) {
+      setUploadState("idle");
       toast.error(err.message || "Failed to upload reel video to storage.");
     } finally {
       setBusy(false);
     }
   };
+
 
   const createProduct = () => {
     const s = findSub(nCat, nSub);
@@ -186,11 +198,13 @@ export function AddReelDialog({ open, onClose, editing }: Props) {
             />
             <button
               type="button"
+              disabled={busy}
               onClick={() => fileRef.current?.click()}
-              className="mt-3 w-full rounded-full border border-primary/30 bg-secondary py-2 text-[0.7rem] font-semibold tracking-[0.1em] text-primary uppercase"
+              className="mt-3 w-full rounded-full border border-primary/30 bg-secondary py-2 text-[0.7rem] font-semibold tracking-[0.1em] text-primary uppercase disabled:opacity-50"
             >
-              {busy ? "Reading…" : videoUrl ? "Replace video" : "Choose video"}
+              {busy ? "Uploading…" : videoUrl ? "Replace video" : "Choose video"}
             </button>
+
           </div>
 
           <div className="space-y-5">
@@ -439,6 +453,48 @@ export function AddReelDialog({ open, onClose, editing }: Props) {
           </div>
         </div>
       </div>
+
+      {/* Video Upload Progress & Animated Checkmark Success Modal Overlay */}
+      {uploadState !== "idle" ? (
+        <div className="fixed inset-0 z-[100] grid place-items-center bg-black/60 p-4 backdrop-blur-md animate-fade-in">
+          <div className="w-full max-w-sm overflow-hidden rounded-3xl border border-primary/30 bg-card p-6 text-center shadow-lift">
+            {uploadState === "uploading" ? (
+              <div className="flex flex-col items-center gap-4 py-4">
+                <div className="relative flex h-16 w-16 items-center justify-center rounded-full bg-primary/10">
+                  <Loader2 className="h-9 w-9 animate-spin text-primary" />
+                  <div className="absolute inset-0 rounded-full border-2 border-primary border-t-transparent animate-spin" />
+                </div>
+                <div>
+                  <h3 className="font-display text-lg font-semibold text-foreground">
+                    Uploading Reel Video
+                  </h3>
+                  <p className="mt-1 text-xs text-muted-foreground truncate max-w-[260px] mx-auto">
+                    {uploadingFileName || "Processing video..."}
+                  </p>
+                  <p className="mt-2 text-[0.7rem] font-medium text-primary bg-primary/10 px-3.5 py-1 rounded-full inline-block">
+                    Uploading to storage... Please wait
+                  </p>
+                </div>
+              </div>
+            ) : (
+              <div className="flex flex-col items-center gap-4 py-4 animate-in zoom-in-95 duration-300">
+                <div className="relative flex h-16 w-16 items-center justify-center rounded-full bg-emerald-500/15 border-2 border-emerald-500/30">
+                  <CheckCircle2 className="h-10 w-10 text-emerald-500 animate-in zoom-in-75 duration-300" />
+                </div>
+                <div>
+                  <h3 className="font-display text-lg font-semibold text-foreground">
+                    Video Uploaded Successfully!
+                  </h3>
+                  <p className="mt-1 text-xs text-emerald-600 font-medium">
+                    Reel video is saved to storage and ready
+                  </p>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      ) : null}
     </div>
   );
+
 }

@@ -13,6 +13,7 @@ import {
 } from "@/data/boutique";
 import { fulfilmentOptions, type FulfilmentId } from "@/lib/requests";
 import { uploadDesignImage } from "@/lib/storage";
+import { ImageCropModal } from "@/components/shared/ImageCropModal";
 
 export type Measurements = Record<string, number | undefined>;
 
@@ -120,9 +121,26 @@ export function SpecForm({
   const colourFile = useRef<HTMLInputElement>(null);
   const [uploadingColour, setUploadingColour] = useState(false);
   const [colourError, setColourError] = useState<string | null>(null);
+  const [pendingColourCropFile, setPendingColourCropFile] = useState<File | null>(null);
   const [customSizeInput, setCustomSizeInput] = useState(
     !sizeOptions.includes(spec.size) ? spec.size : "",
   );
+
+  const processCroppedColourImage = async (croppedFile: File) => {
+    setPendingColourCropFile(null);
+    setColourError(null);
+    setUploadingColour(true);
+    try {
+      const url = await uploadDesignImage(croppedFile);
+      set({ colourImage: url, colour: "Custom shade (uploaded)" });
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Colour upload failed.";
+      setColourError(msg);
+    } finally {
+      setUploadingColour(false);
+    }
+  };
+
 
   const set = (patch: Partial<Spec>) => onChange({ ...spec, ...patch });
 
@@ -257,26 +275,26 @@ export function SpecForm({
               type="file"
               accept="image/*"
               hidden
-              onChange={async (e) => {
+              onChange={(e) => {
                 const file = e.target.files?.[0];
                 e.target.value = "";
                 if (!file) return;
-                setColourError(null);
-                setUploadingColour(true);
-                try {
-                  const url = await uploadDesignImage(file);
-                  set({ colourImage: url, colour: "Custom shade (uploaded)" });
-                } catch (err: unknown) {
-                  const msg = err instanceof Error ? err.message : "Colour upload failed.";
-                  setColourError(msg);
-                } finally {
-                  setUploadingColour(false);
-                }
+                setPendingColourCropFile(file);
               }}
             />
           </div>
           {colourError ? <p className="mt-1 text-xs text-destructive">{colourError}</p> : null}
         </Field>
+
+        <ImageCropModal
+          open={Boolean(pendingColourCropFile)}
+          file={pendingColourCropFile}
+          title="Crop & Adjust Custom Shade Photo"
+          aspectRatio={1}
+          onCropComplete={processCroppedColourImage}
+          onCancel={() => setPendingColourCropFile(null)}
+        />
+
 
         <Field label="Design details">
           <textarea

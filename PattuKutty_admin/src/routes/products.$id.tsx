@@ -15,7 +15,9 @@ import {
 } from "@/data/boutique";
 import { useAdmin, totalStock, isProductSoldOut, type AdminProduct } from "@/lib/admin-store";
 import { createProduct, updateProduct, uploadProductImage, deleteProductImage, fetchProducts } from "@/lib/api/catalogue";
+import { ImageCropModal } from "@/components/shared/ImageCropModal";
 import { inr } from "@/lib/format";
+
 
 export const Route = createFileRoute("/products/$id")({
   head: () => ({
@@ -60,27 +62,18 @@ function ProductEditor() {
     [id],
   );
 
-  const addFromDevice = async (files: FileList | null) => {
-    if (!files?.length) return;
-    setUploading(true);
-    try {
-      const fileArray = Array.from(files);
-      const uploadedUrls: string[] = [];
-      for (const file of fileArray) {
-        const res = await uploadProductImage(file);
-        if (res?.url) uploadedUrls.push(res.url);
-      }
-      setDraft((d) => (d ? { ...d, images: [...d.images, ...uploadedUrls] } : d));
-      toast.success("Photos uploaded to Supabase storage successfully.");
-    } catch (err: any) {
-      const errMsg = err?.message || "Please try again.";
-      toast.error("Image upload failed: " + errMsg);
-      if (errMsg.includes("session has expired") || errMsg.includes("Unauthorized")) {
-        void navigate({ to: "/login" });
-      }
-    } finally {
-      setUploading(false);
-    }
+  // Crop State for Admin
+  const [pendingAdminCropFile, setPendingAdminCropFile] = useState<File | null>(null);
+  const [adminCropMode, setAdminCropMode] = useState<"add" | "replace">("add");
+  const [adminCropQueue, setAdminCropQueue] = useState<File[]>([]);
+  const [targetReplaceUrl, setTargetReplaceUrl] = useState<string | null>(null);
+
+  const addFromDevice = (files: FileList | null) => {
+    if (!files?.length || uploading) return;
+    const picked = Array.from(files);
+    setAdminCropMode("add");
+    setPendingAdminCropFile(picked[0]!);
+    setAdminCropQueue(picked.slice(1));
   };
 
   const handleConfirmDeleteImage = async () => {
@@ -110,48 +103,90 @@ function ProductEditor() {
     replacementFileInputRef.current?.click();
   };
 
-  const handleReplacementFileSelected = async (files: FileList | null) => {
-    if (!files?.length || !updateConfirmImage) return;
+  const handleReplacementFileSelected = (files: FileList | null) => {
+    if (!files?.length || !updateConfirmImage || uploading) return;
     const file = files[0];
     if (!file) return;
-    const targetUrl = updateConfirmImage;
+    setTargetReplaceUrl(updateConfirmImage);
+    setAdminCropMode("replace");
+    setPendingAdminCropFile(file);
+  };
+
+  const processCroppedAdminImage = async (croppedFile: File) => {
+    setPendingAdminCropFile(null);
     setUploading(true);
     try {
-      // Upload new image
-      const res = await uploadProductImage(file);
+      const res = await uploadProductImage(croppedFile);
       if (res?.url) {
-        // Delete old image
-        try {
-          await deleteProductImage(targetUrl, isCreateMode ? undefined : draft?.id);
-        } catch (delErr) {
-          console.warn("Failed to delete old image during replacement:", delErr);
+        if (adminCropMode === "add") {
+          setDraft((d) => (d ? { ...d, images: [...d.images, res.url] } : d));
+          toast.success("Product photo cropped & uploaded to storage successfully.");
+
+          // Process next file in queue if any
+          if (adminCropQueue.length > 0) {
+            const next = adminCropQueue[0]!;
+            setAdminCropQueue(adminCropQueue.slice(1));
+            setPendingAdminCropFile(next);
+          }
+        } else if (adminCropMode === "replace" && targetReplaceUrl) {
+          try {
+            await deleteProductImage(targetReplaceUrl, isCreateMode ? undefined : draft?.id);
+          } catch (delErr) {
+            console.warn("Failed to delete old image during replacement:", delErr);
+          }
+          setDraft((d) =>
+            d
+              ? {
+                  ...d,
+                  images: (d.images || []).map((img) => (img === targetReplaceUrl ? res.url : img)),
+                }
+              : d
+          );
+          toast.success("Product image replaced & uploaded successfully.");
+          setTargetReplaceUrl(null);
+          setUpdateConfirmImage(null);
         }
-        // Swap targetUrl with new url in images array to preserve order
-        setDraft((d) =>
-          d
-            ? {
-                ...d,
-                images: (d.images || []).map((img) => (img === targetUrl ? res.url : img)),
-              }
-            : d
-        );
-        toast.success("Product image updated successfully.");
       }
     } catch (err: any) {
       const errMsg = err?.message || "Please try again.";
-      toast.error("Replacement upload failed: " + errMsg);
+      toast.error("Image upload failed: " + errMsg);
       if (errMsg.includes("session has expired") || errMsg.includes("Unauthorized")) {
         void navigate({ to: "/login" });
       }
     } finally {
       setUploading(false);
-      setUpdateConfirmImage(null);
     }
   };
 
+
   useEffect(() => {
-    if (stored && !draft) setDraft(stored);
-  }, [stored, draft]);
+    if (stored && !draft) {
+      setDraft(stored);
+    } else if (!draft && isCreateMode) {
+      setDraft({
+        id: id || `design-new-${Date.now().toString(36)}`,
+        name: "New Design",
+        description: "Custom design stitched to exact measurements.",
+        category: "blouses",
+        sub: "bridal-blouses",
+        basePrice: 1999,
+        mrp: 2760,
+        blurb: "Handcrafted boutique design",
+        badge: "",
+        expressFromPrice: 2299,
+        deliveryCharge: 49,
+        isActive: true,
+        soldOut: false,
+        images: [],
+        variants: [
+          { size: "S", available: true, stockQty: 1 },
+          { size: "M", available: true, stockQty: 1 },
+          { size: "L", available: true, stockQty: 1 },
+        ],
+      });
+    }
+  }, [stored, draft, isCreateMode, id]);
+
 
   const sizes = useMemo(
     () => (draft?.variants ? draft.variants.map((v) => v.size) : []),
@@ -274,15 +309,21 @@ function ProductEditor() {
       const mergedProduct: AdminProduct = {
         ...draft,
         ...result,
+        id: result?.id || draft.id,
         category: result?.category || draft.category,
         sub: result?.sub || draft.sub,
-        images: Array.isArray(result?.images) && result.images.length > 0 ? result.images : draft.images,
-        variants: Array.isArray(result?.variants) && result.variants.length > 0 ? result.variants : draft.variants,
+        images: Array.isArray(result?.images) ? result.images : (draft.images || []),
+        variants: Array.isArray(result?.variants) && result.variants.length > 0 ? result.variants : (draft.variants || []),
       };
 
       saveProduct(mergedProduct);
       setDraft(mergedProduct);
-      setSuccessMsg(isCreateMode ? "Products uploaded successfully" : "Design updated successfully");
+
+      if (isCreateMode && result?.id) {
+        void navigate({ to: "/products/$id", params: { id: result.id }, replace: true });
+      }
+
+      setSuccessMsg(isCreateMode ? "Product created successfully" : "Design updated successfully");
       setShowSuccessModal(true);
     } catch (err: any) {
       toast.error("Failed to save product: " + (err?.message || "Please check your network connection"));
@@ -290,6 +331,7 @@ function ProductEditor() {
       setSaving(false);
     }
   };
+
 
   const cat = findCategory(draft.category);
 
@@ -799,7 +841,22 @@ function ProductEditor() {
           </div>
         </div>
       ) : null}
+
+      {/* Interactive Admin Product Image Crop & Adjust Modal */}
+      <ImageCropModal
+        open={Boolean(pendingAdminCropFile)}
+        file={pendingAdminCropFile}
+        title={adminCropMode === "replace" ? "Crop & Adjust Replacement Photo" : "Crop & Adjust Product Photo"}
+        aspectRatio={4 / 5}
+        onCropComplete={processCroppedAdminImage}
+        onCancel={() => {
+          setPendingAdminCropFile(null);
+          setAdminCropQueue([]);
+          setTargetReplaceUrl(null);
+        }}
+      />
     </AdminShell>
+
   );
 }
 

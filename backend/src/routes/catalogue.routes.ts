@@ -36,7 +36,7 @@ catalogueRouter.get("/storefront/hero-banners", async (_req, res, next) => {
 catalogueRouter.get("/storefront/featured", async (_req, res, next) => {
   try {
     const data = await CatalogueService.getFeaturedProducts();
-    res.set("Cache-Control", "public, max-age=120, stale-while-revalidate=600");
+    res.set("Cache-Control", "no-cache, no-store, must-revalidate");
     res.json({ success: true, data });
   } catch (err) { next(err); }
 });

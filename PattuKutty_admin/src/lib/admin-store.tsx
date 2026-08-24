@@ -470,6 +470,7 @@ type Value = {
   deleteReel: (id: string) => void;
   moveReel: (id: string, dir: -1 | 1) => void;
   setReels: (list: ReelItem[]) => void;
+  productsLoading: boolean;
   setFeaturedIds: (ids: string[]) => void;
 };
 
@@ -500,6 +501,7 @@ function usePersisted<T>(key: string, seed: () => T) {
 
 export function AdminStoreProvider({ children }: { children: ReactNode }) {
   const [products, setProducts] = useState<AdminProduct[]>([]);
+  const [productsLoading, setProductsLoading] = useState(true);
   const [requests, setRequests] = useState<CustomRequest[]>([]);
   const [requestsLoading, setRequestsLoading] = useState(true);
   const [requestsError, setRequestsError] = useState<string | null>(null);
@@ -557,6 +559,9 @@ export function AdminStoreProvider({ children }: { children: ReactNode }) {
         })
         .catch(() => {
           /* Keep current store state on network failure */
+        })
+        .finally(() => {
+          if (isMounted) setProductsLoading(false);
         });
     });
 
@@ -597,12 +602,10 @@ export function AdminStoreProvider({ children }: { children: ReactNode }) {
         const exists = list.some((x) => x.id === p.id);
         return exists ? list.map((x) => (x.id === p.id ? p : x)) : [p, ...list];
       });
-      import("./api/catalogue").then(({ updateProduct }) => {
-        updateProduct(p.id, p).catch(() => {});
-      });
     },
     [setProducts],
   );
+
   const addProduct = useCallback(
     (p: AdminProduct) => {
       setProducts((l) => [p, ...l]);
@@ -783,6 +786,7 @@ export function AdminStoreProvider({ children }: { children: ReactNode }) {
   const value = useMemo<Value>(
     () => ({
       products,
+      productsLoading,
       requests,
       requestsLoading,
       requestsError,
@@ -808,6 +812,7 @@ export function AdminStoreProvider({ children }: { children: ReactNode }) {
     }),
     [
       products,
+      productsLoading,
       requests,
       requestsLoading,
       requestsError,
@@ -838,6 +843,7 @@ export function useAdmin(): Value {
   if (!v) {
     return {
       products: [],
+      productsLoading: false,
       requests: [],
       requestsLoading: false,
       requestsError: null,
