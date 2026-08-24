@@ -75,6 +75,32 @@ export async function requireAuth(
   }
 }
 
+export async function optionalAuth(
+  req: AuthenticatedRequest,
+  _res: Response,
+  next: NextFunction
+): Promise<void> {
+  const authHeader = req.headers.authorization;
+  if (!authHeader || !authHeader.startsWith("Bearer ")) {
+    return next();
+  }
+
+  const token = authHeader.split(" ")[1];
+  try {
+    const { data } = await db.auth.getUser(token);
+    if (data?.user) {
+      req.user = {
+        id: data.user.id,
+        email: data.user.email || "",
+        role: "customer",
+      };
+    }
+  } catch {
+    /* ignore optional token decode failure */
+  }
+  next();
+}
+
 export function requireAdmin(
   req: AuthenticatedRequest,
   res: Response,

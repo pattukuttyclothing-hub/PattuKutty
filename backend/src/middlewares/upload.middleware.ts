@@ -59,13 +59,28 @@ export async function parseAndValidateUpload(
 
   let filePayload: FilePayload | null = null;
 
-  // 1. Direct Buffer in req.body (from express.raw middleware)
-  if (Buffer.isBuffer(req.body) && req.body.length > 0) {
-    filePayload = {
-      buffer: req.body,
-      fileName: headerFileName || `file_${Date.now()}`,
-      mimeType: contentType.split(";")[0].trim().toLowerCase(),
-    };
+  // 1. Direct Buffer in req.body or req.rawBody (from express.raw middleware or Worker)
+  const existingBuffer = Buffer.isBuffer(req.body) && req.body.length > 0
+    ? req.body
+    : Buffer.isBuffer((req as any).rawBody) && (req as any).rawBody.length > 0
+    ? (req as any).rawBody
+    : null;
+
+  if (existingBuffer) {
+    if (contentType.includes("multipart/form-data")) {
+      const boundaryMatch = contentType.match(/boundary=(?:"([^"]+)"|([^;]+))/i);
+      const boundary = boundaryMatch ? boundaryMatch[1] || boundaryMatch[2] : null;
+      if (boundary) {
+        filePayload = extractMultipartFile(existingBuffer, boundary);
+      }
+    }
+    if (!filePayload) {
+      filePayload = {
+        buffer: existingBuffer,
+        fileName: headerFileName || `file_${Date.now()}`,
+        mimeType: contentType.split(";")[0].trim().toLowerCase(),
+      };
+    }
   }
 
   // 2. Base64 payload in JSON body
@@ -79,7 +94,7 @@ export async function parseAndValidateUpload(
     };
   }
 
-  // 3. Raw Stream chunks if req body was not populated by middleware
+  // 3. Raw Stream chunks if req body was not populated by middleware or rawBody
   if (!filePayload) {
     const chunks: Buffer[] = [];
     try {

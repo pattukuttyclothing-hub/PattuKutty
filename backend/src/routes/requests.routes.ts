@@ -1,11 +1,11 @@
 import { Router } from "express";
 import { RequestsController } from "../controllers/requests.controller.js";
-import { requireAuth, requireAdmin } from "../middlewares/auth.middleware.js";
+import { requireAuth, requireAdmin, optionalAuth } from "../middlewares/auth.middleware.js";
 
 const router = Router();
 
 // Customer Request Routes
-router.post("/requests/upload-media", requireAuth, RequestsController.uploadMedia);
+router.post("/requests/upload-media", optionalAuth, RequestsController.uploadMedia);
 router.post("/requests", requireAuth, RequestsController.submitCustomRequest);
 router.get("/requests", requireAuth, RequestsController.getCustomerRequests);
 router.get("/requests/:id", requireAuth, RequestsController.getRequestById);
