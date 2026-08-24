@@ -34,5 +34,4 @@ AGENTS.md
 *.sw?
 specs
 scripts
-package-lock.json
 docs
