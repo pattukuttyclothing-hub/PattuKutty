@@ -7,6 +7,7 @@
     "dev": "vite dev",
     "build": "node scripts/generate-sitemap.js && vite build",
     "build:dev": "vite build --mode development",
+    "deploy": "npm run build && wrangler deploy",
     "preview": "vite preview",
     "lint": "eslint .",
     "format": "prettier --write .",
