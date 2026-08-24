@@ -1,7 +1,11 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
-  "name": "butterflies-backend",
+  "name": "pattukutty-backend",
   "compatibility_date": "2026-08-24",
   "compatibility_flags": ["nodejs_compat"],
-  "main": "src/worker.ts"
+  "main": "src/worker.ts",
+  "alias": {
+    "iconv-lite": "./src/shims/iconv-lite.ts",
+    "iconv-lite/lib/index.js": "./src/shims/iconv-lite.ts"
+  }
 }
