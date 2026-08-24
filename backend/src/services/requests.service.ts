@@ -388,13 +388,26 @@ export class RequestsService {
     filePayload: { buffer: Buffer; fileName: string; mimeType: string },
     bucketType: "image" | "audio" = "image"
   ): Promise<string> {
-    const bucketName = bucketType === "audio" ? "custom-design-request-audio" : "custom-design-request-images";
+    let finalMime = (filePayload.mimeType || "").split(";")[0].trim().toLowerCase();
+    if (bucketType === "audio" || finalMime.startsWith("audio/")) {
+      if (finalMime.includes("mp4") || finalMime.includes("m4a") || finalMime.includes("aac")) {
+        finalMime = "audio/mp4";
+      } else if (finalMime.includes("mp3") || finalMime.includes("mpeg")) {
+        finalMime = "audio/mpeg";
+      } else if (finalMime.includes("wav")) {
+        finalMime = "audio/wav";
+      } else if (finalMime.includes("ogg")) {
+        finalMime = "audio/ogg";
+      } else {
+        finalMime = "audio/webm";
+      }
+    }
 
-    const extMatch = filePayload.fileName.match(/\.(png|jpe?g|webp|gif|svg|webm|mp3|wav|ogg|m4a)$/i);
+    const extMatch = filePayload.fileName.match(/\.(png|jpe?g|webp|gif|svg|webm|mp3|wav|ogg|m4a|mp4)$/i);
     const ext = extMatch
       ? extMatch[0].toLowerCase()
       : bucketType === "audio"
-      ? ".webm"
+      ? (finalMime.includes("mp4") ? ".m4a" : finalMime.includes("mpeg") ? ".mp3" : finalMime.includes("wav") ? ".wav" : ".webm")
       : filePayload.mimeType.includes("png")
       ? ".png"
       : filePayload.mimeType.includes("webp")
@@ -404,7 +417,7 @@ export class RequestsService {
     const pathInBucket = `${bucketType === "audio" ? "voice" : "designs"}/${Date.now()}_${randomUUID().slice(0, 8)}${ext}`;
 
     const { error } = await db.storage.from(bucketName).upload(pathInBucket, filePayload.buffer, {
-      contentType: filePayload.mimeType,
+      contentType: finalMime,
       upsert: true,
     });
 

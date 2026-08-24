@@ -91,7 +91,7 @@ export function VoiceNote({
         )}
         {value ? (
           <>
-            <audio src={value} controls className="h-9 max-w-[13rem]" />
+            <audio src={value} controls preload="metadata" className="h-9 max-w-[13rem] outline-none" />
             <button
               type="button"
               aria-label="Delete voice note"

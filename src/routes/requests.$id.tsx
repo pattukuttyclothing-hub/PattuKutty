@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { MessageCircle, ShoppingBag, XCircle, Edit3, Sparkles } from "lucide-react";
+import { MessageCircle, ShoppingBag, XCircle, Edit3, Sparkles, Mic } from "lucide-react";
 import { PageShell, PageHeader } from "@/components/shared/Page";
 import { StatusBadge, RotatedStampBadge } from "@/components/shared/Badge";
 import { ConfirmDialog, InfoTip } from "@/components/shared/Dialogs";
@@ -428,7 +428,14 @@ function RequestDetail() {
                 </div>
               ) : null}
 
-              {req.voiceNote ? <audio src={req.voiceNote} controls className="w-full" /> : null}
+              {req.voiceNote ? (
+                <div className="mt-3 rounded-2xl border border-border/80 bg-secondary/40 p-3 shadow-xs">
+                  <span className="text-xs font-semibold text-foreground flex items-center gap-1.5 mb-2">
+                    <Mic className="h-4 w-4 text-primary" /> Voice Note Recording
+                  </span>
+                  <audio src={req.voiceNote} controls preload="metadata" className="w-full h-10 outline-none rounded-lg" />
+                </div>
+              ) : null}
 
               {/* actions */}
               <div className="space-y-3 pt-1">

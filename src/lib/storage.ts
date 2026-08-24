@@ -73,7 +73,16 @@ export async function uploadVoiceAudio(file: Blob): Promise<string> {
   const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:3001/api/v1";
 
   const formData = new FormData();
-  const ext = file.type.includes("wav") ? "wav" : file.type.includes("mp3") ? "mp3" : "webm";
+  const type = (file.type || "").toLowerCase();
+  const ext = type.includes("mp4") || type.includes("m4a") || type.includes("aac")
+    ? "m4a"
+    : type.includes("mp3") || type.includes("mpeg")
+    ? "mp3"
+    : type.includes("wav")
+    ? "wav"
+    : type.includes("ogg")
+    ? "ogg"
+    : "webm";
   const fileName = `voice_${Date.now()}.${ext}`;
   formData.append("file", file, fileName);
 

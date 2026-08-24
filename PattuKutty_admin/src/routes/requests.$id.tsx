@@ -565,7 +565,7 @@ function RequestDetail() {
                 <p className="inline-flex items-center gap-2 text-xs font-semibold text-primary">
                   <Mic className="h-4 w-4" /> Customer Voice Note
                 </p>
-                <audio controls src={r.voiceNote} className="mt-2.5 w-full outline-none" />
+                <audio controls preload="metadata" src={r.voiceNote} className="mt-2.5 w-full outline-none" />
               </div>
             ) : null}
 
