@@ -3,7 +3,7 @@ import { z } from "zod";
 
 dotenv.config();
 
-const envSchema = z.object({
+export const envSchema = z.object({
   PORT: z.string().default("3001"),
   NODE_ENV: z.enum(["development", "production", "test"]).default("development"),
   ALLOWED_ORIGINS: z.string().optional(),
@@ -53,5 +53,21 @@ const envSchema = z.object({
   BLUEDART_CUSTOMER_CODE: z.string().optional(),             // assigned by Blue Dart
 });
 
-export const env = envSchema.parse(process.env);
+export type EnvType = z.infer<typeof envSchema>;
+
+export function getParsedEnv(): EnvType {
+  const result = envSchema.safeParse(process.env);
+  if (result.success) {
+    return result.data;
+  }
+  return envSchema.parse({});
+}
+
+export const env: EnvType = new Proxy({} as EnvType, {
+  get(_target, prop: string | symbol) {
+    const currentEnv = getParsedEnv();
+    return (currentEnv as Record<string, unknown>)[prop as string];
+  },
+});
+
 

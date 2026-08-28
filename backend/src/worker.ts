@@ -8,12 +8,13 @@ import app from "./server.js";
 function applyWorkerEnv(env: Record<string, unknown>) {
   if (env && typeof env === "object") {
     for (const [key, value] of Object.entries(env)) {
-      if (typeof value === "string" && !process.env[key]) {
+      if (typeof value === "string") {
         process.env[key] = value;
       }
     }
   }
 }
+
 
 export default {
   async fetch(request: Request, env: Record<string, unknown>, _ctx: unknown): Promise<Response> {

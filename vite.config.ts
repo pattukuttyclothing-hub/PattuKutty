@@ -7,9 +7,26 @@
 import { defineConfig } from "@lovable.dev/vite-tanstack-config";
 
 export default defineConfig({
+  vite: {
+    build: {
+      rollupOptions: {
+        output: {
+          manualChunks(id: string) {
+            if (id.includes("node_modules")) {
+              if (id.includes("@radix-ui")) return "vendor-radix";
+              if (id.includes("recharts")) return "vendor-recharts";
+              if (id.includes("@supabase")) return "vendor-supabase";
+              if (id.includes("lucide-react")) return "vendor-lucide";
+            }
+          },
+        },
+      },
+    },
+  },
   tanstackStart: {
     // Redirect TanStack Start's bundled server entry to src/server.ts (our SSR error wrapper).
     // nitro/vite builds from this
     server: { entry: "server" },
   },
 });
+
