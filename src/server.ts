@@ -1,7 +1,28 @@
 import "./lib/error-capture";
 
 import { consumeLastCapturedError } from "./lib/error-capture";
-import { renderErrorPage } from "./lib/error-page";
+import { renderErrorPage, type ErrorDetail } from "./lib/error-page";
+
+/** Extract a human-useful ErrorDetail from any thrown value */
+function extractDetail(error: unknown, component: string): ErrorDetail {
+  if (error instanceof Error) {
+    const msg = error.message || String(error);
+    // Detect Supabase / env config errors
+    if (msg.includes("Missing Supabase environment variable")) {
+      return {
+        component: "SupabaseClient",
+        message: msg,
+        hint: "VITE_SUPABASE_URL and VITE_SUPABASE_PUBLISHABLE_KEY must be set in Cloudflare Build Variables.",
+      };
+    }
+    // Detect favicon / asset 404 masking as 500
+    if (msg.toLowerCase().includes("favicon") || msg.toLowerCase().includes("asset")) {
+      return { component: "AssetLoader", message: msg, hint: "A static asset (favicon/image) failed to load. Check /public and R2 bucket config." };
+    }
+    return { component, message: msg };
+  }
+  return { component, message: String(error) };
+}
 
 type ServerEntry = {
   fetch: (request: Request, env: unknown, ctx: unknown) => Promise<Response> | Response;
@@ -28,8 +49,13 @@ async function normalizeCatastrophicSsrResponse(response: Response): Promise<Res
   const body = await response.clone().text();
   if (!isH3SwallowedErrorBody(body)) return response;
 
-  console.error(consumeLastCapturedError() ?? new Error(`h3 swallowed SSR error: ${body}`));
-  return new Response(renderErrorPage(), {
+  const captured = consumeLastCapturedError();
+  const detail: ErrorDetail = captured instanceof Error
+    ? extractDetail(captured, "SSR / h3 Handler")
+    : { component: "SSR / h3 Handler", message: `h3 swallowed SSR error: ${body}`, hint: "A provider (Auth, Cart, Orders, Wishlist, Requests) threw during server-side render." };
+
+  console.error(captured ?? new Error(`h3 swallowed SSR error: ${body}`));
+  return new Response(renderErrorPage(detail), {
     status: 500,
     headers: { "content-type": "text/html; charset=utf-8" },
   });
@@ -62,7 +88,7 @@ export default {
       return await normalizeCatastrophicSsrResponse(response);
     } catch (error: any) {
       console.error("Worker fetch exception:", error?.stack || error?.message || error);
-      return new Response(renderErrorPage(), {
+      return new Response(renderErrorPage(extractDetail(error, "Worker / SSR Entry")), {
         status: 500,
         headers: { "content-type": "text/html; charset=utf-8" },
       });

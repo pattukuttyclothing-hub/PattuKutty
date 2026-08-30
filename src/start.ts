@@ -1,6 +1,6 @@
 import { createStart, createCsrfMiddleware, createMiddleware } from "@tanstack/react-start";
 
-import { renderErrorPage } from "./lib/error-page";
+import { renderErrorPage, type ErrorDetail } from "./lib/error-page";
 import { attachSupabaseAuth } from "@/integrations/supabase/auth-attacher";
 
 const errorMiddleware = createMiddleware().server(async ({ next }) => {
@@ -11,7 +11,14 @@ const errorMiddleware = createMiddleware().server(async ({ next }) => {
       throw error;
     }
     console.error(error);
-    return new Response(renderErrorPage(), {
+    const detail: ErrorDetail = error instanceof Error
+      ? {
+          component: "RequestMiddleware / ServerFn",
+          message: error.message,
+          hint: "A server function or middleware threw an unhandled error. Check AuthProvider, CartProvider, or API route.",
+        }
+      : { component: "RequestMiddleware", message: String(error) };
+    return new Response(renderErrorPage(detail), {
       status: 500,
       headers: { "content-type": "text/html; charset=utf-8" },
     });

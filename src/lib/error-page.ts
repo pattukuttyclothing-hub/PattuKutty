@@ -1,4 +1,31 @@
-export function renderErrorPage(): string {
+export interface ErrorDetail {
+  /** Short label for which layer/component failed, e.g. "AuthProvider", "SupabaseClient", "SSR" */
+  component?: string;
+  /** The raw error message */
+  message?: string;
+  /** A plain-English hint for the developer / admin */
+  hint?: string;
+}
+
+export function renderErrorPage(detail?: ErrorDetail): string {
+  const diagnosticBlock = detail
+    ? `
+      <div class="diag">
+        <p class="diag-title">🔍 Diagnostic Info</p>
+        ${detail.component ? `<div class="diag-row"><span class="diag-label">Component</span><code>${esc(detail.component)}</code></div>` : ''}
+        ${detail.message ? `<div class="diag-row"><span class="diag-label">Error</span><code class="diag-err">${esc(detail.message)}</code></div>` : ''}
+        ${detail.hint ? `<div class="diag-row"><span class="diag-label">Hint</span><span class="diag-hint">${esc(detail.hint)}</span></div>` : ''}
+      </div>`
+    : '';
+
+  return render(diagnosticBlock);
+}
+
+function esc(s: string): string {
+  return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+function render(diagnosticBlock: string): string {
   return `<!doctype html>
 <html lang="en">
   <head>
@@ -14,7 +41,7 @@ export function renderErrorPage(): string {
       body { font: 15px/1.6 "Jost", system-ui, -apple-system, sans-serif; background: var(--cream); color: var(--ink); display: grid; place-items: center; min-height: 100svh; margin: 0; padding: 1.5rem; }
       body::before { content:""; position:fixed; inset:0; pointer-events:none; opacity:.5;
         background-image: repeating-linear-gradient(45deg, rgba(149,26,31,.03) 0 1px, transparent 1px 6px), repeating-linear-gradient(-45deg, rgba(201,162,76,.04) 0 1px, transparent 1px 7px); }
-      .card { position: relative; max-width: 30rem; width: 100%; text-align: center; padding: 2.75rem 2rem; background: #fff; border: 1px solid rgba(201,162,76,.35); border-radius: 1.5rem; box-shadow: 0 26px 60px -28px rgba(107,14,21,.35); animation: rise .7s cubic-bezier(.22,1,.36,1) both; }
+      .card { position: relative; max-width: 34rem; width: 100%; text-align: center; padding: 2.75rem 2rem; background: #fff; border: 1px solid rgba(201,162,76,.35); border-radius: 1.5rem; box-shadow: 0 26px 60px -28px rgba(107,14,21,.35); animation: rise .7s cubic-bezier(.22,1,.36,1) both; }
       .seal { width: 3.5rem; height: 3.5rem; margin: 0 auto 1.25rem; display: grid; place-items: center; border-radius: 999px; background: rgba(201,162,76,.15); border: 1px solid rgba(201,162,76,.5); animation: pulse 3.2s ease-in-out infinite; }
       .seal svg { width: 1.5rem; height: 1.5rem; stroke: var(--maroon); }
       .eyebrow { font-size: .62rem; letter-spacing: .28em; text-transform: uppercase; color: var(--maroon); margin: 0 0 .6rem; }
@@ -30,6 +57,14 @@ export function renderErrorPage(): string {
       @keyframes rise { from { opacity: 0; transform: translateY(22px); } to { opacity: 1; transform: none; } }
       @keyframes pulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.07); } }
       @media (prefers-reduced-motion: reduce) { *, *::before { animation: none !important; transition: none !important; } }
+      /* ── Diagnostic sub-message panel ── */
+      .diag { margin: 1.25rem auto 0; text-align: left; background: #fdf6f0; border: 1px solid rgba(149,26,31,.18); border-radius: .85rem; padding: .9rem 1.1rem; font-size: .75rem; max-width: 30rem; }
+      .diag-title { font-weight: 600; color: var(--maroon); margin: 0 0 .5rem; letter-spacing: .05em; font-size: .7rem; text-transform: uppercase; }
+      .diag-row { display: flex; gap: .5rem; align-items: flex-start; margin-bottom: .3rem; flex-wrap: wrap; }
+      .diag-label { min-width: 5rem; font-weight: 600; color: rgba(58,26,28,.55); flex-shrink: 0; }
+      code { background: rgba(149,26,31,.07); padding: .1rem .35rem; border-radius: .3rem; font-size: .72rem; word-break: break-all; color: var(--deep); font-family: ui-monospace, monospace; }
+      .diag-err { color: #b91c1c; background: rgba(185,28,28,.08); }
+      .diag-hint { color: rgba(58,26,28,.7); font-style: italic; }
     </style>
   </head>
   <body>
@@ -41,6 +76,7 @@ export function renderErrorPage(): string {
       <h1>This page didn't load</h1>
       <div class="rule"></div>
       <p>Something went wrong on our end. You can try refreshing, or head back to the boutique.</p>
+      ${diagnosticBlock}
       <div class="actions">
         <button class="primary" onclick="location.reload()">Try again</button>
         <a class="secondary" href="/">Go home</a>

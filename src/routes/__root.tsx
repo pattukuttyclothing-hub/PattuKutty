@@ -48,15 +48,66 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
     reportLovableError(error, { boundary: "tanstack_root_error_component" });
   }, [error]);
 
+  // Derive a helpful sub-message from the error
+  const msg = error?.message || String(error);
+  let component = "App";
+  let hint: string | null = null;
+
+  if (msg.includes("Missing Supabase environment variable") || msg.includes("SUPABASE")) {
+    component = "SupabaseClient";
+    hint = "VITE_SUPABASE_URL and VITE_SUPABASE_PUBLISHABLE_KEY must be set in your .env / Cloudflare Build Variables.";
+  } else if (msg.includes("useAuth") || msg.includes("AuthProvider")) {
+    component = "AuthProvider";
+    hint = "The Auth context was used outside its provider. Ensure <AuthProvider> wraps the component tree.";
+  } else if (msg.includes("useCart") || msg.includes("CartProvider")) {
+    component = "CartProvider";
+    hint = "The Cart context was used outside its provider.";
+  } else if (msg.includes("useWishlist") || msg.includes("WishlistProvider")) {
+    component = "WishlistProvider";
+    hint = "The Wishlist context was used outside its provider.";
+  } else if (msg.includes("useRequests") || msg.includes("RequestsProvider")) {
+    component = "RequestsProvider";
+    hint = "The Requests context was used outside its provider.";
+  } else if (msg.includes("useOrders") || msg.includes("OrdersProvider")) {
+    component = "OrdersProvider";
+    hint = "The Orders context was used outside its provider.";
+  } else if (msg.toLowerCase().includes("favicon") || msg.toLowerCase().includes("asset")) {
+    component = "AssetLoader";
+    hint = "A static asset (favicon / image) failed to load. Check /public and R2 CDN config.";
+  } else if (msg.toLowerCase().includes("fetch") || msg.toLowerCase().includes("network")) {
+    component = "Network / API Call";
+    hint = "A network request failed. Check if the backend worker is running and CORS is configured.";
+  }
+
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
-      <div className="max-w-md text-center">
+      <div className="max-w-md w-full text-center">
         <h1 className="text-xl font-semibold tracking-tight text-foreground">
           This page didn't load
         </h1>
         <p className="mt-2 text-sm text-muted-foreground">
           Something went wrong on our end. You can try refreshing or head back home.
         </p>
+
+        {/* ── Diagnostic sub-message panel ── */}
+        <div className="mt-4 text-left rounded-xl border border-destructive/20 bg-destructive/5 px-4 py-3 text-xs space-y-1.5">
+          <p className="font-semibold text-destructive uppercase tracking-wide text-[0.65rem]">🔍 Diagnostic Info</p>
+          <div className="flex gap-2">
+            <span className="min-w-[5rem] font-semibold text-muted-foreground">Component</span>
+            <code className="bg-destructive/10 text-destructive rounded px-1.5 py-0.5 break-all font-mono text-[0.7rem]">{component}</code>
+          </div>
+          <div className="flex gap-2 items-start">
+            <span className="min-w-[5rem] font-semibold text-muted-foreground">Error</span>
+            <code className="bg-destructive/10 text-destructive rounded px-1.5 py-0.5 break-all font-mono text-[0.7rem]">{msg}</code>
+          </div>
+          {hint && (
+            <div className="flex gap-2 items-start">
+              <span className="min-w-[5rem] font-semibold text-muted-foreground">Hint</span>
+              <span className="italic text-muted-foreground">{hint}</span>
+            </div>
+          )}
+        </div>
+
         <div className="mt-6 flex flex-wrap justify-center gap-2">
           <button
             onClick={() => {

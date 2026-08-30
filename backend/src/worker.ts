@@ -20,6 +20,25 @@ export default {
   async fetch(request: Request, env: Record<string, unknown>, _ctx: unknown): Promise<Response> {
     applyWorkerEnv(env);
 
+  // ── Startup diagnostic log (runs on first request each worker lifecycle) ──
+  if (!(globalThis as any).__pattukuttyDiagDone) {
+    (globalThis as any).__pattukuttyDiagDone = true;
+    const required: Record<string, string | undefined> = {
+      SUPABASE_URL: process.env.SUPABASE_URL,
+      SUPABASE_SERVICE_ROLE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY,
+      SUPABASE_ANON_KEY: process.env.SUPABASE_ANON_KEY,
+    };
+    const missing = Object.entries(required).filter(([, v]) => !v).map(([k]) => k);
+    if (missing.length > 0) {
+      console.error(
+        `[WORKER STARTUP] ❌ Missing env vars: ${missing.join(', ')}. ` +
+        `Configure these in Cloudflare Worker environment (wrangler.jsonc [vars] or CF dashboard).`
+      );
+    } else {
+      console.log(`[WORKER STARTUP] ✅ All required env vars present.`);
+    }
+  }
+
     const requestOrigin = request.headers.get("origin");
     const allowedOrigin = requestOrigin && isAllowedOrigin(requestOrigin) ? requestOrigin : (requestOrigin || "*");
     const corsHeaders: Record<string, string> = {
@@ -159,11 +178,23 @@ export default {
           // Dispatch request to Express app
           app(req as any, res as any);
         } catch (err: any) {
+          const url = request.url;
+          const component = err?.message?.includes('supabase') ? 'SupabaseService'
+            : err?.message?.includes('auth') ? 'AuthMiddleware'
+            : err?.message?.includes('R2') || err?.message?.includes('r2') ? 'R2Storage'
+            : 'BackendWorker';
+          console.error(
+            `[WORKER ERROR] Component=${component} URL=${url}\n` +
+            `Message: ${err?.message}\n` +
+            `Stack: ${err?.stack || '(no stack)'}`
+          );
           resolve(
             new Response(
               JSON.stringify({
                 success: false,
+                component,
                 message: err?.message || "Internal Worker Error",
+                hint: "Check [WORKER ERROR] logs in Cloudflare Worker dashboard for stack trace.",
               }),
               {
                 status: 500,
