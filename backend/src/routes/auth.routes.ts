@@ -10,27 +10,25 @@ interface RateLimitEntry {
 
 const loginAttempts = new Map<string, RateLimitEntry>();
 
-// Clean up expired rate limit entries periodically
-if (typeof setInterval !== "undefined") {
-  setInterval(() => {
-    const now = Date.now();
-    for (const [key, entry] of loginAttempts.entries()) {
-      if (now > entry.resetTime) {
-        loginAttempts.delete(key);
-      }
+function cleanupExpiredLoginAttempts(now: number): void {
+  for (const [key, entry] of loginAttempts.entries()) {
+    if (now > entry.resetTime) {
+      loginAttempts.delete(key);
     }
-  }, 10 * 60 * 1000);
+  }
 }
 
 /**
  * Middleware: Rate limit admin login attempts (5 attempts per 15 minutes per IP + email combination)
  */
 function adminLoginRateLimiter(req: Request, res: Response, next: () => void): void {
+  const now = Date.now();
+  cleanupExpiredLoginAttempts(now);
+
   const forwarded = req.headers["x-forwarded-for"];
   const ip = typeof forwarded === "string" ? forwarded.split(",")[0]?.trim() : req.ip || "127.0.0.1";
   const email = typeof req.body?.email === "string" ? req.body.email.toLowerCase().trim() : "anonymous";
   const key = `admin_login:${ip}:${email}`;
-  const now = Date.now();
   const WINDOW_MS = 15 * 60 * 1000; // 15 minutes
   const MAX_ATTEMPTS = 5;
 
