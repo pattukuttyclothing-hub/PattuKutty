@@ -11,7 +11,7 @@ let lastAuthUrl: string | null = null;
 export function getDb(): SupabaseClient {
   const parsedEnv = getParsedEnv();
   const currentUrl = parsedEnv.SUPABASE_URL;
-  const currentKey = parsedEnv.SUPABASE_SERVICE_ROLE_KEY;
+  const currentKey = parsedEnv.SUPABASE_SERVICE_ROLE_KEY || parsedEnv.SUPABASE_ANON_KEY || "";
 
   if (!cachedDbClient || lastDbKey !== currentKey || lastDbUrl !== currentUrl) {
     lastDbKey = currentKey;
@@ -29,7 +29,7 @@ export function getDb(): SupabaseClient {
 export function getAuthClient(): SupabaseClient {
   const parsedEnv = getParsedEnv();
   const currentUrl = parsedEnv.SUPABASE_URL;
-  const currentKey = parsedEnv.SUPABASE_ANON_KEY || parsedEnv.SUPABASE_SERVICE_ROLE_KEY;
+  const currentKey = parsedEnv.SUPABASE_ANON_KEY || parsedEnv.SUPABASE_SERVICE_ROLE_KEY || "";
 
   if (!cachedAuthClient || lastAuthKey !== currentKey || lastAuthUrl !== currentUrl) {
     lastAuthKey = currentKey;

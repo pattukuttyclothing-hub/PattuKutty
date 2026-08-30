@@ -6,5 +6,10 @@
   "alias": {
     "iconv-lite": "./src/shims/iconv-lite.ts",
     "iconv-lite/lib/index.js": "./src/shims/iconv-lite.ts"
+  },
+  "vars": {
+    "NODE_ENV": "production",
+    "SUPABASE_URL": "https://tfdpnrdnoxriwdbzuxrv.supabase.co",
+    "ALLOWED_ORIGINS": "https://pattukutty.pattukuttyclothing.workers.dev,https://pattukutty-admin.pattukuttyclothing.workers.dev"
   }
 }

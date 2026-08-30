@@ -108,8 +108,18 @@ ordersRouter.post("/orders/:id/cancel", requireAuth, async (req, res, next) => {
 
 ordersRouter.get("/admin/orders", requireAuth, requireAdmin, async (req, res, next) => {
   try {
-    const { stage, delivery_type } = req.query as { stage?: string; delivery_type?: string };
-    const data = await OrdersService.getAllOrdersAdmin({ stage, delivery_type });
+    const { stage, delivery_type, limit, offset } = req.query as {
+      stage?: string;
+      delivery_type?: string;
+      limit?: string;
+      offset?: string;
+    };
+    const data = await OrdersService.getAllOrdersAdmin({
+      stage,
+      delivery_type,
+      limit: limit ? Number(limit) : undefined,
+      offset: offset ? Number(offset) : undefined,
+    });
     res.json({ success: true, data });
   } catch (err) { next(err); }
 });
@@ -247,6 +257,24 @@ ordersRouter.post("/admin/orders/:id/retry-refund", requireAuth, requireAdmin, a
   } catch (err) { next(err); }
 });
 
+// Admin: Surface stuck refunds (status = 'processing' > 24 hours threshold)
+ordersRouter.get("/admin/refunds/stuck", requireAuth, requireAdmin, async (req, res, next) => {
+  try {
+    const { getStuckRefunds } = await import("../services/refund.service.js");
+    const hours = req.query.hours ? Number(req.query.hours) : 24;
+    const data = await getStuckRefunds(hours);
+    res.json({ success: true, data });
+  } catch (err) { next(err); }
+});
+
+// Admin: Trigger batch background sync for all active shipments
+ordersRouter.post("/admin/shipments/sync-tracking", requireAuth, requireAdmin, async (_req, res, next) => {
+  try {
+    const data = await OrdersService.syncAllActiveShipmentsTracking();
+    res.json({ success: true, data });
+  } catch (err) { next(err); }
+});
+
 // Razorpay webhook handler for payments, orders & refund events
 ordersRouter.post("/payments/webhook", async (req, res, next) => {
   try {
@@ -256,7 +284,22 @@ ordersRouter.post("/payments/webhook", async (req, res, next) => {
     const rawBodyBuffer = (req as unknown as { rawBody?: Buffer }).rawBody;
     const bodyContent = rawBodyBuffer ? rawBodyBuffer.toString("utf-8") : JSON.stringify(req.body);
 
-    if (webhookSecret && signature) {
+    if (!webhookSecret) {
+      console.error(
+        "[CRITICAL] RAZORPAY_WEBHOOK_SECRET is not configured. " +
+        "Rejecting webhook request to prevent unverified payload processing. " +
+        "Set RAZORPAY_WEBHOOK_SECRET in environment variables before deploying."
+      );
+      res.status(500).json({ success: false, message: "Webhook secret not configured" });
+      return;
+    }
+
+    if (!signature) {
+      res.status(400).json({ success: false, message: "Missing webhook signature" });
+      return;
+    }
+
+    {
       const crypto = await import("crypto");
       const expectedSig = crypto
         .default
@@ -265,7 +308,7 @@ ordersRouter.post("/payments/webhook", async (req, res, next) => {
         .digest("hex");
 
       const a = Buffer.from(expectedSig);
-      const b = Buffer.from(signature || "");
+      const b = Buffer.from(signature);
       const isValid = a.length === b.length && crypto.timingSafeEqual(a, b);
 
       if (!isValid) {

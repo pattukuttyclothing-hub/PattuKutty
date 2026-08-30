@@ -22,6 +22,8 @@ export interface PlaceOrderPayload {
   razorpayOrderId?: string | undefined;
   razorpayPaymentId?: string | undefined;
   customerNotes?: string | undefined;
+  idempotencyKey?: string | undefined;
+  idempotency_key?: string | undefined;
   items: Array<{
     id?: string | undefined;
     productId?: string | undefined;

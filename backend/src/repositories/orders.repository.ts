@@ -2,19 +2,16 @@ import { db } from "../config/db.js";
 
 export class OrdersRepository {
   static async createCODOrder(orderPayload: Record<string, unknown>, items: Record<string, unknown>[]) {
-    const tenSecondsAgo = new Date(Date.now() - 10 * 1000).toISOString();
-    const customerId = orderPayload.customer_id as string;
-    if (customerId) {
-      const { data: existing } = await db
+    const key = (orderPayload.idempotency_key || orderPayload.idempotencyKey) as string | undefined;
+
+    if (key) {
+      const { data: existing, error } = await db
         .from("orders")
         .select("*, order_items(*)")
-        .eq("customer_id", customerId)
-        .eq("payment_method", "cod")
-        .gte("created_at", tenSecondsAgo)
-        .order("created_at", { ascending: false })
+        .eq("idempotency_key", key)
         .maybeSingle();
 
-      if (existing) {
+      if (!error && existing) {
         return { ...existing, items: existing.order_items || [] };
       }
     }
@@ -24,16 +21,28 @@ export class OrdersRepository {
 
   static async createOrder(orderPayload: Record<string, unknown>, items: Record<string, unknown>[]) {
     // Ensure total, delivery_type, and items are omitted if present to prevent PostgREST PGRST204 schema cache errors
-    const { total, delivery_type, items: _rawItems, ...cleanPayload } = orderPayload;
+    const { total, delivery_type, items: _rawItems, idempotencyKey, ...cleanPayload } = orderPayload;
     if (!cleanPayload.fulfilment_type && delivery_type) {
       cleanPayload.fulfilment_type = delivery_type;
     }
 
-    const { data: order, error: orderErr } = await db
+    let { data: order, error: orderErr } = await db
       .from("orders")
       .insert([cleanPayload])
       .select()
       .single();
+
+    if (orderErr && orderErr.code === "PGRST204" && "idempotency_key" in cleanPayload) {
+      delete cleanPayload.idempotency_key;
+      const retried = await db
+        .from("orders")
+        .insert([cleanPayload])
+        .select()
+        .single();
+      order = retried.data;
+      orderErr = retried.error;
+    }
+
     if (orderErr) throw orderErr;
 
     // Insert line items (triggers atomic stock check via enforce_stock_on_order_item)
@@ -117,38 +126,69 @@ export class OrdersRepository {
   }
 
   static async finalizeRazorpayOrder(orderId: string, razorpayPaymentId: string) {
-    // 1. Fetch order to inspect items and pending metadata
-    const { data: existing, error: fetchErr } = await db
+    // Concurrency design: a single atomic conditional UPDATE (WHERE payment_status = 'pending')
+    // is used as the gate for order finalization. Postgres acquires a row-level exclusive lock
+    // during the UPDATE, making the WHERE-condition check and the mutation atomic. Two concurrent
+    // callers (e.g. /payments/verify and /payments/webhook) will race:
+    //   - The first to execute the UPDATE claims the row (payment_status flips to 'paid').
+    //   - The second's UPDATE matches zero rows (payment_status is already 'paid'), detects
+    //     this, reads the already-finalized order, and returns it — without inserting items again.
+    // This eliminates the TOCTOU window that existed with a separate read-then-conditionally-write.
+
+    // Step 1: Atomically claim the order by updating ONLY if still pending.
+    const { data: claimed, error: claimErr } = await db
       .from("orders")
-      .select("*, order_items(*)")
+      .update({
+        payment_status: "paid",
+        razorpay_payment_id: razorpayPaymentId,
+        updated_at: new Date().toISOString(),
+      })
       .eq("id", orderId)
-      .single();
-    if (fetchErr || !existing) throw fetchErr || new Error("Order not found");
+      .eq("payment_status", "pending")   // ← atomic gate: only one caller wins this UPDATE
+      .select("*")
+      .maybeSingle();
 
-    const existingItems = existing.order_items || existing.items || [];
+    if (claimErr) throw claimErr;
 
-    // Idempotency check: If order is already finalized/paid, return existing without re-processing
-    if (existing.payment_status === "paid") {
-      return existing;
+    if (!claimed) {
+      // Another caller already finalized this order — return the current state idempotently.
+      const { data: existing, error: fetchErr } = await db
+        .from("orders")
+        .select("*, order_items(*)")
+        .eq("id", orderId)
+        .single();
+      if (fetchErr || !existing) throw fetchErr || new Error("Order not found");
+      return { ...existing, items: existing.order_items || [] };
     }
 
-    let cleanNotes: string | null = existing.customer_notes;
+    // Step 2: This caller won the race. Parse pending items from customer_notes.
+    let cleanNotes: string | null = claimed.customer_notes;
     let pendingItems: Record<string, unknown>[] = [];
 
-    if (existing.customer_notes && existing.customer_notes.startsWith("{")) {
+    if (claimed.customer_notes && claimed.customer_notes.startsWith("{")) {
       try {
-        const parsed = JSON.parse(existing.customer_notes);
+        const parsed = JSON.parse(claimed.customer_notes);
         if (parsed && Array.isArray(parsed.pendingItems)) {
           pendingItems = parsed.pendingItems;
           cleanNotes = parsed.notes || null;
         }
       } catch {
-        // Fallback to raw string if not JSON
+        // Fallback: treat raw string as notes
       }
     }
 
-    // 2. Insert order items if not already present (fires enforce_stock_on_order_item trigger ATOMICALLY on payment success)
-    if ((!existingItems || existingItems.length === 0) && pendingItems.length > 0) {
+    // Step 3: Check whether order_items were already inserted (e.g. by a prior partial run).
+    const { data: existingItems } = await db
+      .from("order_items")
+      .select("id")
+      .eq("order_id", orderId)
+      .limit(1);
+
+    const itemsAlreadyInserted = existingItems && existingItems.length > 0;
+
+    // Step 4: Insert order_items only if not already present and there are pending snapshots.
+    // (fires enforce_stock_on_order_item trigger which atomically decrements stock)
+    if (!itemsAlreadyInserted && pendingItems.length > 0) {
       const formattedItems = pendingItems.map((item) => ({
         order_id: orderId,
         variant_id: item.variant_id ?? item.variantId ?? null,
@@ -163,19 +203,13 @@ export class OrdersRepository {
       if (itemsErr) throw itemsErr;
     }
 
-    // 3. Mark payment status as paid
-    const { data, error } = await db
-      .from("orders")
-      .update({
-        payment_status: "paid",
-        razorpay_payment_id: razorpayPaymentId,
-        customer_notes: cleanNotes,
-        updated_at: new Date().toISOString(),
-      })
-      .eq("id", orderId)
-      .select("*, order_items(*)")
-      .single();
-    if (error) throw error;
+    // Step 5: Update customer_notes to cleaned value (strip serialized pendingItems blob).
+    if (cleanNotes !== claimed.customer_notes) {
+      await db
+        .from("orders")
+        .update({ customer_notes: cleanNotes, updated_at: new Date().toISOString() })
+        .eq("id", orderId);
+    }
 
     await this.recordPaymentEvent({
       orderId,
@@ -185,7 +219,15 @@ export class OrdersRepository {
       signatureVerified: true,
     });
 
-    return { ...data, items: data.order_items || [] };
+    // Step 6: Return finalized order with items.
+    const { data: finalOrder, error: finalErr } = await db
+      .from("orders")
+      .select("*, order_items(*)")
+      .eq("id", orderId)
+      .single();
+    if (finalErr || !finalOrder) throw finalErr || new Error("Order not found after finalization");
+
+    return { ...finalOrder, items: finalOrder.order_items || [] };
   }
 
   static async recordPaymentEvent(eventData: {
@@ -323,13 +365,21 @@ export class OrdersRepository {
     return data;
   }
 
-  static async getAllOrdersAdmin() {
-    const { data, error } = await db
-      .from("v_admin_orders")            // ← uses the enriched admin view
-      .select("*, items:order_items(*)")
-      .order("created_at", { ascending: false });
+  static async getAllOrdersAdmin(filters?: { stage?: string; delivery_type?: string; limit?: number; offset?: number }) {
+    let query = db.from("v_admin_orders").select("*, items:order_items(*)", { count: "exact" });
+    if (filters?.stage && filters.stage !== "all") {
+      query = query.eq("stage", filters.stage);
+    }
+    if (filters?.delivery_type && filters.delivery_type !== "all") {
+      query = query.eq("fulfilment_type", filters.delivery_type);
+    }
+    const limit = filters?.limit ? Math.min(Number(filters.limit), 100) : 20;
+    const offset = filters?.offset ? Math.max(Number(filters.offset), 0) : 0;
+
+    query = query.order("created_at", { ascending: false }).range(offset, offset + limit - 1);
+    const { data, count, error } = await query;
     if (error) throw error;
-    return data ?? [];
+    return { orders: data ?? [], total: count ?? 0, limit, offset };
   }
 
   static async getOrderByIdAdmin(id: string) {
@@ -342,13 +392,8 @@ export class OrdersRepository {
     return data;
   }
 
-  static async getFilteredOrdersAdmin(filters: { stage?: string; delivery_type?: string }) {
-    let query = db.from("v_admin_orders").select("*, items:order_items(*)");
-    if (filters.stage) query = query.eq("stage", filters.stage);
-    if (filters.delivery_type) query = query.eq("fulfilment_type", filters.delivery_type);
-    const { data, error } = await query.order("created_at", { ascending: false });
-    if (error) throw error;
-    return data ?? [];
+  static async getFilteredOrdersAdmin(filters: { stage?: string; delivery_type?: string; limit?: number; offset?: number }) {
+    return await this.getAllOrdersAdmin(filters);
   }
 
   /** Updates order stage AND inserts audit event row per spec */

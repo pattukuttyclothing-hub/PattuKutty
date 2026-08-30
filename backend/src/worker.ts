@@ -2,6 +2,7 @@ process.env.CLOUDFLARE_WORKER = "true";
 
 import { EventEmitter } from "node:events";
 import { Readable } from "node:stream";
+import { isAllowedOrigin } from "./config/env.js";
 import app from "./server.js";
 
 // Propagate Cloudflare Worker environment variables to process.env
@@ -15,18 +16,21 @@ function applyWorkerEnv(env: Record<string, unknown>) {
   }
 }
 
-
 export default {
   async fetch(request: Request, env: Record<string, unknown>, _ctx: unknown): Promise<Response> {
     applyWorkerEnv(env);
 
-    const origin = request.headers.get("origin") || "*";
-    const corsHeaders = {
-      "Access-Control-Allow-Origin": origin,
+    const requestOrigin = request.headers.get("origin");
+    const allowedOrigin = requestOrigin && isAllowedOrigin(requestOrigin) ? requestOrigin : (requestOrigin || "*");
+    const corsHeaders: Record<string, string> = {
+      "Access-Control-Allow-Origin": allowedOrigin,
       "Access-Control-Allow-Methods": "GET, POST, PUT, PATCH, DELETE, OPTIONS",
-      "Access-Control-Allow-Headers": "Content-Type, Authorization, X-File-Name, X-Bucket-Name, X-Requested-With, Accept, Origin",
-      "Access-Control-Allow-Credentials": "true",
+      "Access-Control-Allow-Headers": "Content-Type, Authorization, X-File-Name, X-Bucket-Name, X-Requested-With, Accept, Origin, Cache-Control, Pragma",
     };
+
+    if (allowedOrigin !== "*") {
+      corsHeaders["Access-Control-Allow-Credentials"] = "true";
+    }
 
     if (request.method === "OPTIONS") {
       return new Response(null, {
@@ -135,8 +139,10 @@ export default {
 
               // Guarantee CORS origin header on all responses
               if (!responseHeaders.has("Access-Control-Allow-Origin")) {
-                responseHeaders.set("Access-Control-Allow-Origin", origin);
-                responseHeaders.set("Access-Control-Allow-Credentials", "true");
+                responseHeaders.set("Access-Control-Allow-Origin", allowedOrigin);
+                if (allowedOrigin !== "*") {
+                  responseHeaders.set("Access-Control-Allow-Credentials", "true");
+                }
               }
 
               resolve(

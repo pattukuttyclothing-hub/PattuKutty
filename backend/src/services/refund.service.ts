@@ -347,3 +347,20 @@ export async function retryRefundAdmin(orderId: string, adminId: string): Promis
     reason: refund.reason || "Admin retry failed refund",
   });
 }
+
+/**
+ * Identifies orders where refunds have been in 'processing' status longer than thresholdHours (default 24 hours).
+ * Surfaced via admin route to make stuck refunds visible.
+ */
+export async function getStuckRefunds(thresholdHours: number = 24): Promise<RefundRecord[]> {
+  const cutoff = new Date(Date.now() - thresholdHours * 60 * 60 * 1000).toISOString();
+  const { data, error } = await db
+    .from("refunds")
+    .select("*, order:orders(*)")
+    .eq("status", "processing")
+    .lte("requested_at", cutoff)
+    .order("requested_at", { ascending: true });
+
+  if (error) throw error;
+  return (data as RefundRecord[]) ?? [];
+}

@@ -74,6 +74,7 @@ export type NewOrder = {
   deliveryType?: DeliveryType | undefined;
   custom?: boolean | undefined;
   requestId?: string | undefined;
+  idempotencyKey?: string | undefined;
 };
 
 type Row = Record<string, unknown>;
@@ -283,6 +284,7 @@ export function OrdersProvider({ children }: { children: ReactNode }) {
         razorpayOrderId: o.razorpayOrderId,
         razorpayPaymentId: o.razorpayPaymentId,
         customerNotes: o.notes ?? undefined,
+        idempotencyKey: o.idempotencyKey ?? undefined,
         items: o.items.map((it) => ({
           id: it.id,
           productId: it.id,

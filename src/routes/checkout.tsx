@@ -8,9 +8,11 @@ import {
   Loader2,
   Lock,
   MapPin,
+  Pencil,
   Plus,
   ShieldCheck,
   ShoppingBag,
+  Trash2,
   Truck,
   Wallet,
 } from "lucide-react";
@@ -21,7 +23,7 @@ import { deliveryRules, storeInfo } from "@/data/boutique";
 import { inr, useCart } from "@/lib/cart";
 import { useAuth } from "@/lib/auth";
 import { useOrders, type ShippingAddress } from "@/lib/orders";
-import { listAddresses, saveAddress, type SavedAddress } from "@/lib/addresses";
+import { listAddresses, saveAddress, updateAddress, deleteAddress, type SavedAddress } from "@/lib/addresses";
 import { createBackendPaymentOrder, verifyBackendPayment, cancelBackendPaymentOrder } from "@/lib/api/orders";
 import { fmtDate, expectedDeliveryDate, courier } from "@/lib/tracking";
 
@@ -139,6 +141,7 @@ function CheckoutPage() {
   const [saved, setSaved] = useState<SavedAddress[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState<ShippingAddress>(emptyAddress);
   const [notes, setNotes] = useState("");
   const [method, setMethod] = useState<"razorpay" | "cod">("razorpay");
@@ -189,6 +192,7 @@ function CheckoutPage() {
   const finalise = async (
     payment: { status: "paid" | "pending"; razorpayOrderId?: string; razorpayPaymentId?: string },
     address: ShippingAddress,
+    idempotencyKey?: string,
   ) => {
     const created = await place({
       items,
@@ -199,6 +203,7 @@ function CheckoutPage() {
       notes: notes.trim() || undefined,
       paymentMethod: method,
       paymentStatus: payment.status,
+      idempotencyKey,
       ...(payment.razorpayOrderId ? { razorpayOrderId: payment.razorpayOrderId } : {}),
       ...(payment.razorpayPaymentId ? { razorpayPaymentId: payment.razorpayPaymentId } : {}),
     });
@@ -206,6 +211,44 @@ function CheckoutPage() {
     setCelebration({ id: created.id, orderNo: created.orderNo, total: inr(created.total || total) });
   };
 
+  const handleEditAddress = (a: SavedAddress) => {
+    setEditingId(a.id);
+    setForm({
+      fullName: a.fullName,
+      phone: a.phone,
+      line1: a.line1,
+      line2: a.line2 ?? "",
+      landmark: a.landmark ?? "",
+      city: a.city,
+      state: a.state,
+      pincode: a.pincode,
+      addressType: (a.addressType as ShippingAddress["addressType"]) ?? "home",
+    });
+    setShowForm(true);
+  };
+
+  const handleDeleteAddress = async (id: string) => {
+    if (!window.confirm("Remove this address from your account?")) return;
+    setSaved((prev) => prev.filter((a) => a.id !== id));
+    if (selectedId === id) setSelectedId(null);
+    await deleteAddress("", id);
+  };
+
+  const handleSaveForm = async () => {
+    if (!user) return;
+    if (editingId) {
+      // Fix 4: Update existing address via PATCH
+      const updated = await updateAddress(editingId, form);
+      if (updated) {
+        setSaved((prev) => prev.map((a) => (a.id === editingId ? updated : a)));
+        setSelectedId(updated.id);
+      }
+      setEditingId(null);
+    }
+    // (New address save during payNow is handled in payNow; this closes the form on edit)
+    setShowForm(false);
+    setForm(emptyAddress);
+  };
 
   const payNow = async () => {
     if (busy || !user || !shipping || !addressValid) return;
@@ -225,7 +268,8 @@ function CheckoutPage() {
       }
 
       if (method === "cod") {
-        await finalise({ status: "pending" }, effectiveAddress);
+        const idempotencyKey = `cod_${user.id}_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
+        await finalise({ status: "pending" }, effectiveAddress, idempotencyKey);
         return;
       }
 
@@ -415,45 +459,70 @@ function CheckoutPage() {
               {step === 1 ? (
                 <div className="mt-5 space-y-3">
                   {saved.map((a) => (
-                    <button
+                    <div
                       key={a.id}
-                      type="button"
-                      onClick={() => {
-                        setSelectedId(a.id);
-                        setShowForm(false);
-                      }}
-                      className={`flex w-full gap-3 rounded-2xl border p-4 text-left transition-colors ${
+                      className={`relative flex gap-3 rounded-2xl border p-4 transition-colors ${
                         !showForm && selectedId === a.id
                           ? "border-primary bg-secondary/60"
                           : "border-border hover:bg-secondary/40"
                       }`}
                     >
-                      <span
-                        className={`mt-1 grid h-4 w-4 shrink-0 place-items-center rounded-full border ${
-                          !showForm && selectedId === a.id
-                            ? "border-primary bg-primary"
-                            : "border-border"
-                        }`}
+                      {/* Clickable selection area */}
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setSelectedId(a.id);
+                          setShowForm(false);
+                          setEditingId(null);
+                        }}
+                        className="flex min-w-0 flex-1 gap-3 text-left"
                       >
-                        {!showForm && selectedId === a.id ? (
-                          <span className="h-1.5 w-1.5 rounded-full bg-primary-foreground" />
-                        ) : null}
-                      </span>
-                      <span className="min-w-0">
-                        <span className="flex flex-wrap items-center gap-2">
-                          <span className="text-sm font-semibold text-foreground">{a.fullName}</span>
-                          <StatusBadge tone="info">{a.addressType ?? "home"}</StatusBadge>
-                          {a.isDefault ? <StatusBadge tone="gold">Default</StatusBadge> : null}
+                        <span
+                          className={`mt-1 grid h-4 w-4 shrink-0 place-items-center rounded-full border ${
+                            !showForm && selectedId === a.id
+                              ? "border-primary bg-primary"
+                              : "border-border"
+                          }`}
+                        >
+                          {!showForm && selectedId === a.id ? (
+                            <span className="h-1.5 w-1.5 rounded-full bg-primary-foreground" />
+                          ) : null}
                         </span>
-                        <span className="mt-1 block text-xs leading-relaxed text-muted-foreground">
-                          {[a.line1, a.line2, a.landmark, `${a.city} ${a.pincode}`, a.state]
-                            .filter(Boolean)
-                            .join(", ")}
-                          <br />
-                          Phone {a.phone}
+                        <span className="min-w-0">
+                          <span className="flex flex-wrap items-center gap-2">
+                            <span className="text-sm font-semibold text-foreground">{a.fullName}</span>
+                            <StatusBadge tone="info">{a.addressType ?? "home"}</StatusBadge>
+                            {a.isDefault ? <StatusBadge tone="gold">Default</StatusBadge> : null}
+                          </span>
+                          <span className="mt-1 block text-xs leading-relaxed text-muted-foreground">
+                            {[a.line1, a.line2, a.landmark, `${a.city} ${a.pincode}`, a.state]
+                              .filter(Boolean)
+                              .join(", ")}
+                            <br />
+                            Phone {a.phone}
+                          </span>
                         </span>
+                      </button>
+                      {/* Fix 4 & 5: Edit and Delete action buttons */}
+                      <span className="flex shrink-0 items-start gap-1 pt-0.5">
+                        <button
+                          type="button"
+                          title="Edit address"
+                          onClick={() => handleEditAddress(a)}
+                          className="grid h-7 w-7 place-items-center rounded-xl text-muted-foreground transition-colors hover:bg-secondary hover:text-primary"
+                        >
+                          <Pencil className="h-3.5 w-3.5" />
+                        </button>
+                        <button
+                          type="button"
+                          title="Remove address"
+                          onClick={() => void handleDeleteAddress(a.id)}
+                          className="grid h-7 w-7 place-items-center rounded-xl text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </button>
                       </span>
-                    </button>
+                    </div>
                   ))}
 
                   {showForm ? (
@@ -535,7 +604,7 @@ function CheckoutPage() {
                       {saved.length ? (
                         <button
                           type="button"
-                          onClick={() => setShowForm(false)}
+                          onClick={() => { setShowForm(false); setEditingId(null); setForm(emptyAddress); }}
                           className="text-left text-xs font-semibold text-primary hover:underline sm:col-span-2"
                         >
                           Use a saved address instead
@@ -555,10 +624,16 @@ function CheckoutPage() {
                   <button
                     type="button"
                     disabled={!addressValid}
-                    onClick={() => setStep(2)}
+                    onClick={() => {
+                      if (editingId) {
+                        void handleSaveForm().then(() => setStep(2));
+                      } else {
+                        setStep(2);
+                      }
+                    }}
                     className="mt-1 flex w-full items-center justify-center gap-2 rounded-full bg-primary py-3.5 text-sm font-medium text-primary-foreground shadow-soft transition-transform hover:scale-[1.01] disabled:opacity-50"
                   >
-                    Deliver to this address <ChevronRight className="h-4 w-4" />
+                    {editingId ? "Save & continue" : "Deliver to this address"} <ChevronRight className="h-4 w-4" />
                   </button>
                 </div>
               ) : shipping ? (
@@ -716,13 +791,13 @@ function CheckoutPage() {
                 </div>
                 <div className="flex justify-between">
                   <dt className="text-muted-foreground">Delivery</dt>
-                  <dd className="font-medium text-foreground">
-                    {delivery === 0 ? "Free" : inr(delivery)}
+                  <dd className="font-medium text-muted-foreground text-xs">
+                    Calculated at checkout
                   </dd>
                 </div>
                 <div className="gold-divider my-2 h-px" />
                 <div className="flex justify-between text-base">
-                  <dt className="font-semibold text-foreground">Total payable</dt>
+                  <dt className="font-semibold text-foreground">Estimated total</dt>
                   <dd className="font-semibold text-primary">{inr(total)}</dd>
                 </div>
               </dl>

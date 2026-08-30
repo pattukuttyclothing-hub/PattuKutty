@@ -3,12 +3,65 @@ import { db, authClient } from "../config/db.js";
 
 export const authRouter = Router();
 
+interface RateLimitEntry {
+  count: number;
+  resetTime: number;
+}
+
+const loginAttempts = new Map<string, RateLimitEntry>();
+
+// Clean up expired rate limit entries periodically
+if (typeof setInterval !== "undefined") {
+  setInterval(() => {
+    const now = Date.now();
+    for (const [key, entry] of loginAttempts.entries()) {
+      if (now > entry.resetTime) {
+        loginAttempts.delete(key);
+      }
+    }
+  }, 10 * 60 * 1000);
+}
+
+/**
+ * Middleware: Rate limit admin login attempts (5 attempts per 15 minutes per IP + email combination)
+ */
+function adminLoginRateLimiter(req: Request, res: Response, next: () => void): void {
+  const forwarded = req.headers["x-forwarded-for"];
+  const ip = typeof forwarded === "string" ? forwarded.split(",")[0]?.trim() : req.ip || "127.0.0.1";
+  const email = typeof req.body?.email === "string" ? req.body.email.toLowerCase().trim() : "anonymous";
+  const key = `admin_login:${ip}:${email}`;
+  const now = Date.now();
+  const WINDOW_MS = 15 * 60 * 1000; // 15 minutes
+  const MAX_ATTEMPTS = 5;
+
+  const entry = loginAttempts.get(key) || { count: 0, resetTime: now + WINDOW_MS };
+
+  if (now > entry.resetTime) {
+    entry.count = 0;
+    entry.resetTime = now + WINDOW_MS;
+  }
+
+  if (entry.count >= MAX_ATTEMPTS) {
+    const retryAfterSec = Math.ceil((entry.resetTime - now) / 1000);
+    res.setHeader("Retry-After", String(retryAfterSec));
+    res.status(429).json({
+      success: false,
+      message: `Too many failed login attempts. Please try again in ${Math.ceil(retryAfterSec / 60)} minutes.`,
+    });
+    return;
+  }
+
+  entry.count += 1;
+  loginAttempts.set(key, entry);
+  next();
+}
+
 /**
  * POST /api/v1/admin/login
  * Admin Login route. Authenticates against Supabase Auth and checks admin_roles authorization.
- * SECURITY NOTICE: Rate limiting (e.g. express-rate-limit) is pending implementation on this endpoint to mitigate brute-force risks.
+ * Protected with application-level rate limiting (5 attempts per 15 mins per IP+email).
  */
-authRouter.post("/admin/login", async (req: Request, res: Response): Promise<void> => {
+authRouter.post("/admin/login", adminLoginRateLimiter, async (req: Request, res: Response): Promise<void> => {
   const { email, password } = req.body || {};
 
   if (!email || !password) {

@@ -53,6 +53,8 @@ export interface PlaceOrderPayload {
   razorpay_payment_id?: string;
   customer_notes?: string;
   customerNotes?: string;
+  idempotency_key?: string;
+  idempotencyKey?: string;
 }
 
 // Fallback catalog snapshot for dev mode if DB is empty
@@ -366,7 +368,7 @@ export class OrdersService {
 
     return {
       razorpayOrderId,
-      keyId: keyId || "rzp_test_public_key",
+      keyId: keyId || "",
       amount: amountInPaise,
       currency: "INR" as const,
       orderId: order.id,
@@ -501,11 +503,30 @@ export class OrdersService {
     const codPayload = { ...payload, paymentMethod: "cod", payment_method: "cod" };
     const calc = await this.calculateAuthoritativeOrder(customerId, codPayload);
 
+    // COD Guardrail 1: Maximum order value threshold check
+    const maxCodValue = env.COD_MAX_ORDER_VALUE ?? 15000;
+    if (calc.totalPayable > maxCodValue) {
+      const err = new Error(`Cash-on-Delivery is not available for orders exceeding ₹${maxCodValue}. Please select online payment (Razorpay).`) as Error & { statusCode: number };
+      err.statusCode = 400;
+      throw err;
+    }
+
+    // COD Guardrail 2: Pincode allowlist/blocklist eligibility check
+    // TODO: Connect pincode allowlist/blocklist data source (e.g. BlueDart API location finder or DB table)
+    // No pincode allowlist/blocklist data exists in this codebase yet; executing as no-op until data model is implemented.
+    const shippingPincode = (payload.shipping?.pincode as string) || (payload.shipping_address?.pincode as string);
+    if (shippingPincode) {
+      // no-op check placeholder
+    }
+
     calc.orderPayload.payment_method = "cod";
     calc.orderPayload.payment_status = "pending";
     calc.orderPayload.stage = "placed";
     calc.orderPayload.razorpay_order_id = null;
     calc.orderPayload.razorpay_payment_id = null;
+    if (payload.idempotencyKey || payload.idempotency_key) {
+      calc.orderPayload.idempotency_key = payload.idempotencyKey || payload.idempotency_key;
+    }
 
     return await OrdersRepository.createCODOrder(calc.orderPayload, calc.snapshots);
   }
@@ -549,11 +570,8 @@ export class OrdersService {
     return order;
   }
 
-  static async getAllOrdersAdmin(filters?: { stage?: string; delivery_type?: string }) {
-    if (filters && (filters.stage || filters.delivery_type)) {
-      return await OrdersRepository.getFilteredOrdersAdmin(filters);
-    }
-    return await OrdersRepository.getAllOrdersAdmin();
+  static async getAllOrdersAdmin(filters?: { stage?: string; delivery_type?: string; limit?: number; offset?: number }) {
+    return await OrdersRepository.getAllOrdersAdmin(filters);
   }
 
   static async getOrderByIdAdmin(id: string) {
@@ -604,6 +622,19 @@ export class OrdersService {
         const err = new Error("Cannot modify a cancelled order.") as Error & { statusCode: number };
         err.statusCode = 409;
         throw err;
+      }
+
+      // Shipped stage guard: verify active shipment row with valid AWB exists before transitioning
+      if (stage === "shipped" || stage === "in-transit" || stage === "out-for-delivery") {
+        const shipment = await OrdersRepository.getShipmentByOrder(id);
+        if (!shipment || !shipment.awb || !isValidAwb(String(shipment.awb))) {
+          const err = new Error(
+            `Cannot update stage to "${stage}": No active shipment or valid AWB exists for this order. ` +
+            "Please generate a Blue Dart shipment first before marking the order as shipped."
+          ) as Error & { statusCode: number };
+          err.statusCode = 400;
+          throw err;
+        }
       }
 
       // Flexible transition matrix validation allowing all boutique stitching & delivery stages
@@ -953,7 +984,7 @@ export class OrdersService {
   }
 
   /**
-   * Cancels a Blue Dart waybill (spec §11).
+   * Cancels a Blue Dart waybill and associated pickup registration (spec §11, §12).
    */
   static async cancelBlueDartWaybill(orderId: string, adminId: string) {
     const shipment = await OrdersRepository.getShipmentByOrder(orderId);
@@ -963,6 +994,23 @@ export class OrdersService {
       throw err;
     }
 
+    // Step 1: If pickup was registered and token exists, cancel pickup registration first
+    if (shipment.pickup_token && shipment.pickup_date) {
+      try {
+        await cancelPickup({
+          awb: String(shipment.awb),
+          pickupToken: String(shipment.pickup_token),
+          pickupDate: String(shipment.pickup_date),
+          reason: "Waybill cancelled by admin",
+        });
+      } catch (pickupErr) {
+        console.warn(`[BlueDart] Pickup cancellation error prior to waybill cancel for AWB ${shipment.awb}:`, pickupErr);
+      }
+    } else {
+      console.warn(`[BlueDart] No active pickup registration token found for AWB ${shipment.awb}. Skipping cancelPickup call.`);
+    }
+
+    // Step 2: Cancel waybill (AWB) at BlueDart
     const cancelResult = await cancelWaybill(String(shipment.awb));
     if (!cancelResult.cancelled) {
       const err = new Error(`Waybill cancellation rejected by Blue Dart: ${cancelResult.reason || "Cannot cancel in current state"}`) as Error & { statusCode: number };
@@ -972,6 +1020,7 @@ export class OrdersService {
 
     const updatedShipment = await OrdersRepository.updateShipmentStatus(shipment.id, {
       status: "cancelled",
+      pickup_registration_status: "cancelled",
     });
 
     return {
@@ -1127,30 +1176,8 @@ export class OrdersService {
 
     // Query Blue Dart API Gateway if configured and valid AWB
     if (isBlueDartConfigured()) {
-      try {
-        const liveScans = await getTracking(String(shipment.awb));
-        if (liveScans && liveScans.length > 0) {
-          isLiveSuccess = true;
-          // Persist new scan events idempotently
-          for (const scan of liveScans) {
-            await db.from("shipment_scans").upsert({
-              shipment_id: shipment.id,
-              stage_code: "shipped",
-              location: scan.location,
-              detail: `${scan.status}: ${scan.detail}`,
-              scanned_at: scan.timestamp,
-            }, { onConflict: "shipment_id,scanned_at", ignoreDuplicates: true });
-          }
-          // Update last_tracking_at timestamp on shipment
-          await db
-            .from("shipments")
-            .update({ last_tracking_at: new Date().toISOString() })
-            .eq("id", shipment.id);
-        }
-      } catch (trackErr) {
-        trackErrorMsg = String(trackErr);
-        console.warn("[Tracking] Blue Dart fetch failed:", trackErr);
-      }
+      const syncRes = await OrdersService.syncShipmentTracking(shipment);
+      isLiveSuccess = syncRes.synced;
     }
 
     // Re-fetch shipment scans from DB to return complete scan timeline
@@ -1225,5 +1252,106 @@ export class OrdersService {
       throw err;
     }
     return await OrdersRepository.createShipment(orderId, payload);
+  }
+
+  /**
+   * Shared helper to sync live tracking data for a single shipment.
+   * Reused by both on-demand getOrderTracking() and background batch sync.
+   * Auto-transitions order stage & shipment status if courier confirms delivery or RTO.
+   */
+  static async syncShipmentTracking(shipment: Record<string, unknown>): Promise<{ synced: boolean; status: string }> {
+    const awb = String(shipment.awb ?? "");
+    if (!awb || !isValidAwb(awb) || !isBlueDartConfigured()) {
+      return { synced: false, status: String(shipment.status ?? "unshipped") };
+    }
+
+    try {
+      const liveScans = await getTracking(awb);
+      if (!liveScans || liveScans.length === 0) {
+        return { synced: false, status: String(shipment.status ?? "shipped") };
+      }
+
+      // 1. Persist new scan events idempotently
+      for (const scan of liveScans) {
+        await db.from("shipment_scans").upsert(
+          {
+            shipment_id: shipment.id,
+            stage_code: "shipped",
+            location: scan.location,
+            detail: `${scan.status}: ${scan.detail}`,
+            scanned_at: scan.timestamp,
+          },
+          { onConflict: "shipment_id,scanned_at", ignoreDuplicates: true }
+        );
+      }
+
+      // 2. Check latest scan status for terminal delivery / RTO confirmation
+      const latestScan = liveScans[liveScans.length - 1];
+      const latestStatus = String(latestScan?.status || "").toLowerCase();
+      const latestDetail = String(latestScan?.detail || "").toLowerCase();
+
+      let newShipmentStatus: string | null = null;
+      let newOrderStage: string | null = null;
+
+      if (latestStatus.includes("dlvd") || latestStatus.includes("delivered") || latestDetail.includes("delivered")) {
+        newShipmentStatus = "delivered";
+        newOrderStage = "delivered";
+      } else if (latestStatus.includes("rto") || latestStatus.includes("returned") || latestDetail.includes("returned to origin")) {
+        newShipmentStatus = "rto";
+        // Do NOT auto-restock stock here per spec §47; physical verification required
+      }
+
+      const shipmentUpdate: Record<string, unknown> = {
+        last_tracking_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      };
+
+      if (newShipmentStatus) {
+        shipmentUpdate.status = newShipmentStatus;
+      }
+
+      await db.from("shipments").update(shipmentUpdate).eq("id", shipment.id);
+
+      if (newOrderStage && shipment.order_id) {
+        await db
+          .from("orders")
+          .update({ stage: newOrderStage, updated_at: new Date().toISOString() })
+          .eq("id", shipment.order_id);
+
+        await db.from("order_stage_events").insert({
+          order_id: shipment.order_id,
+          stage: newOrderStage,
+          changed_by: null,
+          created_at: new Date().toISOString(),
+        });
+      }
+
+      return { synced: true, status: newShipmentStatus || String(shipment.status) };
+    } catch (err) {
+      console.warn(`[Tracking Sync] Failed to sync AWB ${awb}:`, err);
+      return { synced: false, status: String(shipment.status) };
+    }
+  }
+
+  /**
+   * Background batch job: Syncs tracking for all active shipments (status NOT IN 'delivered', 'rto', 'cancelled').
+   */
+  static async syncAllActiveShipmentsTracking(): Promise<{ totalProcessed: number; syncedCount: number }> {
+    const { data: activeShipments, error } = await db
+      .from("shipments")
+      .select("*")
+      .not("status", "in", '("delivered","rto","cancelled")');
+
+    if (error || !activeShipments) {
+      return { totalProcessed: 0, syncedCount: 0 };
+    }
+
+    let syncedCount = 0;
+    for (const shipment of activeShipments) {
+      const res = await this.syncShipmentTracking(shipment);
+      if (res.synced) syncedCount++;
+    }
+
+    return { totalProcessed: activeShipments.length, syncedCount };
   }
 }

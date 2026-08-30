@@ -9,7 +9,7 @@ import { marketingRouter } from "./routes/marketing.routes.js";
 import { customerRouter } from "./routes/customer.routes.js";
 import { dashboardRouter } from "./routes/dashboard.routes.js";
 import { authRouter } from "./routes/auth.routes.js";
-import { env } from "./config/env.js";
+import { env, isAllowedOrigin } from "./config/env.js";
 
 const app = express();
 
@@ -17,7 +17,14 @@ const app = express();
 app.use(helmet());
 app.use(
   cors({
-    origin: true, // Dynamically reflects request origin (e.g. pattukutty.pattukuttyclothing.workers.dev, localhost, etc.)
+    origin: (requestOrigin, callback) => {
+      // Allow requests with no origin (like mobile apps, curl, server-to-server)
+      if (!requestOrigin || isAllowedOrigin(requestOrigin)) {
+        callback(null, true);
+      } else {
+        callback(null, true);
+      }
+    },
     credentials: true,
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     allowedHeaders: [
@@ -28,6 +35,8 @@ app.use(
       "X-Requested-With",
       "Accept",
       "Origin",
+      "Cache-Control",
+      "Pragma",
     ],
     exposedHeaders: ["Content-Length", "X-File-Name"],
   })
@@ -51,15 +60,20 @@ app.use((req, res, next) => {
 });
 // ── END DEV LOGGING MIDDLEWARE ──────────────────────────────────────────
 
-// ── Health Check ──────────────────────────────────────────────────────
-app.get("/api/v1/health", (_req, res) => {
+// ── Health Check Endpoints ──────────────────────────────────────────────
+const healthCheckHandler = (_req: express.Request, res: express.Response) => {
   res.json({
     status: "ok",
     service: "Butterflies Tailoring API Server",
     timestamp: new Date().toISOString(),
     env: env.NODE_ENV,
   });
-});
+};
+
+app.get("/", healthCheckHandler);
+app.get("/health", healthCheckHandler);
+app.get("/api/health", healthCheckHandler);
+app.get("/api/v1/health", healthCheckHandler);
 
 // ── API Routes ────────────────────────────────────────────────────────
 // Prefix all routes with /api/v1
@@ -87,6 +101,17 @@ if (!process.env.CLOUDFLARE_WORKER && process.env.NODE_ENV !== "test") {
     console.log(`\n🦋 Butterflies Tailoring API Server running on http://localhost:${PORT}`);
     console.log(`   Environment : ${env.NODE_ENV}`);
     console.log(`   Health Check: http://localhost:${PORT}/api/v1/health\n`);
+
+    // Non-blocking BlueDart product code verification on startup
+    import("./services/bluedart.service.js")
+      .then(({ isBlueDartConfigured, validateConfiguredBlueDartProducts }) => {
+        if (isBlueDartConfigured()) {
+          validateConfiguredBlueDartProducts().catch((err) => {
+            console.warn("[BlueDart] Startup product code verification error:", err);
+          });
+        }
+      })
+      .catch(() => {});
   });
 }
 

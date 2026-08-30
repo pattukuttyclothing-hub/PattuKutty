@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import {
   ArrowLeft,
@@ -32,7 +32,7 @@ import {
   type OrderStage,
 } from "@/lib/admin-store";
 import { fmtDateTime, inr } from "@/lib/format";
-import { enterShipment, updateOrderStage, cancelOrderAdmin, initiateRefundAdmin, fetchShipmentScansAdmin, type LiveScanEvent } from "@/lib/api/orders";
+import { fetchOrderById, enterShipment, updateOrderStage, cancelOrderAdmin, initiateRefundAdmin, fetchShipmentScansAdmin, type LiveScanEvent } from "@/lib/api/orders";
 import { ShipmentPickupModal } from "@/components/admin/ShipmentPickupModal";
 import { ShipmentPickupCancelModal } from "@/components/admin/ShipmentPickupCancelModal";
 
@@ -80,21 +80,77 @@ export const Route = createFileRoute("/orders/$id")({
 function OrderDetail() {
   const { id } = Route.useParams();
   const { findOrder, setOrderStage, saveOrder } = useAdmin();
-  const o = findOrder(id);
+  const storeOrder = findOrder(id);
+
+  const [fetchedOrder, setFetchedOrder] = useState<AdminOrder | null>(null);
+  const [loading, setLoading] = useState(!storeOrder);
+  const [notFound, setNotFound] = useState(false);
+
+  useEffect(() => {
+    let active = true;
+    void (async () => {
+      try {
+        const fetched = await fetchOrderById(id);
+        if (active) {
+          if (fetched) {
+            setFetchedOrder(fetched);
+            setNotFound(false);
+          } else if (!storeOrder) {
+            setNotFound(true);
+          }
+        }
+      } catch (err) {
+        console.warn("[Order Detail] Remote fetch error:", err);
+        if (active && !storeOrder) {
+          setNotFound(true);
+        }
+      } finally {
+        if (active) setLoading(false);
+      }
+    })();
+    return () => {
+      active = false;
+    };
+  }, [id, storeOrder]);
+
+  const o = fetchedOrder || storeOrder;
 
   const [stageLoading, setStageLoading] = useState(false);
   const [cancelModalOpen, setCancelModalOpen] = useState(false);
   const [cancelReason, setCancelReason] = useState("");
   const [cancelLoading, setCancelLoading] = useState(false);
 
-  if (!o) {
+  if (loading) {
     return (
       <AdminShell>
-        <PageHead title="Order not found" />
-        <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6">
-          <Link to="/orders" className="text-sm text-primary underline">
-            Back to orders
-          </Link>
+        <PageHead title="Loading Order..." />
+        <div className="flex h-64 items-center justify-center">
+          <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+        </div>
+      </AdminShell>
+    );
+  }
+
+  if (notFound || !o) {
+    return (
+      <AdminShell>
+        <PageHead title="Order Not Found" subtitle={`No order found matching ID "${id}".`} />
+        <div className="mx-auto max-w-7xl px-4 py-12 text-center sm:px-6">
+          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-destructive/10 text-destructive mb-4">
+            <XCircle className="h-8 w-8" />
+          </div>
+          <h3 className="font-display text-lg font-semibold">Order Not Found</h3>
+          <p className="mt-2 text-sm text-muted-foreground">
+            The requested order (ID: <span className="font-mono">{id}</span>) could not be found in the database or local store.
+          </p>
+          <div className="mt-6">
+            <Link
+              to="/orders"
+              className="inline-flex items-center gap-2 rounded-full bg-primary px-5 py-2.5 text-xs font-semibold text-primary-foreground shadow-soft"
+            >
+              <ArrowLeft className="h-4 w-4" /> Return to Orders List
+            </Link>
+          </div>
         </div>
       </AdminShell>
     );
@@ -175,12 +231,16 @@ function OrderDetail() {
         title={stageMeta(o.stage, stages).label}
         subtitle={
           <span className="inline-flex flex-wrap items-center gap-2">
-            <StatusBadge tone={o.paymentStatus === "paid" ? "ok" : "review"}>
+            <StatusBadge tone={o.paymentStatus === "paid" || o.paymentStatus === "refunded" ? "ok" : o.paymentStatus === "refund_processing" ? "gold" : "review"}>
               {o.paymentStatus === "paid"
                 ? "Paid"
-                : o.paymentMethod === "cod"
-                  ? "Pay on delivery"
-                  : "Payment pending"}
+                : o.paymentStatus === "refunded"
+                  ? "Refunded"
+                  : o.paymentStatus === "refund_processing"
+                    ? "Refund Processing"
+                    : o.paymentMethod === "cod"
+                      ? "Pay on delivery"
+                      : "Payment pending"}
             </StatusBadge>
             {o.isCustom ? <StatusBadge tone="gold">Customisation {o.requestNo}</StatusBadge> : null}
             <span className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-[0.68rem] font-medium ${
@@ -371,8 +431,8 @@ function PaymentCard({ order: o }: { order: AdminOrder }) {
     setRefundLoading(true);
     try {
       await initiateRefundAdmin(o.id, "Admin-initiated refund");
-      saveOrder(o.id, { paymentStatus: "refunded" });
-      toast.success(`Refund initiated for Order #${o.orderNo}.`);
+      saveOrder(o.id, { paymentStatus: "refund_processing" });
+      toast.success(`Refund initiated for Order #${o.orderNo}. Status set to refund processing pending webhook confirmation.`);
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Failed to initiate refund";
       toast.error(msg);
@@ -381,7 +441,7 @@ function PaymentCard({ order: o }: { order: AdminOrder }) {
     }
   };
 
-  const canRefund = o.paymentMethod === "razorpay" && (o.stage === "cancelled" || o.paymentStatus === "paid") && o.paymentStatus !== "refunded";
+  const canRefund = o.paymentMethod === "razorpay" && (o.stage === "cancelled" || o.paymentStatus === "paid") && o.paymentStatus !== "refunded" && o.paymentStatus !== "refund_processing";
 
   return (
     <section className="space-y-3 rounded-3xl border border-border bg-card p-5 shadow-soft">

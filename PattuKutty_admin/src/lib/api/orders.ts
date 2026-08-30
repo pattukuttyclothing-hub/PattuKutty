@@ -60,15 +60,40 @@ export function mapRawOrder(o: any): AdminOrder {
   };
 }
 
-export async function fetchOrders(filters?: { stage?: string; deliveryType?: string }): Promise<AdminOrder[]> {
+export interface FetchOrdersResult {
+  orders: AdminOrder[];
+  total: number;
+  limit: number;
+  offset: number;
+}
+
+export async function fetchOrders(filters?: {
+  stage?: string | undefined;
+  deliveryType?: string | undefined;
+  limit?: number | undefined;
+  offset?: number | undefined;
+}): Promise<FetchOrdersResult> {
   const params = new URLSearchParams();
-  if (filters?.stage) params.append("stage", filters.stage);
-  if (filters?.deliveryType) params.append("deliveryType", filters.deliveryType);
+  if (filters?.stage && filters.stage !== "all") params.append("stage", filters.stage);
+  if (filters?.deliveryType && filters.deliveryType !== "all") params.append("delivery_type", filters.deliveryType);
+  if (filters?.limit) params.append("limit", String(filters.limit));
+  if (filters?.offset) params.append("offset", String(filters.offset));
 
   const queryStr = params.toString();
-  const res = await apiFetch<ApiResponse<AdminOrder[]> | AdminOrder[]>(`/admin/orders${queryStr ? `?${queryStr}` : ""}`);
-  const list = Array.isArray(res) ? res : (res.data ?? []);
-  return list.map(mapRawOrder);
+  const res = await apiFetch<any>(`/admin/orders${queryStr ? `?${queryStr}` : ""}`);
+
+  if (res && res.data && Array.isArray(res.data.orders)) {
+    return {
+      orders: res.data.orders.map(mapRawOrder),
+      total: res.data.total ?? res.data.orders.length,
+      limit: res.data.limit ?? 20,
+      offset: res.data.offset ?? 0,
+    };
+  }
+
+  const list = Array.isArray(res) ? res : (res?.data || []);
+  const mapped = Array.isArray(list) ? list.map(mapRawOrder) : [];
+  return { orders: mapped, total: mapped.length, limit: mapped.length || 20, offset: 0 };
 }
 
 export async function fetchOrderById(id: string): Promise<AdminOrder> {

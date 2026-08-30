@@ -48,7 +48,10 @@ export function CartProvider({ children }: { children: ReactNode }) {
       const raw = window.localStorage.getItem(STORAGE_KEY);
       if (raw) setItems(JSON.parse(raw) as CartItem[]);
     } catch {
-      /* ignore */
+      toast.warning(
+        "Could not restore your saved bag — your browser storage may be full or restricted. " +
+        "Items you add this session will not persist if you close the tab."
+      );
     }
   }, []);
 
@@ -56,7 +59,10 @@ export function CartProvider({ children }: { children: ReactNode }) {
     try {
       window.localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
     } catch {
-      /* ignore */
+      toast.error(
+        "Your bag could not be saved. Please check your browser storage settings " +
+        "(try clearing site data) and try again — items may be lost if you leave this page."
+      );
     }
   }, [items]);
 
@@ -101,8 +107,11 @@ export function CartProvider({ children }: { children: ReactNode }) {
       clear,
       count: items.reduce((s, i) => s + i.qty, 0),
       subtotal,
+      // Delivery is always 0 in the cart — final delivery fee is calculated
+      // server-side at checkout based on pincode, delivery type, and product rules.
+      // Do NOT use this value for payment; use the backend-confirmed total.
       delivery: 0,
-      total: subtotal,
+      total: subtotal, // Subtotal only — shown as estimate; final total confirmed at checkout
     };
   }, [items, add, setQty, remove, clear]);
 

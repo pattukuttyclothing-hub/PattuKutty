@@ -151,7 +151,7 @@ export type AdminOrder = {
   deliveryFee: number;
   total: number;
   paymentMethod: "razorpay" | "cod";
-  paymentStatus: "pending" | "paid" | "failed" | "refunded";
+  paymentStatus: "pending" | "paid" | "failed" | "refunded" | "refund_processing";
   /** Razorpay payment / order reference */
   paymentRef?: string;
   paymentAttemptedAt?: string;

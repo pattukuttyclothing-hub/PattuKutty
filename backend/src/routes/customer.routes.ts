@@ -60,6 +60,19 @@ customerRouter.delete("/customer/addresses/:id", requireAuth, async (req, res, n
   } catch (err) { next(err); }
 });
 
+customerRouter.patch("/customer/addresses/:id", requireAuth, async (req, res, next) => {
+  try {
+    const customerId = (req as unknown as { user: { id: string } }).user.id;
+    const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+    const data = await CustomerService.updateAddress(id, customerId, req.body as Record<string, unknown>);
+    if (!data) {
+      res.status(404).json({ success: false, message: "Address not found or not owned by this customer" });
+      return;
+    }
+    res.json({ success: true, data });
+  } catch (err) { next(err); }
+});
+
 // ── Reviews ───────────────────────────────────────────────────────────
 
 customerRouter.post("/reviews", requireAuth, async (req, res, next) => {

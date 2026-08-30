@@ -171,6 +171,65 @@ export function toBlueDartDate(dateInput?: string | number | Date | null): strin
   return `/Date(${isNaN(parsed) ? Date.now() : parsed})/`;
 }
 
+/** Formats input to uppercase alphanumeric string stripped of non-alphanumeric chars and bounded by maxLen */
+export function formatBlueDartAlphaNumeric(input: string, maxLen: number): string {
+  const clean = input.replace(/[^A-Z0-9]/gi, "").toUpperCase();
+  return clean.length <= maxLen ? clean : clean.slice(-maxLen);
+}
+
+/** Formats invoice number to alphanumeric string of max 10 chars per spec schema */
+export function formatBlueDartInvoiceNo(orderNo: string): string {
+  return formatBlueDartAlphaNumeric(orderNo, 10);
+}
+
+/**
+ * Parses BlueDart ScanDate ("30-Jan-2023") and ScanTime ("11:41") into a valid ISO 8601 string.
+ */
+export function parseBlueDartScanTimestamp(scanDate?: string | null, scanTime?: string | null): string {
+  if (!scanDate || typeof scanDate !== "string" || !scanDate.trim()) {
+    return new Date().toISOString();
+  }
+
+  const trimmedDate = scanDate.trim();
+  const trimmedTime = (scanTime && typeof scanTime === "string") ? scanTime.trim() : "00:00:00";
+
+  let hours = 0;
+  let minutes = 0;
+  let seconds = 0;
+
+  if (trimmedTime) {
+    const timeMatch = trimmedTime.match(/^(\d{1,2}):(\d{1,2})(?::(\d{1,2}))?$/);
+    if (timeMatch) {
+      hours = parseInt(timeMatch[1], 10);
+      minutes = parseInt(timeMatch[2], 10);
+      seconds = timeMatch[3] ? parseInt(timeMatch[3], 10) : 0;
+    }
+  }
+
+  const MONTH_MAP: Record<string, number> = {
+    jan: 0, feb: 1, mar: 2, apr: 3, may: 4, jun: 5,
+    jul: 6, aug: 7, sep: 8, oct: 9, nov: 10, dec: 11,
+  };
+
+  const ddmmyyyyMatch = trimmedDate.match(/^(\d{1,2})[-/]([A-Za-z]{3})[-/](\d{4})$/);
+  if (ddmmyyyyMatch) {
+    const day = parseInt(ddmmyyyyMatch[1], 10);
+    const month = MONTH_MAP[ddmmyyyyMatch[2].toLowerCase()];
+    const year = parseInt(ddmmyyyyMatch[3], 10);
+
+    if (month !== undefined && !isNaN(day) && !isNaN(year)) {
+      return new Date(Date.UTC(year, month, day, hours, minutes, seconds)).toISOString();
+    }
+  }
+
+  const fallbackParsed = Date.parse(`${trimmedDate} ${trimmedTime}`);
+  if (!isNaN(fallbackParsed)) {
+    return new Date(fallbackParsed).toISOString();
+  }
+
+  return new Date().toISOString();
+}
+
 
 /**
  * Assets presence of credentials and returns configured Blue Dart URLs per environment.
@@ -224,6 +283,10 @@ export function assertCredentials(): {
     ? "https://apigateway.bluedart.com/in/transportation/waybill/v1/GenerateWayBill"
     : "https://apigateway-sandbox.bluedart.com/in/transportation/waybill/v1/GenerateWayBill";
 
+  const defaultCancelWaybillBase = envMode === "production"
+    ? "https://apigateway.bluedart.com/in/transportation/waybill/v1/CancelWaybill"
+    : "https://apigateway-sandbox.bluedart.com/in/transportation/waybill/v1/CancelWaybill";
+
   const defaultPickupBase = envMode === "production"
     ? "https://apigateway.bluedart.com/in/transportation/pickup/v1/RegisterPickup"
     : "https://apigateway-sandbox.bluedart.com/in/transportation/pickup/v1/RegisterPickup";
@@ -240,7 +303,7 @@ export function assertCredentials(): {
   const waybillUrl = env.BLUEDART_WAYBILL_BASE_URL || defaultWaybillBase;
   const pickupUrl = env.BLUEDART_PICKUP_BASE_URL || defaultPickupBase;
   const trackingUrl = env.BLUEDART_TRACKING_BASE_URL || defaultTrackingBase;
-  const cancelWaybillUrl = `${env.BLUEDART_WAYBILL_BASE_URL || apiUrl}/WaybillGeneration/waybillManifestGenerationLatest/CancelWaybill`;
+  const cancelWaybillUrl = process.env.BLUEDART_CANCEL_WAYBILL_BASE_URL || defaultCancelWaybillBase;
   const cancelPickupUrl = env.BLUEDART_CANCEL_PICKUP_BASE_URL || defaultCancelPickupBase;
   const productUrl = env.BLUEDART_PRODUCT_BASE_URL || defaultProductBase;
 
@@ -270,8 +333,8 @@ export function isBlueDartConfigured(): boolean {
 
 export function getShipperInfo(): BlueDartShipperInfo {
   const { loginId } = assertCredentials();
-  const originArea = env.BLUEDART_ORIGIN_AREA;
-  const customerCode = env.BLUEDART_CUSTOMER_CODE || loginId;
+  const originArea = env.BLUEDART_ORIGIN_AREA?.trim();
+  const customerCode = env.BLUEDART_CUSTOMER_CODE?.trim();
 
   if (!originArea || !customerCode) {
     const err = new Error(
@@ -283,6 +346,15 @@ export function getShipperInfo(): BlueDartShipperInfo {
     throw err;
   }
 
+  if (customerCode.length > 6) {
+    const err = new Error(
+      `Blue Dart customer code configuration error: BLUEDART_CUSTOMER_CODE ("${customerCode}") exceeds maximum length of 6 characters.`
+    ) as Error & { statusCode: number; code: string };
+    err.statusCode = 503;
+    err.code = "BLUEDART_SHIPPER_CONFIG_INVALID";
+    throw err;
+  }
+
   return {
     name: "Butterflies Tailoring",
     line1: "12A, Ramanathapuram, 3rd Street, Gandhipuram",
@@ -290,8 +362,8 @@ export function getShipperInfo(): BlueDartShipperInfo {
     state: "Tamil Nadu",
     pincode: "641012",
     phone: "9876543210",
-    originArea: originArea.trim(),
-    customerCode: customerCode.trim(),
+    originArea,
+    customerCode,
     loginId: loginId.trim(),
   };
 }
@@ -304,12 +376,31 @@ export function getBlueDartHealth(): BlueDartHealthStatus {
     loginIdConfigured: Boolean(env.BLUEDART_CLIENT_ID || env.BLUEDART_LOGIN_ID || env.BLUEDART_API_KEY),
     licenseKeyConfigured: Boolean(env.BLUEDART_CLIENT_SECRET || env.BLUEDART_LICENSE_KEY || env.BLUEDART_LICENCE_KEY || env.BLUEDART_API_SECRET),
     originAreaConfigured: Boolean(env.BLUEDART_ORIGIN_AREA),
-    customerCodeConfigured: Boolean(env.BLUEDART_CUSTOMER_CODE || env.BLUEDART_CLIENT_ID || env.BLUEDART_LOGIN_ID),
+    customerCodeConfigured: Boolean(env.BLUEDART_CUSTOMER_CODE && env.BLUEDART_CUSTOMER_CODE.trim().length <= 6),
     allowProductionTests: Boolean(env.BLUEDART_ALLOW_PRODUCTION_TESTS),
   };
 }
 
 // ─── Authentication ──────────────────────────────────────────────────────────
+
+/**
+ * Safely decodes standard JWT payload to read the `exp` claim (in milliseconds).
+ * Returns null if token is not a valid 3-segment JWT or lacks `exp`.
+ */
+function decodeJwtExpiry(token: string): number | null {
+  try {
+    const parts = token.split(".");
+    if (parts.length < 2) return null;
+    const payloadJson = Buffer.from(parts[1], "base64url").toString("utf8");
+    const payload = JSON.parse(payloadJson) as { exp?: number };
+    if (typeof payload.exp === "number" && payload.exp > 0) {
+      return payload.exp * 1000;
+    }
+  } catch {
+    // Decoding failed
+  }
+  return null;
+}
 
 /**
  * Obtains Blue Dart JWT according to official API Gateway contract.
@@ -352,10 +443,23 @@ export async function authenticate(): Promise<string> {
   }
 
   if (!res.ok) {
-    const text = await res.text().catch(() => "(unreadable body)");
-    console.error("[BlueDart] Auth HTTP error:", res.status, text);
+    const rawText = await res.text().catch(() => "(unreadable body)");
+    console.error("[BlueDart] Auth HTTP error:", res.status, rawText);
+    let detail = rawText;
+    try {
+      const parsed = JSON.parse(rawText) as {
+        status?: number;
+        title?: string;
+        "error-response"?: string;
+        errorResponse?: string;
+        detail?: string;
+      };
+      detail = parsed["error-response"] || parsed.errorResponse || parsed.detail || parsed.title || rawText;
+    } catch {
+      // Keep rawText if non-JSON
+    }
     const err = new Error(
-      "Blue Dart authentication failed. Check credentials and network connectivity."
+      `Blue Dart authentication failed (HTTP ${res.status}): ${detail}`
     ) as Error & { statusCode: number };
     err.statusCode = 502;
     throw err;
@@ -379,14 +483,15 @@ export async function authenticate(): Promise<string> {
   }
 
   _cachedJwt = token;
-  _jwtExpiresAt = data.TokenExpiry
-    ? new Date(data.TokenExpiry).getTime()
-    : now + 23 * 60 * 60 * 1000;
+  const decodedExp = decodeJwtExpiry(token);
+  // Spec generateJWT_api_spec.yaml defines no TokenExpiry field in response schema ({ "JWTToken": "..." }).
+  // We attempt to decode the JWT's own `exp` claim (in ms), falling back to a conservative 1 hour (3600s) TTL instead of 23 hours.
+  _jwtExpiresAt = decodedExp ?? (now + 60 * 60 * 1000);
 
   return _cachedJwt;
 }
 
-/** Internal fetch helper with JWT retry on HTTP 401 */
+/** Internal fetch helper with JWT retry on HTTP 401/403 or auth-related failures */
 async function fetchWithJwtRetry(
   url: string,
   options: { method?: string; headers?: Record<string, string>; body?: string }
@@ -415,8 +520,27 @@ async function fetchWithJwtRetry(
     clearTimeout(timer);
   }
 
-  if (res.status === 401) {
-    console.warn("[BlueDart] JWT unauthorized (HTTP 401). Retrying with fresh JWT...");
+  let isAuthError = res.status === 401 || res.status === 403;
+  if (!isAuthError && !res.ok) {
+    try {
+      const cloneText = await res.clone().text();
+      const lower = cloneText.toLowerCase();
+      if (
+        lower.includes("jwt") ||
+        lower.includes("unauthorized") ||
+        lower.includes("invalid token") ||
+        lower.includes("token expired") ||
+        lower.includes("access to the resource is not allowed")
+      ) {
+        isAuthError = true;
+      }
+    } catch {
+      // Ignore clone error
+    }
+  }
+
+  if (isAuthError) {
+    console.warn(`[BlueDart] JWT auth rejection (HTTP ${res.status}). Invalidating cached token and retrying with fresh JWT...`);
     invalidateJwt();
     jwt = await authenticate();
     requestHeaders["JWTToken"] = jwt;
@@ -425,8 +549,12 @@ async function fetchWithJwtRetry(
     timer = setTimeout(() => controller.abort(), timeoutMs);
     try {
       res = await fetch(url, { ...options, headers: requestHeaders, signal: controller.signal });
+      if (res.status === 401 || res.status === 403) {
+        invalidateJwt();
+      }
     } catch (err) {
       clearTimeout(timer);
+      invalidateJwt();
       const isTimeout = (err as { name?: string }).name === "AbortError";
       throw new Error(isTimeout ? `Blue Dart API retry timed out after ${timeoutMs}ms` : String(err));
     } finally {
@@ -555,6 +683,7 @@ export async function generateWaybill(params: WaybillCreateParams): Promise<Blue
   const isCod = params.paymentMethod === "cod";
   const weightKg = params.weightKg ?? 0.5;
   const pieces = params.pieces ?? 1;
+  const creditRefNo = formatBlueDartAlphaNumeric(params.orderNo, 20);
 
   const waybillPayload = {
     Request: {
@@ -575,23 +704,25 @@ export async function generateWaybill(params: WaybillCreateParams): Promise<Blue
         CustomerAddress1: shipper.line1,
         CustomerPincode: shipper.pincode,
         Sender: shipper.name,
+        IsToPayCustomer: false,
       },
       Services: {
         AWBNo: "",
         ProductCode: productCode,
         SubProductCode: isCod ? "C" : "P",
         ActualWeight: weightKg,
-        CollectableAmount: isCod ? (params.codAmount ?? 0) : 0,
+        CollactableAmount: isCod ? (params.codAmount ?? 0) : 0,
         Commodity: {
-          CommodityDetail1: `Order ${params.orderNo}`,
-          CommodityDetail2: "Ethnic wear / tailoring",
+          CommodityDetail1: `Order${params.orderNo}`.replace(/[^A-Za-z0-9]/g, "").slice(0, 30),
+          CommodityDetail2: "Ethnic wear / tailoring".replace(/[^A-Za-z0-9]/g, "").slice(0, 30),
           CommodityDetail3: "",
         },
+        CreditReferenceNo: creditRefNo,
         DeclaredValue: params.declaredValue,
         Dimensions: [],
         PieceCount: pieces.toString(),
-        InvoiceNo: params.orderNo,
-        PackType: "BOX",
+        InvoiceNo: formatBlueDartInvoiceNo(params.orderNo),
+        PackType: "",
         PickupDate: toBlueDartDate(params.pickupDate),
         PickupTime: params.pickupTime ?? "1200",
         ProductType: 1,
@@ -630,8 +761,27 @@ export async function generateWaybill(params: WaybillCreateParams): Promise<Blue
   if (!waybillRes.ok) {
     const text = await waybillRes.text().catch(() => "(unreadable body)");
     console.error("[BlueDart] Waybill creation HTTP error:", waybillRes.status, text);
+    let detailMsg = text;
+    try {
+      const parsedErr = JSON.parse(text) as {
+        status?: number;
+        title?: string;
+        "error-response"?: string;
+        error?: string;
+        message?: string;
+      };
+      if (parsedErr["error-response"]) {
+        detailMsg = parsedErr.title
+          ? `${parsedErr.title}: ${parsedErr["error-response"]}`
+          : parsedErr["error-response"];
+      } else if (parsedErr.message || parsedErr.error) {
+        detailMsg = parsedErr.message || parsedErr.error || text;
+      }
+    } catch {
+      // Body was plain text or not valid JSON
+    }
     const err = new Error(
-      `Blue Dart waybill creation failed (HTTP ${waybillRes.status}). ` +
+      `Blue Dart waybill creation failed (HTTP ${waybillRes.status}): ${detailMsg}. ` +
       "The order has NOT been marked as shipped. Please retry."
     ) as Error & { statusCode: number };
     err.statusCode = 502;
@@ -642,7 +792,7 @@ export async function generateWaybill(params: WaybillCreateParams): Promise<Blue
     GenerateWayBillResult?: {
       AWBNo?: string;
       IsError?: boolean;
-      Status?: { StatusMessage?: string; StatusCode?: string }[];
+      Status?: { StatusInformation?: string; StatusMessage?: string; StatusCode?: string }[];
       ErrorMessage?: { ErrorCode?: string; ErrorDescription?: string }[];
     };
   };
@@ -652,6 +802,7 @@ export async function generateWaybill(params: WaybillCreateParams): Promise<Blue
   // Response validation even on HTTP 200 (spec §4)
   if (!waybillResult || waybillResult.IsError || !isValidAwb(waybillResult.AWBNo)) {
     const msg =
+      waybillResult?.Status?.[0]?.StatusInformation ??
       waybillResult?.Status?.[0]?.StatusMessage ??
       waybillResult?.ErrorMessage?.[0]?.ErrorDescription ??
       "Waybill generation returned an error from Blue Dart";
@@ -706,12 +857,12 @@ export async function registerPickup(params: PickupRegistrationParams): Promise<
         IsReversePickup: false,
         NumberofPieces: Number(params.pieces || 1),
         OfficeCloseTime: "1800",
-        PackType: "BOX",
+        PackType: "",
         ProductCode: env.BLUEDART_PREPAID_PRODUCT_CODE || "A",
         ReferenceNo: "",
         Remarks: "",
         RouteCode: "",
-        ShipmentPickupDate: params.pickupDate.trim(),
+        ShipmentPickupDate: toBlueDartDate(params.pickupDate),
         ShipmentPickupTime: params.pickupTime.trim(),
         SubProducts: params.subProducts ? [params.subProducts] : ["E-Tailing"],
         VolumeWeight: 0.5,
@@ -777,12 +928,13 @@ export async function cancelWaybill(awb: string): Promise<{ cancelled: boolean; 
     const res = await fetchWithJwtRetry(cancelWaybillUrl, {
       method: "POST",
       body: JSON.stringify({
-        AWBNo: awb.trim(),
+        Request: {
+          AWBNo: awb.trim(),
+        },
         Profile: {
           LoginID: loginId,
           LicenceKey: licenseKey,
           Api_type: apiType,
-          Version: "1.3",
         },
       }),
     });
@@ -794,12 +946,19 @@ export async function cancelWaybill(awb: string): Promise<{ cancelled: boolean; 
     }
 
     const data = (await res.json()) as {
-      IsError?: boolean;
-      Status?: { StatusMessage?: string }[];
+      CancelWaybillResult?: {
+        AWBNo?: string;
+        IsError?: boolean;
+        Status?: { StatusCode?: string; StatusInformation?: string; StatusMessage?: string }[];
+      };
     };
 
-    if (data.IsError) {
-      const reason = data.Status?.[0]?.StatusMessage ?? "Blue Dart returned error on waybill cancellation";
+    const result = data?.CancelWaybillResult;
+    if (!result || result.IsError) {
+      const reason =
+        result?.Status?.[0]?.StatusInformation ??
+        result?.Status?.[0]?.StatusMessage ??
+        "Blue Dart returned error on waybill cancellation";
       console.warn("[BlueDart] Waybill cancellation failed:", reason);
       return { cancelled: false, reason };
     }
@@ -909,7 +1068,47 @@ export async function trackShipment(awb: string): Promise<BlueDartTrackingEvent[
   }
 
   if (!res.ok) {
-    throw new Error(`Blue Dart tracking failed: HTTP ${res.status}`);
+    const contentType = res.headers.get("content-type") || "";
+    const bodyText = await res.text().catch(() => "(unreadable body)");
+    console.error("[BlueDart] Tracking HTTP error:", res.status, bodyText);
+
+    let detail = bodyText;
+    if (contentType.includes("application/json")) {
+      try {
+        const parsed = JSON.parse(bodyText) as {
+          status?: number;
+          title?: string;
+          "error-response"?: string;
+          error?: string;
+          message?: string;
+        };
+        if (parsed["error-response"]) {
+          detail = parsed.title
+            ? `${parsed.title}: ${parsed["error-response"]}`
+            : parsed["error-response"];
+        } else if (parsed.message || parsed.error) {
+          detail = parsed.message || parsed.error || bodyText;
+        }
+      } catch {
+        // Plain text fallback
+      }
+    } else {
+      try {
+        const parsed = JSON.parse(bodyText) as {
+          title?: string;
+          "error-response"?: string;
+        };
+        if (parsed["error-response"]) {
+          detail = parsed.title
+            ? `${parsed.title}: ${parsed["error-response"]}`
+            : parsed["error-response"];
+        }
+      } catch {
+        // Raw plain text body
+      }
+    }
+
+    throw new Error(`Blue Dart tracking failed (HTTP ${res.status}): ${detail}`);
   }
 
   const xmlText = await res.text();
@@ -966,9 +1165,7 @@ export async function trackShipment(awb: string): Promise<BlueDartTrackingEvent[
         status: String(scan.Scan ?? "").trim(),
         location: String(scan.ScannedLocation ?? "").trim(),
         detail: instructions || String(scan.Scan ?? "").trim(),
-        timestamp: scan.ScanDate
-          ? `${scan.ScanDate}T${scan.ScanTime ?? "00:00:00"}`
-          : new Date().toISOString(),
+        timestamp: parseBlueDartScanTimestamp(scan.ScanDate, scan.ScanTime),
       });
     }
 
@@ -1035,3 +1232,60 @@ export async function getProductsAndSubProducts(): Promise<BlueDartProduct[]> {
 
 /** Exported alias for backwards compatibility */
 export const getProducts = getProductsAndSubProducts;
+
+/**
+ * Non-blocking validation helper that queries BlueDart product master list
+ * and logs a diagnostic warning if configured product codes are not active on the account.
+ */
+export async function validateConfiguredBlueDartProducts(): Promise<{
+  valid: boolean;
+  prepaidValid: boolean;
+  codValid: boolean;
+  warnings: string[];
+}> {
+  const prepaidCode = env.BLUEDART_PREPAID_PRODUCT_CODE || "A";
+  const codCode = env.BLUEDART_COD_PRODUCT_CODE;
+
+  const warnings: string[] = [];
+  let prepaidValid = true;
+  let codValid = true;
+
+  try {
+    const products = await getProductsAndSubProducts();
+    const activeCodes = new Set(
+      products.map((p) => p.productCode || p.productName).filter(Boolean)
+    );
+
+    if (activeCodes.size > 0) {
+      if (!activeCodes.has(prepaidCode)) {
+        prepaidValid = false;
+        warnings.push(
+          `[BlueDart Config Warning] BLUEDART_PREPAID_PRODUCT_CODE "${prepaidCode}" was not found in BlueDart active product list (${Array.from(activeCodes).join(", ")})`
+        );
+      }
+
+      if (codCode && !activeCodes.has(codCode)) {
+        codValid = false;
+        warnings.push(
+          `[BlueDart Config Warning] BLUEDART_COD_PRODUCT_CODE "${codCode}" was not found in BlueDart active product list (${Array.from(activeCodes).join(", ")})`
+        );
+      }
+    }
+  } catch (err) {
+    // Non-blocking catch: log warning and continue without failing startup
+    warnings.push(`[BlueDart Product Check Skipped] Could not verify products: ${String(err)}`);
+  }
+
+  if (warnings.length > 0) {
+    for (const warning of warnings) {
+      console.warn(warning);
+    }
+  }
+
+  return {
+    valid: prepaidValid && codValid,
+    prepaidValid,
+    codValid,
+    warnings,
+  };
+}

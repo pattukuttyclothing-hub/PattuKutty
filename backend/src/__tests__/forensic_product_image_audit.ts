@@ -2,7 +2,7 @@ import { createClient } from "@supabase/supabase-js";
 import { env } from "../config/env.js";
 
 // Clean, unmutated service client for direct database & storage verification queries
-const cleanDb = createClient(env.SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY, {
+const cleanDb = createClient(env.SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY || "", {
   auth: { persistSession: false },
 });
 
@@ -72,7 +72,7 @@ async function executeForensicAudit() {
     if (testCust?.id) {
       await cleanDb.auth.admin.updateUserById(testCust.id, { password: "CustomerPassword123!" });
     }
-    const tempCustAuth = createClient(env.SUPABASE_URL, env.SUPABASE_ANON_KEY || env.SUPABASE_SERVICE_ROLE_KEY, { auth: { persistSession: false } });
+    const tempCustAuth = createClient(env.SUPABASE_URL, env.SUPABASE_ANON_KEY || env.SUPABASE_SERVICE_ROLE_KEY || "", { auth: { persistSession: false } });
     const custLogin = await tempCustAuth.auth.signInWithPassword({
       email: testEmail,
       password: "CustomerPassword123!",

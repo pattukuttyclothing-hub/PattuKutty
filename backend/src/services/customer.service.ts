@@ -21,6 +21,10 @@ export class CustomerService {
     return await CustomerRepository.deleteAddress(id, customerId);
   }
 
+  static async updateAddress(id: string, customerId: string, payload: Record<string, unknown>) {
+    return await CustomerRepository.updateAddress(id, customerId, payload);
+  }
+
   static async submitReview(payload: {
     product_id: string;
     customer_id: string;

@@ -3,7 +3,7 @@ import { env } from "../config/env.js";
 import { db, authClient } from "../config/db.js";
 
 // Dedicated clean service client for test assertions (never mutated by user sessions)
-const cleanDb = createClient(env.SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY, {
+const cleanDb = createClient(env.SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY || "", {
   auth: { persistSession: false },
 });
 
