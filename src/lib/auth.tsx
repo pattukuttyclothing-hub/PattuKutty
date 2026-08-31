@@ -190,6 +190,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         localStorage.removeItem("butterflies-cart");
         localStorage.removeItem("butterflies-phone");
         localStorage.removeItem("butterflies-auth-next");
+        localStorage.removeItem("pk_customer_orders");
         Object.keys(localStorage).forEach((key) => {
           if (key.endsWith("-auth-token") || key.includes("butterflies")) {
             localStorage.removeItem(key);

@@ -22,8 +22,9 @@ export function formatWhatsappNumber(num: string): string {
   return digits;
 }
 
-const rawWhatsapp = (typeof import.meta !== "undefined" && import.meta.env?.["VITE_WHATSAPP_NUMBER"]) || "919791712622";
-const rawPhone = (typeof import.meta !== "undefined" && import.meta.env?.["VITE_STORE_PHONE"]) || "+91 97917 12622";
+const _env = (typeof import.meta !== "undefined" && typeof import.meta.env !== "undefined") ? (import.meta.env as Record<string, string | undefined>) : {};
+const rawWhatsapp = _env["VITE_WHATSAPP_NUMBER"] || "919791712622";
+const rawPhone = _env["VITE_STORE_PHONE"] || "+91 97917 12622";
 
 export const storeInfo = {
   name: "Pattu Kutty",

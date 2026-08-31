@@ -52,10 +52,10 @@ export function RequestCard({ request: r, index = 0 }: { request: CustomRequest;
         eyebrow={eyebrowText}
         title={cardTitle}
         metaLines={[
-          `${r.colour || "Custom Colour"} · Size ${r.size || "Standard"} · ${r.qty || 1} piece${(r.qty || 1) > 1 ? "s" : ""}`,
+          `${r.colour || ""} · Size ${r.size || ""} · ${r.qty || 1} piece${(r.qty || 1) > 1 ? "s" : ""}`,
           `Stitching time: ${timelineById(r.timeline).label}`,
           <span key="c" className="inline-flex items-center gap-1.5">
-            <Phone className="h-3.5 w-3.5" /> {r.customerName || "Valued Customer"} · {r.customerPhone || "+91 98765 43210"}
+            <Phone className="h-3.5 w-3.5" /> {r.customerName || "(no name)"} · {r.customerPhone || "(no phone)"}
           </span>,
         ]}
         cta={r.quote ? `Quoted ${inr(r.quote.totalPayable)}` : "Review & quote"}

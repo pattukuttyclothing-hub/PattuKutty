@@ -606,19 +606,23 @@ function OrderTrackingPage() {
               <h2 className="font-display text-lg font-semibold text-foreground">Items in Order</h2>
               <div className="mt-4 divide-y divide-border">
                 {(order.items ?? []).map((it, i) => {
-                  const name = it.name || (it as any).product_name_snapshot || "Custom Designer Wear";
-                  const size = it.size || (it as any).size_snapshot || "Standard";
+                  const name = it.name || (it as any).product_name_snapshot || "";
+                  const size = it.size || (it as any).size_snapshot || "";
                   const qty = Math.max(1, Number(it.qty || (it as any).quantity || 1));
                   const unitPrice = Number(it.price ?? (it as any).unit_price ?? 0);
                   const img =
                     it.image ||
                     (it as any).image_url_snapshot ||
                     (it as any).image_url ||
-                    "https://images.unsplash.com/photo-1610030469983-98e550d6193c?w=900&auto=format&fit=crop&q=80";
+                    "";
 
                   return (
                     <div key={i} className="flex items-center gap-4 py-3 first:pt-0 last:pb-0">
-                      <img loading="lazy" src={img} alt={name} className="h-16 w-14 rounded-xl object-cover" />
+                      {img ? (
+                        <img loading="lazy" src={img} alt={name} className="h-16 w-14 rounded-xl object-cover" />
+                      ) : (
+                        <div className="h-16 w-14 rounded-xl bg-muted flex items-center justify-center text-muted-foreground text-xs">No img</div>
+                      )}
                       <div className="min-w-0 flex-1">
                         <p className="text-sm font-semibold text-foreground truncate">{name}</p>
                         <p className="text-xs text-muted-foreground">

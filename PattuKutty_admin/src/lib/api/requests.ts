@@ -20,7 +20,7 @@ interface ApiResponse<T> {
 export function mapRawRequestToCustomRequest(raw: any): CustomRequest {
   if (!raw || typeof raw !== "object") return raw;
 
-  const customerName = raw.customer?.full_name || raw.customer_name || raw.customerName || "Valued Customer";
+  const customerName = raw.customer?.full_name || raw.customer_name || raw.customerName || "";
   
   const phoneMatch = raw.fabric_notes ? raw.fabric_notes.match(/\[Contact Phone\]:\s*([^\n]+)/) : null;
   const contactPhoneFromNotes = phoneMatch ? phoneMatch[1].trim() : null;
@@ -31,13 +31,13 @@ export function mapRawRequestToCustomRequest(raw: any): CustomRequest {
     raw.customer_phone ||
     raw.customerPhone ||
     raw.phone ||
-    "+91 98765 43210";
+    "";
 
   // Extract colour from fabric_notes or colour relation
   const colourMatch = raw.fabric_notes ? raw.fabric_notes.match(/\[Colour\]:\s*([^\n]+)/) : null;
   const colour =
     (typeof raw.colour === "string" ? raw.colour : raw.colour?.name || raw.colour_detail?.name) ||
-    (colourMatch ? colourMatch[1].trim() : "Custom Colour");
+    (colourMatch ? colourMatch[1].trim() : "");
 
   // Category & Subcategory resolution (prioritize slug, then object name, then string/id)
   const categorySlug =

@@ -85,13 +85,13 @@ function normalizeOrderItem(it: Record<string, unknown>): CartItem {
     it["product_name_snapshot"] ||
     it["title"] ||
     it["product_name"] ||
-    "Custom Designer Item"
+    ""
   );
   const size = String(
     it["size"] ||
     it["size_snapshot"] ||
     it["variant"] ||
-    "Free Size"
+    ""
   );
   const qty = Math.max(1, Number(it["qty"] ?? it["quantity"] ?? 1));
   const price = Number(
@@ -105,7 +105,7 @@ function normalizeOrderItem(it: Record<string, unknown>): CartItem {
     it["image_url_snapshot"] ||
     it["image_url"] ||
     it["hero_image_url"] ||
-    "https://images.unsplash.com/photo-1610030469983-98e550d6193c?w=900&auto=format&fit=crop&q=80"
+    ""
   );
   const id = String(it["id"] || it["variant_id"] || it["product_id"] || `item-${Date.now()}`);
   const customReqId = (it["customRequestId"] || it["custom_request_id"]) as string | undefined;
@@ -116,7 +116,7 @@ function normalizeOrderItem(it: Record<string, unknown>): CartItem {
     name,
     price,
     size,
-    colour: String(it["colour"] || it["colour_snapshot"] || "Design Colour"),
+    colour: String(it["colour"] || it["colour_snapshot"] || ""),
     qty,
     image,
     isCustom: Boolean(it["isCustom"] || it["is_custom"]),

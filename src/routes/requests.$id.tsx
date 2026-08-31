@@ -313,7 +313,7 @@ function RequestDetail() {
               {(() => {
                 const rawNotes = req.description || (req as any).fabricNotes || "";
                 const phoneMatch = rawNotes.match(/\[Contact Phone\]:\s*([^\n]+)/);
-                const phoneVal = (req as any).phone || (req as any).customerPhone || (phoneMatch ? phoneMatch[1].trim() : "+91 98765 43210");
+                const phoneVal = (req as any).phone || (req as any).customerPhone || (phoneMatch ? phoneMatch[1].trim() : "");
 
                 const cleanNotes = rawNotes
                   .replace(/\[Colour\]:\s*[^\n]+/gi, "")

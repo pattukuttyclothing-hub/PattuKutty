@@ -99,7 +99,7 @@ export class WhatsAppService {
     const messageText = [
       `*Butterflies Tailoring — Quotation for ${params.requestNo}*`,
       ``,
-      `Hello ${params.customerName || "Valued Customer"},`,
+      `Hello ${params.customerName || ""},`,
       `Our designer has reviewed your design specification and prepared a quotation:`,
       ``,
       `📌 *Design Name*: ${params.quoteName}`,
@@ -196,7 +196,7 @@ export class WhatsAppService {
     const messageText = [
       `*Butterflies Tailoring — Quotation for ${params.requestNo}*`,
       ``,
-      `Hello ${params.customerName || "Valued Customer"},`,
+      `Hello ${params.customerName || ""},`,
       `Our designer has reviewed your design specification and prepared a quotation:`,
       ``,
       `📌 *Design Name*: ${params.quoteName}`,
@@ -311,7 +311,7 @@ export class WhatsAppService {
     const messageText = [
       `*Butterflies Tailoring — Request Update (${params.requestNo})*`,
       ``,
-      `Hello ${params.customerName || "Valued Customer"},`,
+      `Hello ${params.customerName || ""},`,
       `Your custom design request (${params.requestNo}) has been cancelled.`,
       ``,
       `📌 *Reason*: ${params.cancelReason || "Cancelled by studio/customer"}`,

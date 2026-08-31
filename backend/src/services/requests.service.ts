@@ -259,7 +259,7 @@ export class RequestsService {
     // 3. Attempt WhatsApp Notification with binary image media
     const { WhatsAppService } = await import("./whatsapp.service.js");
     const customerPhone = req.customer?.phone || req.phone || "";
-    const customerName = req.customer?.full_name || "Valued Customer";
+    const customerName = req.customer?.full_name || "";
 
     const whatsappResult = await WhatsAppService.sendQuotationMediaNotification({
       toPhone: customerPhone,
@@ -310,7 +310,7 @@ export class RequestsService {
       referenceImages.find((u: string) => typeof u === "string" && u.trim().startsWith("http")) || null;
 
     const customerPhone = req.customer?.phone || req.phone || "";
-    const customerName = req.customer?.full_name || "Valued Customer";
+    const customerName = req.customer?.full_name || "";
 
     const whatsappResult = await WhatsAppService.sendQuotationMediaNotification({
       toPhone: customerPhone,
@@ -360,7 +360,7 @@ export class RequestsService {
     try {
       const fullReq = await RequestsRepository.getRequestById(id);
       const customerPhone = fullReq?.customer?.phone || (fullReq?.fabric_notes ? (fullReq.fabric_notes.match(/\[Contact Phone\]:\s*([^\n]+)/)?.[1]?.trim()) : null) || "";
-      const customerName = fullReq?.customer?.full_name || "Valued Customer";
+      const customerName = fullReq?.customer?.full_name || "";
       const requestNo = fullReq?.request_no || "CR-0000";
       const referenceImageUrl = Array.isArray(fullReq?.reference_image_urls) ? fullReq.reference_image_urls[0] : fullReq?.custom_colour_image_url;
 

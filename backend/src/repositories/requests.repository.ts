@@ -223,20 +223,17 @@ export class RequestsRepository {
     }
 
     const colourMatch = data.fabric_notes ? data.fabric_notes.match(/\[Colour\]:\s*([^\n]+)/) : null;
-    const colour = data.colour || colourObj?.name || (colourMatch ? colourMatch[1].trim() : "Custom Colour");
+    const colour = data.colour || colourObj?.name || (colourMatch ? colourMatch[1].trim() : "") || null;
 
     const phoneMatch = data.fabric_notes ? data.fabric_notes.match(/\[Contact Phone\]:\s*([^\n]+)/) : null;
-    const extractedPhone = phoneMatch ? phoneMatch[1].trim() : "+91 98765 43210";
+    const extractedPhone = phoneMatch ? phoneMatch[1].trim() : "";
 
     if (!customer) {
-      customer = {
-        id: data.customer_id || "cust-default",
-        full_name: "Priya Ramesh",
-        phone: extractedPhone,
-        city: "Coimbatore",
-      };
+      // No customer record found — do NOT inject a fake identity.
+      // Return null customer so the API caller can surface a proper error.
+      customer = null;
     } else if (!customer.phone) {
-      customer.phone = extractedPhone;
+      customer.phone = extractedPhone || null;
     }
 
     let quote = null;
@@ -281,12 +278,12 @@ export class RequestsRepository {
       // Ignore if quotes table read fails
     }
 
-    const finalPhone = phoneMatch ? phoneMatch[1].trim() : (customer?.phone || extractedPhone);
+    const finalPhone = phoneMatch ? phoneMatch[1].trim() : (customer?.phone || "");
     if (customer && phoneMatch) {
       customer.phone = finalPhone;
     }
 
-    return { ...data, colour, phone: finalPhone, customer, category, sub_category, colour_detail: colourObj, quote };
+    return { ...data, colour: colour || "", phone: finalPhone, customer, category, sub_category, colour_detail: colourObj, quote };
   }
 
   static async submitQuoteAdmin(

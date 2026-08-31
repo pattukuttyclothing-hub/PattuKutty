@@ -20,9 +20,9 @@ export function mapRawOrder(o: any): AdminOrder {
   if (!o) return o;
   const items = Array.isArray(o.items)
     ? o.items.map((i: any) => ({
-        name: i.product_name_snapshot || i.name || "Custom Piece",
-        size: i.size_snapshot || i.size || "M",
-        colour: i.colour_snapshot || i.colour || "Design Colour",
+        name: i.product_name_snapshot || i.name || "",
+        size: i.size_snapshot || i.size || "",
+        colour: i.colour_snapshot || i.colour || "",
         unitPrice: i.unit_price ?? i.unitPrice ?? 0,
         qty: i.qty ?? 1,
         image: i.image_url_snapshot || i.image || "",

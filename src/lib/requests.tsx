@@ -140,7 +140,7 @@ export function mapBackendToCustomRequest(raw: any): CustomRequest {
       : Array.isArray(raw.images)
       ? raw.images
       : [],
-    colour: raw.colour || "Custom Colour",
+    colour: raw.colour || "",
     colourImage: raw.custom_colour_image_url || raw.colourImage,
     description: raw.fabric_notes || raw.description || "",
     voiceNote: raw.voice_note_url || raw.voiceNote,
@@ -149,8 +149,8 @@ export function mapBackendToCustomRequest(raw: any): CustomRequest {
       return pm ? pm[1].trim() : (raw.phone || raw.customer?.phone || "");
     })(),
     qty: Number(raw.qty || 1),
-    size: raw.size || "Standard",
-    timeline: raw.timeline_id || raw.timeline || "3_day",
+    size: raw.size || "",
+    timeline: raw.timeline_id || raw.timeline || "",
     status,
     fulfilment: raw.fulfilment === "doorstep" ? "doorstep" : "pickup",
     updateRequestedAt: raw.update_requested_at || raw.updateRequestedAt,
@@ -169,7 +169,7 @@ export function mapBackendToCustomRequest(raw: any): CustomRequest {
     quote: raw.quote
       ? {
           name: raw.quote.name || "Custom Design Quotation",
-          size: raw.quote.size || raw.size || "Standard",
+          size: raw.quote.size || raw.size || "",
           price: Number(raw.quote.price || 0),
           gstAmount: Number(raw.quote.gst_amount ?? raw.quote.gstAmount ?? 0),
           deliveryFee: Number(raw.quote.delivery_fee ?? raw.quote.deliveryFee ?? 0),
@@ -215,7 +215,7 @@ export function RequestsProvider({ children }: { children: ReactNode }) {
 
   const create = useCallback(
     async (r: NewRequest): Promise<CustomRequest> => {
-      const cleanSize = (r.size || "Standard").slice(0, 20);
+      const cleanSize = (r.size || "").slice(0, 20);
 
       const { submitCustomRequest } = await import("./api/requests");
       const backendData = await submitCustomRequest({

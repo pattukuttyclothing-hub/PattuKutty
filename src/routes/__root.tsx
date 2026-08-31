@@ -41,6 +41,16 @@ function NotFoundComponent() {
   );
 }
 
+function parseStackFrame(stack?: string): { file: string; line: string } | null {
+  if (!stack) return null;
+  // Match "at something (file.ts:12:34)" or "file.ts:12:34" lines
+  const match = stack.match(/(?:at\s+(?:\S+\s+)?\(?)([^\s()]+\.[jt]sx?):(\d+):\d+/);
+  if (!match || !match[1] || !match[2]) return null;
+  // Trim common build-path noise like "/@fs/home/…/src/"
+  const file = match[1].replace(/^\/.*\/src\//, "src/").replace(/^\/.*\/dist\//, "dist/");
+  return { file, line: match[2] };
+}
+
 function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
   console.error(error);
   const router = useRouter();
@@ -48,11 +58,16 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
     reportLovableError(error, { boundary: "tanstack_root_error_component" });
   }, [error]);
 
-  // Derive a helpful sub-message from the error
   const msg = error?.message || String(error);
+  const stack = (error as any)?.stack as string | undefined;
+  const cause = (error as any)?.cause;
+  const causeMsg = cause instanceof Error ? cause.message : (cause ? String(cause) : null);
+  const frame = parseStackFrame(stack);
+
   let component = "App";
   let hint: string | null = null;
 
+  // Classify by message
   if (msg.includes("Missing Supabase environment variable") || msg.includes("SUPABASE")) {
     component = "SupabaseClient";
     hint = "VITE_SUPABASE_URL and VITE_SUPABASE_PUBLISHABLE_KEY must be set in your .env / Cloudflare Build Variables.";
@@ -77,11 +92,15 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
   } else if (msg.toLowerCase().includes("fetch") || msg.toLowerCase().includes("network")) {
     component = "Network / API Call";
     hint = "A network request failed. Check if the backend worker is running and CORS is configured.";
+  } else if (!frame || !stack || stack.trim() === msg) {
+    // No usable stack → likely a CF Worker SSR module-init crash
+    component = "SSR / h3 Handler";
+    hint = "The crash happened during module initialisation (before React rendered). Check env variables and top-level module imports.";
   }
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
-      <div className="max-w-md w-full text-center">
+      <div className="max-w-lg w-full text-center">
         <h1 className="text-xl font-semibold tracking-tight text-foreground">
           This page didn't load
         </h1>
@@ -92,19 +111,55 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
         {/* ── Diagnostic sub-message panel ── */}
         <div className="mt-4 text-left rounded-xl border border-destructive/20 bg-destructive/5 px-4 py-3 text-xs space-y-1.5">
           <p className="font-semibold text-destructive uppercase tracking-wide text-[0.65rem]">🔍 Diagnostic Info</p>
-          <div className="flex gap-2">
-            <span className="min-w-[5rem] font-semibold text-muted-foreground">Component</span>
+
+          {/* Component */}
+          <div className="flex gap-2 items-start">
+            <span className="min-w-[5rem] shrink-0 font-semibold text-muted-foreground">Component</span>
             <code className="bg-destructive/10 text-destructive rounded px-1.5 py-0.5 break-all font-mono text-[0.7rem]">{component}</code>
           </div>
+
+          {/* Error message */}
           <div className="flex gap-2 items-start">
-            <span className="min-w-[5rem] font-semibold text-muted-foreground">Error</span>
+            <span className="min-w-[5rem] shrink-0 font-semibold text-muted-foreground">Error</span>
             <code className="bg-destructive/10 text-destructive rounded px-1.5 py-0.5 break-all font-mono text-[0.7rem]">{msg}</code>
           </div>
+
+          {/* File + Line from stack */}
+          {frame && (
+            <div className="flex gap-2 items-start">
+              <span className="min-w-[5rem] shrink-0 font-semibold text-muted-foreground">Location</span>
+              <code className="bg-destructive/10 text-destructive rounded px-1.5 py-0.5 break-all font-mono text-[0.7rem]">
+                {frame.file} : line {frame.line}
+              </code>
+            </div>
+          )}
+
+          {/* Cause (nested error) */}
+          {causeMsg && (
+            <div className="flex gap-2 items-start">
+              <span className="min-w-[5rem] shrink-0 font-semibold text-muted-foreground">Cause</span>
+              <code className="bg-destructive/10 text-destructive rounded px-1.5 py-0.5 break-all font-mono text-[0.7rem]">{causeMsg}</code>
+            </div>
+          )}
+
+          {/* Hint */}
           {hint && (
             <div className="flex gap-2 items-start">
-              <span className="min-w-[5rem] font-semibold text-muted-foreground">Hint</span>
+              <span className="min-w-[5rem] shrink-0 font-semibold text-muted-foreground">Hint</span>
               <span className="italic text-muted-foreground">{hint}</span>
             </div>
+          )}
+
+          {/* Full stack (collapsed) */}
+          {stack && (
+            <details className="mt-1">
+              <summary className="cursor-pointer text-[0.65rem] uppercase tracking-wide text-muted-foreground font-semibold select-none">
+                Full stack trace ▸
+              </summary>
+              <pre className="mt-2 whitespace-pre-wrap break-all font-mono text-[0.65rem] text-muted-foreground leading-4 max-h-48 overflow-y-auto">
+                {stack}
+              </pre>
+            </details>
           )}
         </div>
 
