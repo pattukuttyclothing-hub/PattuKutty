@@ -49,7 +49,7 @@ export function Footer() {
                 <MessageCircle className="h-4 w-4" />
               </a>
               <a
-                href={`tel:${storeInfo.phone.replace(/\s/g, "")}`}
+                href={`tel:${(storeInfo?.phone || "+91 97917 12622").replace(/\s/g, "")}`}
                 aria-label="Call us"
                 className="grid h-11 w-11 place-items-center rounded-full border border-primary-foreground/20 transition-all duration-300 hover:-translate-y-0.5 hover:border-accent hover:text-accent"
               >
@@ -79,7 +79,7 @@ export function Footer() {
           <div className="min-w-0">
             <h3 className="text-xs font-medium tracking-[0.24em] text-accent uppercase">Hours</h3>
             <ul className="mt-5 space-y-3">
-              {storeInfo.hours.map((h) => (
+              {(storeInfo?.hours || []).map((h) => (
                 <li key={h.day} className="flex gap-2 text-sm text-primary-foreground/70">
                   <Clock className="mt-0.5 h-4 w-4 shrink-0 text-accent" />
                   <span className="min-w-0">
@@ -97,14 +97,14 @@ export function Footer() {
             </h3>
             <p className="mt-5 flex gap-2 text-sm leading-relaxed text-primary-foreground/70">
               <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-accent" />
-              {storeInfo.address}
+              {storeInfo?.address}
             </p>
             <p className="mt-3 text-sm text-primary-foreground/70">
-              <a href={`tel:${storeInfo.phone.replace(/\s/g, "")}`} className="gold-underline">
-                {storeInfo.phone}
+              <a href={`tel:${(storeInfo?.phone || "+91 97917 12622").replace(/\s/g, "")}`} className="gold-underline">
+                {storeInfo?.phone || "+91 97917 12622"}
               </a>
               <span className="mx-2 text-primary-foreground/30">·</span>
-              {storeInfo.instagram}
+              {storeInfo?.instagram}
             </p>
             <div className="mt-5 overflow-hidden rounded-2xl border border-primary-foreground/20 bg-primary-foreground/5 shadow-lg">
               <iframe

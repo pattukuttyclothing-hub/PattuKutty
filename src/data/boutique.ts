@@ -22,15 +22,11 @@ export function formatWhatsappNumber(num: string): string {
   return digits;
 }
 
-const _env = (typeof import.meta !== "undefined" && typeof import.meta.env !== "undefined") ? (import.meta.env as Record<string, string | undefined>) : {};
-const rawWhatsapp = _env["VITE_WHATSAPP_NUMBER"] || "919791712622";
-const rawPhone = _env["VITE_STORE_PHONE"] || "+91 97917 12622";
-
 export const storeInfo = {
   name: "Pattu Kutty",
   tagline: "Coimbatore's fastest ladies dress designer",
-  phone: rawPhone,
-  whatsapp: formatWhatsappNumber(rawWhatsapp),
+  phone: "+91 97917 12622",
+  whatsapp: "919791712622",
   instagram: "@pattu.kutty",
   address: "463, Bharathiyar Road, Pappanaicken Palayam, Coimbatore – 641037",
   area: "Gandhipuram, Coimbatore",
@@ -41,7 +37,7 @@ export const storeInfo = {
 };
 
 export const waLink = (message: string) =>
-  `https://wa.me/${storeInfo.whatsapp}?text=${encodeURIComponent(message)}`;
+  `https://wa.me/${storeInfo?.whatsapp || "919791712622"}?text=${encodeURIComponent(message)}`;
 
 
 /** DELIVERY RULES — controlled by System Admin */

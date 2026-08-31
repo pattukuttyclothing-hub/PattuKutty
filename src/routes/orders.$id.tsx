@@ -467,13 +467,13 @@ function OrderTrackingPage() {
                     <p className="mt-1 text-sm text-muted-foreground">
                       {order.status === "picked_up"
                         ? "Thank you for visiting our boutique!"
-                        : `Please visit our boutique at ${storeInfo.address} with Order #${order.orderNo} to collect your outfit.`}
+                        : `Please visit our boutique at ${storeInfo?.address} with Order #${order.orderNo} to collect your outfit.`}
                     </p>
                     <a
-                      href={`tel:${storeInfo.phone.replace(/\s/g, "")}`}
+                      href={`tel:${(storeInfo?.phone || "+91 97917 12622").replace(/\s/g, "")}`}
                       className="mt-3 inline-flex items-center gap-1.5 text-xs font-semibold text-violet-600"
                     >
-                      <Phone className="h-3.5 w-3.5" /> Call Boutique: {storeInfo.phone}
+                      <Phone className="h-3.5 w-3.5" /> Call Boutique: {storeInfo?.phone || "+91 97917 12622"}
                     </a>
                   </div>
                 </div>
@@ -689,14 +689,14 @@ function OrderTrackingPage() {
 
               {isPickup ? (
                 <div className="space-y-2 text-sm text-muted-foreground">
-                  <p className="font-semibold text-foreground">{storeInfo.name}</p>
+                  <p className="font-semibold text-foreground">{storeInfo?.name}</p>
                   <p className="flex items-start gap-2">
                     <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
-                    <span>{storeInfo.address}</span>
+                    <span>{storeInfo?.address}</span>
                   </p>
                   <p className="flex items-center gap-2">
                     <Phone className="h-4 w-4 text-primary" />
-                    <span>{storeInfo.phone}</span>
+                    <span>{storeInfo?.phone || "+91 97917 12622"}</span>
                   </p>
                 </div>
               ) : order?.shipping ? (

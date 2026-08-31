@@ -15,15 +15,11 @@ export const abs = (path = "/") => `${SITE_URL}${path.startsWith("/") ? path : `
 export const absImage = (url?: string | null) =>
   !url ? OG_IMAGE : url.startsWith("http") ? url : abs(url);
 
-import { storeInfo } from "@/data/boutique";
-
 export const BRAND = {
   name: "Pattu Kutty",
   legalName: "Pattu Kutty Clothing",
   city: "Coimbatore",
-  get phone() {
-    return storeInfo.phone;
-  },
+  phone: "+91 97917 12622",
   street: "463, Bharathiyar Road, Pappanaicken Palayam",
   postalCode: "641037",
   instagram: "https://instagram.com/pattu.kutty",
