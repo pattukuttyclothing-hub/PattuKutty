@@ -6,26 +6,26 @@ export class RequestsRepository {
   }
 
   static async resolveCategoryUuid(catIdOrSlug?: string): Promise<string | null> {
-    if (!catIdOrSlug || typeof catIdOrSlug !== "string") return null;
-    const trimmed = catIdOrSlug.trim();
-    if (!trimmed) return null;
+    const trimmed = typeof catIdOrSlug === "string" ? catIdOrSlug.trim() : "";
 
-    if (this.isUUID(trimmed)) {
+    if (trimmed && this.isUUID(trimmed)) {
       return trimmed;
     }
 
     try {
-      const { data } = await db.from("categories").select("id").eq("slug", trimmed).maybeSingle();
-      if (data?.id && this.isUUID(data.id)) return data.id;
+      if (trimmed) {
+        const { data } = await db.from("categories").select("id").eq("slug", trimmed).maybeSingle();
+        if (data?.id && this.isUUID(data.id)) return data.id;
 
-      const normalized = trimmed.toLowerCase().replace(/_/g, "-").replace(/\s+/g, "-");
-      const { data: dataNorm } = await db.from("categories").select("id").eq("slug", normalized).maybeSingle();
-      if (dataNorm?.id && this.isUUID(dataNorm.id)) return dataNorm.id;
+        const normalized = trimmed.toLowerCase().replace(/_/g, "-").replace(/\s+/g, "-");
+        const { data: dataNorm } = await db.from("categories").select("id").eq("slug", normalized).maybeSingle();
+        if (dataNorm?.id && this.isUUID(dataNorm.id)) return dataNorm.id;
 
-      const { data: dataName } = await db.from("categories").select("id").ilike("name", `%${trimmed}%`).maybeSingle();
-      if (dataName?.id && this.isUUID(dataName.id)) return dataName.id;
+        const { data: dataName } = await db.from("categories").select("id").ilike("name", `%${trimmed}%`).maybeSingle();
+        if (dataName?.id && this.isUUID(dataName.id)) return dataName.id;
+      }
 
-      // Fallback to first available category UUID if non-empty category slug provided
+      // Fallback to first available category UUID so category_id is never NULL in DB
       const { data: anyCat } = await db.from("categories").select("id").limit(1).maybeSingle();
       if (anyCat?.id && this.isUUID(anyCat.id)) return anyCat.id;
     } catch {
@@ -362,17 +362,19 @@ export class RequestsRepository {
       gstAmount: number;
       deliveryFee: number;
       readyBy: string;
+      updateReason?: string;
+      changedFieldsSummary?: string;
     }
   ) {
     // 1. Invalidate previous current quotes for this request
-    try {
-      await db
-        .from("custom_request_quotes")
-        .update({ is_current: false })
-        .eq("request_id", requestId)
-        .eq("is_current", true);
-    } catch {
-      // ignore
+    const { error: invalidateErr } = await db
+      .from("custom_request_quotes")
+      .update({ is_current: false })
+      .eq("request_id", requestId)
+      .eq("is_current", true);
+
+    if (invalidateErr) {
+      throw invalidateErr;
     }
 
     // 2. Insert new quote record into custom_request_quotes table
@@ -389,25 +391,32 @@ export class RequestsRepository {
       is_current: true,
     };
 
-    let insertedQuote = null;
-    try {
-      const { data: qData, error: qErr } = await db
-        .from("custom_request_quotes")
-        .insert([quotePayload])
-        .select()
-        .single();
-      if (!qErr && qData) {
-        insertedQuote = qData;
-      }
-    } catch (e: any) {
-      console.warn("Failed to insert into custom_request_quotes table:", e.message);
+    const { data: insertedQuote, error: qErr } = await db
+      .from("custom_request_quotes")
+      .insert([quotePayload])
+      .select()
+      .single();
+
+    if (qErr || !insertedQuote) {
+      throw qErr || new Error("Failed to insert quotation record into custom_request_quotes table.");
     }
 
-    // 3. Update custom_requests table status to 'quoted'
-    const reqPayload = {
+    // 3. Update custom_requests table status to 'quoted' and store update reason or changed fields if provided
+    const reqPayload: Record<string, unknown> = {
       status: "quoted",
       updated_at: new Date().toISOString(),
     };
+
+    const noteParts: string[] = [];
+    if (quoteData.changedFieldsSummary) {
+      noteParts.push(`[Updated Fields]: ${quoteData.changedFieldsSummary}`);
+    }
+    if (quoteData.updateReason) {
+      noteParts.push(`[Admin Update Reason]: ${quoteData.updateReason}`);
+    }
+    if (noteParts.length > 0) {
+      reqPayload.update_request_note = noteParts.join("\n");
+    }
 
     const { data: reqData, error: reqErr } = await db
       .from("custom_requests")
@@ -420,8 +429,43 @@ export class RequestsRepository {
 
     return {
       request: reqData,
-      quote: insertedQuote || quotePayload,
+      quote: insertedQuote,
     };
+  }
+
+  static async updateRequestDesignAdmin(
+    id: string,
+    designData: {
+      size?: string;
+      qty?: number;
+      colour?: string;
+      fabricNotes?: string;
+    }
+  ) {
+    const payload: Record<string, unknown> = {
+      updated_at: new Date().toISOString(),
+    };
+
+    if (designData.size !== undefined) payload.size = designData.size;
+    if (designData.qty !== undefined) payload.qty = designData.qty;
+    if (designData.fabricNotes !== undefined) payload.fabric_notes = designData.fabricNotes;
+
+    if (designData.colour && typeof designData.colour === "string" && designData.colour.trim()) {
+      const colourId = await this.resolveColourId(designData.colour);
+      if (colourId) {
+        payload.colour_id = colourId;
+      }
+    }
+
+    const { data, error } = await db
+      .from("custom_requests")
+      .update(payload)
+      .eq("id", id)
+      .select()
+      .single();
+
+    if (error) throw error;
+    return data;
   }
 
   static async updateRequestStatus(id: string, status: string, updates?: Record<string, unknown>) {

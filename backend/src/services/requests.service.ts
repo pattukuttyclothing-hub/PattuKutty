@@ -53,19 +53,44 @@ export class RequestsService {
         : `[Contact Phone]: ${phone}`;
     }
 
-    // Format optional source product ID if provided
+    // Format optional source product ID if provided & bind source product metadata
     const sourceProductId = payload.sourceProductId ?? payload.source_product_id;
+    let sourceProductObj: { id: string; name: string; category_id?: string; sub_category_id?: string; images?: any } | null = null;
     if (sourceProductId && typeof sourceProductId === "string" && sourceProductId.trim()) {
-      fabricNotes = fabricNotes
-        ? `${fabricNotes}\n[Source Product ID]: ${sourceProductId.trim()}`
-        : `[Source Product ID]: ${sourceProductId.trim()}`;
+      const cleanSourceId = sourceProductId.trim();
+      try {
+        const { data: pData } = await db
+          .from("products")
+          .select("id, name, category_id, sub_category_id, images")
+          .eq("id", cleanSourceId)
+          .maybeSingle();
+        if (pData) {
+          sourceProductObj = pData;
+        }
+      } catch {
+        // ignore lookup failure
+      }
+
+      if (!fabricNotes.includes("[Source Product ID]:")) {
+        fabricNotes = fabricNotes
+          ? `${fabricNotes}\n[Source Product ID]: ${cleanSourceId}`
+          : `[Source Product ID]: ${cleanSourceId}`;
+      }
+      if (sourceProductObj?.name && !fabricNotes.includes("[Source Product Name]:")) {
+        fabricNotes = `${fabricNotes}\n[Source Product Name]: ${sourceProductObj.name}`;
+      }
     }
 
     // Extract reference images and voice note early for validation fallback
     const rawImages = payload.referenceImageUrls ?? payload.images;
-    const referenceImageUrls = Array.isArray(rawImages)
+    let referenceImageUrls = Array.isArray(rawImages)
       ? rawImages.filter((url): url is string => typeof url === "string" && url.trim().length > 0)
       : [];
+
+    if (referenceImageUrls.length === 0 && sourceProductObj?.images && Array.isArray(sourceProductObj.images)) {
+      referenceImageUrls = sourceProductObj.images.map((img: any) => typeof img === "string" ? img : img?.url).filter(Boolean);
+    }
+
     const rawVoiceNote = payload.voiceNoteUrl ?? payload.voiceNote;
     const voiceNoteUrl = typeof rawVoiceNote === "string" && rawVoiceNote.trim() ? rawVoiceNote.trim() : null;
 
@@ -119,9 +144,15 @@ export class RequestsService {
     let categoryUuid: string | null = null;
     if (rawCategory && typeof rawCategory === "string" && rawCategory.trim()) {
       categoryUuid = await RequestsRepository.resolveCategoryUuid(rawCategory.trim());
-      if (!categoryUuid) {
-        throw createError("Selected design category is invalid or no longer available.", 400);
-      }
+    }
+    if (!categoryUuid && sourceProductObj?.category_id) {
+      categoryUuid = sourceProductObj.category_id;
+    }
+    if (!categoryUuid) {
+      categoryUuid = await RequestsRepository.resolveCategoryUuid();
+    }
+    if (!categoryUuid) {
+      throw createError("Selected design category is required.", 400);
     }
 
     // 9. SubCategory Resolution (UUID or Slug)
@@ -129,9 +160,9 @@ export class RequestsService {
     let subCategoryUuid: string | null = null;
     if (rawSubCategory && typeof rawSubCategory === "string" && rawSubCategory.trim()) {
       subCategoryUuid = await RequestsRepository.resolveSubCategoryUuid(rawSubCategory.trim());
-      if (!subCategoryUuid) {
-        throw createError("Selected design subcategory is invalid or no longer available.", 400);
-      }
+    }
+    if (!subCategoryUuid && sourceProductObj?.sub_category_id) {
+      subCategoryUuid = sourceProductObj.sub_category_id;
     }
 
     // 10. Optional Fields & Colour ID Resolution
@@ -201,6 +232,8 @@ export class RequestsService {
       estimated_days?: number;
       size?: string;
       isEdit?: boolean;
+      updateReason?: string;
+      update_reason?: string;
     }
   ) {
     const req = await RequestsRepository.getRequestById(id);
@@ -236,6 +269,35 @@ export class RequestsService {
 
     const gstAmount = Math.round(price * 0.05);
     const totalPayable = price + gstAmount + deliveryFee;
+    const updateReason = (payload.updateReason || payload.update_reason || "").trim() || undefined;
+
+    // Partial Quotation Field Diffing when editing existing quotation
+    const changedFields: string[] = [];
+    if (isEdit && req.quote) {
+      if (name !== req.quote.name) {
+        changedFields.push(`Design Name: "${req.quote.name}" -> "${name}"`);
+      }
+      if (price !== req.quote.price) {
+        changedFields.push(`Stitching Price: ₹${req.quote.price.toLocaleString("en-IN")} -> ₹${price.toLocaleString("en-IN")}`);
+      }
+      if (size !== req.quote.size) {
+        changedFields.push(`Size: "${req.quote.size}" -> "${size}"`);
+      }
+      if (deliveryFee !== (req.quote.deliveryFee ?? 0)) {
+        changedFields.push(`Delivery Fee: ₹${(req.quote.deliveryFee ?? 0).toLocaleString("en-IN")} -> ₹${deliveryFee.toLocaleString("en-IN")}`);
+      }
+      const oldReadyByStr = (req.quote.readyBy || "").slice(0, 10);
+      const newReadyByStr = readyByDateStr.slice(0, 10);
+      if (oldReadyByStr && newReadyByStr && oldReadyByStr !== newReadyByStr) {
+        changedFields.push(`Ready By Date: ${oldReadyByStr} -> ${newReadyByStr}`);
+      }
+
+      if (changedFields.length === 0 && !updateReason) {
+        throw createError("No quotation fields were modified.", 400);
+      }
+    }
+
+    const changedFieldsSummary = changedFields.length > 0 ? changedFields.join("; ") : undefined;
 
     // 1. Persist quotation in DB (Quotation persistence MUST succeed before WhatsApp dispatch)
     const quoteResult = await RequestsRepository.submitQuoteAdmin(id, adminUserId, {
@@ -245,6 +307,8 @@ export class RequestsService {
       gstAmount,
       deliveryFee,
       readyBy: readyByDateStr,
+      updateReason,
+      changedFieldsSummary,
     });
 
     // 2. Fetch reference image for WhatsApp binary media attachment
@@ -433,6 +497,34 @@ export class RequestsService {
     }
 
     return pubData.publicUrl;
+  }
+
+  static async updateDesignAdmin(
+    id: string,
+    payload: { size?: string; qty?: number; colour?: string; fabricNotes?: string }
+  ) {
+    const req = await RequestsRepository.getRequestById(id);
+    if (!req) {
+      throw createError("Custom stitching request not found.", 404);
+    }
+    const cleanPayload: { size?: string; qty?: number; colour?: string; fabricNotes?: string } = {};
+    if (payload.size !== undefined) {
+      cleanPayload.size = String(payload.size || "").trim().slice(0, 20);
+    }
+    if (payload.qty !== undefined) {
+      const qtyNum = Number(payload.qty);
+      if (isNaN(qtyNum) || !Number.isInteger(qtyNum) || qtyNum <= 0) {
+        throw createError("Quantity must be a positive whole number greater than 0.", 400);
+      }
+      cleanPayload.qty = qtyNum;
+    }
+    if (payload.colour !== undefined) {
+      cleanPayload.colour = String(payload.colour || "").trim();
+    }
+    if (payload.fabricNotes !== undefined) {
+      cleanPayload.fabricNotes = String(payload.fabricNotes || "").trim();
+    }
+    return await RequestsRepository.updateRequestDesignAdmin(id, cleanPayload);
   }
 
   static async deleteStorageFile(filePathOrUrl: string, bucketType: "image" | "audio" | "product" = "image"): Promise<void> {

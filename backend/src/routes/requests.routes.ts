@@ -15,6 +15,7 @@ router.patch("/requests/:id/cancel", requireAuth, RequestsController.cancelCusto
 // Admin Management Routes
 router.get("/admin/requests", requireAuth, requireAdmin, RequestsController.getAllRequestsAdmin);
 router.post("/admin/requests/:id/quote", requireAuth, requireAdmin, RequestsController.submitQuoteAdmin);
+router.patch("/admin/requests/:id/design", requireAuth, requireAdmin, RequestsController.updateDesignAdmin);
 router.patch("/admin/requests/:id/cancel", requireAuth, requireAdmin, RequestsController.cancelCustomRequestAdmin);
 router.post("/admin/requests/:id/notify-whatsapp", requireAuth, requireAdmin, RequestsController.notifyWhatsAppQuote);
 router.post("/admin/requests/:id/convert", requireAuth, requireAdmin, RequestsController.convertToOrderAdmin);

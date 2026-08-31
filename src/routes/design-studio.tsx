@@ -124,19 +124,42 @@ function DesignStudio() {
   const handleSubmit = () => {
     if (!spec || submitting) return;
     setErrorMsg(null);
+
+    // Enforce mandatory field checks before sending to API
+    if (!spec.category) {
+      setErrorMsg("Please select a design category.");
+      return;
+    }
+    if (!spec.sub) {
+      setErrorMsg("Please select a design style.");
+      return;
+    }
+    if (!spec.size || !spec.size.trim()) {
+      setErrorMsg("Please select an outfit size.");
+      return;
+    }
+    if (!spec.phone || !spec.phone.trim()) {
+      setErrorMsg("Please enter a valid contact phone number so our studio can reach you.");
+      return;
+    }
+    if (!spec.timeline) {
+      setErrorMsg("Please select your required turnaround timeline window.");
+      return;
+    }
+
     gate(() => {
       setSubmitting(true);
       create(spec)
         .then((created) => {
           if (!created || !created.id) {
-            throw new Error("Design request submission failed. Valid request ID missing.");
+            throw new Error("Design request submission failed. Server response did not return a valid request ID.");
           }
           setSubmitting(false);
           setSubmittedSpec(spec);
           setDone(created.id);
         })
         .catch((err: unknown) => {
-          const message = err instanceof Error ? err.message : "Unable to submit your request. Please try again.";
+          const message = err instanceof Error ? err.message : "Unable to submit your design request. Please check your network connection and try again.";
           setErrorMsg(message);
           setSubmitting(false);
         });

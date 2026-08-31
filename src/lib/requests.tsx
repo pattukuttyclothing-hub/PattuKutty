@@ -94,8 +94,8 @@ type RequestsValue = {
   find: (id: string) => CustomRequest | undefined;
   create: (r: NewRequest) => Promise<CustomRequest>;
   update: (id: string, patch: Partial<CustomRequest>) => void;
-  requestUpdate: (id: string, patch: Partial<CustomRequest>, note: string) => void;
-  cancel: (id: string, reason: string) => void;
+  requestUpdate: (id: string, patch: Partial<CustomRequest>, note: string) => Promise<void>;
+  cancel: (id: string, reason: string) => Promise<void>;
   rerequest: (id: string) => void;
 };
 
@@ -252,21 +252,21 @@ export function RequestsProvider({ children }: { children: ReactNode }) {
   );
 
   const requestUpdate = useCallback(
-    (id: string, patch: Partial<CustomRequest>, note: string) => {
+    async (id: string, patch: Partial<CustomRequest>, note: string) => {
+      const { requestChanges: apiRequestChanges } = await import("./api/requests");
+      const res = await apiRequestChanges(id, note);
+      if (!res) throw new Error("Failed to submit request modification to server.");
       update(id, { ...patch, updateNote: note, updateRequestedAt: new Date().toISOString() });
-      import("./api/requests").then(({ requestChanges: apiRequestChanges }) => {
-        apiRequestChanges(id, note).catch(() => {});
-      });
     },
     [update],
   );
 
   const cancel = useCallback(
-    (id: string, reason: string) => {
+    async (id: string, reason: string) => {
+      const { cancelCustomRequest: apiCancel } = await import("./api/requests");
+      const res = await apiCancel(id, reason);
+      if (!res) throw new Error("Failed to cancel custom request on server.");
       update(id, { status: "cancelled", cancelReason: reason, cancelledAt: new Date().toISOString() });
-      import("./api/requests").then(({ cancelCustomRequest: apiCancel }) => {
-        apiCancel(id, reason).catch(() => {});
-      });
     },
     [update],
   );
@@ -326,6 +326,17 @@ export const isRequestPaid = (r: Pick<CustomRequest, "status">) =>
   r.status === "accepted" || r.status === "ordered";
 
 export const requestTypeLabel = (r: CustomRequest) => {
+  // 1. If admin assigned a quote title/name, prioritize it
+  if (r.quote?.name && r.quote.name.trim() && !r.quote.name.includes("Custom Design Quotation")) {
+    return r.quote.name.trim();
+  }
+
+  // 2. If request was initiated from a sold-out product, extract the source product name
+  const sourceNameMatch = (r.description || "").match(/\[Source Product Name\]:\s*([^\n]+)/);
+  if (sourceNameMatch && sourceNameMatch[1]?.trim()) {
+    return sourceNameMatch[1].trim();
+  }
+
   const catObj = categories.find((c) => c.id === r.category);
   const subObj = catObj?.subs.find((s) => s.id === r.sub);
 

@@ -132,6 +132,16 @@ export class RequestsController {
     }
   }
 
+  static async updateDesignAdmin(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const id = String(req.params.id);
+      const data = await RequestsService.updateDesignAdmin(id, req.body);
+      res.json({ success: true, data });
+    } catch (err) {
+      next(err);
+    }
+  }
+
   static async uploadMedia(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
     try {
       const bucketHeader = (req.headers["x-bucket-name"] as string) || (req.query["bucket"] as string) || req.body?.bucket;

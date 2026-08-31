@@ -96,8 +96,20 @@ function RequestDetail() {
   const total = price + gst + deliveryFee;
   const isPickup = r.fulfilment === "pickup";
 
-  const handleSaveDesign = () => {
+  const handleSaveDesign = async () => {
     try {
+      const { updateCustomRequestDesignAdmin } = await import("@/lib/api/requests");
+      const res = await updateCustomRequestDesignAdmin(r.id, {
+        size: editSize,
+        qty: editQty,
+        colour: editColour,
+        fabricNotes: editNotes,
+      });
+
+      if (!res || !res.success) {
+        throw new Error(res?.message || "Failed to update design specification on server.");
+      }
+
       saveRequest(r.id, {
         size: editSize,
         qty: editQty,
@@ -109,14 +121,14 @@ function RequestDetail() {
         open: true,
         type: "success",
         title: "Design Updated Successfully",
-        message: "The design specification and sizing measurements have been updated.",
+        message: "The design specification and sizing measurements have been updated in database.",
       });
-    } catch {
+    } catch (err: any) {
       setQuoteModal({
         open: true,
         type: "failure",
-        title: "Design Update Warning",
-        message: "Could not update design specification. Please try again.",
+        title: "Design Update Error",
+        message: String(err?.message || "Could not update design specification. Please try again."),
       });
     }
   };
@@ -164,6 +176,7 @@ function RequestDetail() {
         deliveryFee,
         readyBy: new Date(readyBy).toISOString(),
         isEdit: isEditMode,
+        ...(isEditMode && updateReason.trim() ? { updateReason: updateReason.trim() } : {}),
       });
 
       let updatedFabricNotes = r.fabricNotes || "";

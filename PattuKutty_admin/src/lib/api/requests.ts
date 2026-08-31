@@ -8,7 +8,8 @@ export interface SubmitQuotePayload {
   gstAmount: number;
   deliveryFee: number;
   readyBy: string;
-  isEdit?: boolean;
+  isEdit?: boolean | undefined;
+  updateReason?: string | undefined;
 }
 
 interface ApiResponse<T> {
@@ -135,6 +136,7 @@ export async function fetchCustomRequestById(id: string): Promise<CustomRequest>
 export interface QuoteResponse {
   success: boolean;
   data: CustomRequest;
+  message?: string | undefined;
   whatsapp?: {
     sent: boolean;
     error?: string;
@@ -161,6 +163,16 @@ export async function cancelCustomRequestAdmin(requestId: string, reason: string
   return apiFetch<QuoteResponse>(`/admin/requests/${requestId}/cancel`, {
     method: "PATCH",
     body: JSON.stringify({ reason }),
+  });
+}
+
+export async function updateCustomRequestDesignAdmin(
+  requestId: string,
+  payload: { size?: string; qty?: number; colour?: string; fabricNotes?: string }
+): Promise<QuoteResponse> {
+  return apiFetch<QuoteResponse>(`/admin/requests/${requestId}/design`, {
+    method: "PATCH",
+    body: JSON.stringify(payload),
   });
 }
 
