@@ -46,7 +46,14 @@ export function CartProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     try {
       const raw = window.localStorage.getItem(STORAGE_KEY);
-      if (raw) setItems(JSON.parse(raw) as CartItem[]);
+      if (raw) {
+        const parsed = JSON.parse(raw) as CartItem[];
+        const sanitized = parsed.map((item, idx) => ({
+          ...item,
+          key: item.key || `${item.id || "item"}|${item.size || ""}|${item.colour || ""}|${idx}`,
+        }));
+        setItems(sanitized);
+      }
     } catch {
       toast.warning(
         "Could not restore your saved bag — your browser storage may be full or restricted. " +
@@ -57,6 +64,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     try {
+      window.localStorage.getItem(STORAGE_KEY);
       window.localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
     } catch {
       toast.error(
@@ -66,12 +74,15 @@ export function CartProvider({ children }: { children: ReactNode }) {
     }
   }, [items]);
 
+  const matchesKey = (item: CartItem, key: string) =>
+    item.key === key || `${item.id}|${item.size}|${item.colour}` === key || item.id === key;
+
   const add = useCallback((item: Omit<CartItem, "key">) => {
     const key = `${item.id}|${item.size}|${item.colour}`;
     setItems((prev) => {
-      const found = prev.find((p) => p.key === key);
+      const found = prev.find((p) => matchesKey(p, key));
       if (found) {
-        return prev.map((p) => (p.key === key ? { ...p, qty: p.qty + item.qty } : p));
+        return prev.map((p) => (matchesKey(p, key) ? { ...p, qty: p.qty + item.qty } : p));
       }
       return [...prev, { ...item, key }];
     });
@@ -80,7 +91,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
   const setQty = useCallback((key: string, qty: number) => {
     setItems((prev) =>
-      prev.flatMap((p) => (p.key === key ? (qty < 1 ? [] : [{ ...p, qty }]) : [p])),
+      prev.flatMap((p) => (matchesKey(p, key) ? (qty < 1 ? [] : [{ ...p, qty }]) : [p])),
     );
     if (qty < 1) {
       toast.info("Item removed from bag");
@@ -88,7 +99,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const remove = useCallback((key: string) => {
-    setItems((prev) => prev.filter((p) => p.key !== key));
+    setItems((prev) => prev.filter((p) => !matchesKey(p, key)));
     toast.info("Item removed from bag");
   }, []);
 

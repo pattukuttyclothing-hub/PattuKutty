@@ -24,7 +24,7 @@ import { inr, useCart } from "@/lib/cart";
 import { useAuth } from "@/lib/auth";
 import { useOrders, type ShippingAddress } from "@/lib/orders";
 import { listAddresses, saveAddress, updateAddress, deleteAddress, type SavedAddress } from "@/lib/addresses";
-import { createBackendPaymentOrder, verifyBackendPayment, cancelBackendPaymentOrder } from "@/lib/api/orders";
+import { createBackendPaymentOrder, verifyBackendPayment, cancelBackendPaymentOrder, calculateOrderSummary } from "@/lib/api/orders";
 import { fmtDate, expectedDeliveryDate, courier } from "@/lib/tracking";
 
 const title = "Secure Checkout — Pattu Kutty";
@@ -171,6 +171,55 @@ function CheckoutPage() {
       phone: prev.phone || profile?.phone || "",
     }));
   }, [profile]);
+
+  const [summaryData, setSummaryData] = useState<{
+    subtotal: number;
+    gstAmount: number;
+    deliveryFee: number;
+    totalPayable: number;
+  } | null>(null);
+
+  useEffect(() => {
+    if (!user || items.length === 0) return;
+    let isMounted = true;
+    const checkoutPayload = {
+      deliveryType: "doorstep" as const,
+      paymentMethod: method,
+      items: items.map((it) => ({
+        id: it.id,
+        productId: it.id,
+        customRequestId: it.customRequestId || (it.isCustom ? it.id : undefined),
+        custom_request_id: it.customRequestId || (it.isCustom ? it.id : undefined),
+        isCustom: it.isCustom,
+        is_custom: it.isCustom,
+        size: it.size,
+        colour: it.colour,
+        qty: it.qty,
+      })),
+    };
+
+    calculateOrderSummary(checkoutPayload)
+      .then((res) => {
+        if (isMounted && res) {
+          setSummaryData({
+            subtotal: res.subtotal,
+            gstAmount: res.gstAmount,
+            deliveryFee: res.deliveryFee,
+            totalPayable: res.totalPayable,
+          });
+        }
+      })
+      .catch((err) => {
+        console.warn("[Checkout] Authoritative price calculation info:", err);
+      });
+
+    return () => { isMounted = false; };
+  }, [user, items, method]);
+
+  const displaySubtotal = summaryData?.subtotal ?? subtotal;
+  const displayGst = summaryData?.gstAmount ?? 0;
+  const displayDelivery = summaryData?.deliveryFee ?? delivery;
+  const displayTotal = summaryData?.totalPayable ?? total;
 
   const shipping = useMemo<ShippingAddress | null>(() => {
     if (showForm) return form;
@@ -787,18 +836,24 @@ function CheckoutPage() {
                   <dt className="text-muted-foreground">
                     Items ({items.reduce((n, i) => n + i.qty, 0)})
                   </dt>
-                  <dd className="font-medium text-foreground">{inr(subtotal)}</dd>
+                  <dd className="font-medium text-foreground">{inr(displaySubtotal)}</dd>
                 </div>
+                {displayGst > 0 ? (
+                  <div className="flex justify-between">
+                    <dt className="text-muted-foreground">GST (5% incl.)</dt>
+                    <dd className="font-medium text-foreground">{inr(displayGst)}</dd>
+                  </div>
+                ) : null}
                 <div className="flex justify-between">
                   <dt className="text-muted-foreground">Delivery</dt>
-                  <dd className="font-medium text-muted-foreground text-xs">
-                    Calculated at checkout
+                  <dd className="font-medium text-foreground">
+                    {displayDelivery === 0 ? "Free" : inr(displayDelivery)}
                   </dd>
                 </div>
                 <div className="gold-divider my-2 h-px" />
                 <div className="flex justify-between text-base">
-                  <dt className="font-semibold text-foreground">Estimated total</dt>
-                  <dd className="font-semibold text-primary">{inr(total)}</dd>
+                  <dt className="font-semibold text-foreground">Total payable</dt>
+                  <dd className="font-semibold text-primary">{inr(displayTotal)}</dd>
                 </div>
               </dl>
               <p className="mt-3 text-xs text-muted-foreground">

@@ -115,6 +115,31 @@ export async function createBackendPaymentOrder(payload: PlaceOrderPayload): Pro
   return res.data;
 }
 
+export async function calculateOrderSummary(payload: PlaceOrderPayload): Promise<{
+  subtotal: number;
+  taxableValue: number;
+  gstAmount: number;
+  deliveryFee: number;
+  totalPayable: number;
+  items: Array<Record<string, unknown>>;
+}> {
+  const res = await apiFetch<{
+    success: boolean;
+    data: {
+      subtotal: number;
+      taxableValue: number;
+      gstAmount: number;
+      deliveryFee: number;
+      totalPayable: number;
+      items: Array<Record<string, unknown>>;
+    };
+  }>("/orders/calculate-summary", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+  return res.data;
+}
+
 export async function verifyBackendPayment(payload: VerifyPaymentPayload): Promise<Order> {
   const res = await apiFetch<{ success: boolean; data: Order }>("/payments/verify", {
     method: "POST",

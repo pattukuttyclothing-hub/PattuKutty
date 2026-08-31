@@ -14,6 +14,14 @@ const p = (v: string | string[]): string => (Array.isArray(v) ? v[0] : v);
 //  PAYMENT & ORDER ENDPOINTS
 // ═══════════════════════════════════════════════════════════════════
 
+ordersRouter.post("/orders/calculate-summary", requireAuth, async (req, res, next) => {
+  try {
+    const customerId = (req as unknown as { user: { id: string } }).user.id;
+    const summary = await OrdersService.calculateOrderSummary(customerId, req.body as Parameters<typeof OrdersService.calculateOrderSummary>[1]);
+    res.json({ success: true, data: summary });
+  } catch (err) { next(err); }
+});
+
 ordersRouter.post("/payments/create-order", requireAuth, async (req, res, next) => {
   try {
     const customerId = (req as unknown as { user: { id: string } }).user.id;

@@ -315,6 +315,21 @@ export class OrdersService {
   }
 
   /**
+   * Calculates backend-authoritative price summary for checkout items and address.
+   */
+  static async calculateOrderSummary(customerId: string, payload: PlaceOrderPayload) {
+    const calc = await this.calculateAuthoritativeOrder(customerId, payload);
+    return {
+      subtotal: calc.subtotal,
+      taxableValue: calc.taxableValue,
+      gstAmount: calc.gstAmount,
+      deliveryFee: calc.deliveryFee,
+      totalPayable: calc.totalPayable,
+      items: calc.snapshots,
+    };
+  }
+
+  /**
    * Creates a Razorpay payment order on the backend.
    * Calculates authoritative amount server-side and issues Razorpay order via Razorpay API.
    */

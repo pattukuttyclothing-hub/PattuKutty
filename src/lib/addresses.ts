@@ -24,6 +24,15 @@ const map = (row: Row): SavedAddress => ({
 // no write logic happens here. Only writes are routed through the backend.
 export async function listAddresses(): Promise<SavedAddress[]> {
   try {
+    const res = await apiFetch<{ success: boolean; data: Row[] }>("/customer/addresses");
+    if (res && res.success && Array.isArray(res.data)) {
+      return res.data.map(map);
+    }
+  } catch (err) {
+    console.warn("[Addresses] Backend fetch failed, trying direct query fallback:", err);
+  }
+
+  try {
     const { data, error } = await supabase
       .from("addresses")
       .select("*")
