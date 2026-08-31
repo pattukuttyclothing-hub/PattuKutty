@@ -237,7 +237,26 @@ function ProductPage() {
 
           <div className="grid gap-8 lg:grid-cols-12 lg:gap-12">
             <div className="lg:col-span-6 lg:sticky lg:top-28 self-start">
-              <ProductGallery images={activeProduct.images || [activeProduct.image]} alt={activeProduct.name} />
+              <ProductGallery
+                images={activeProduct.images || [activeProduct.image]}
+                alt={activeProduct.name}
+                isSoldOut={isSoldOut}
+                overlay={
+                  <button
+                    type="button"
+                    title={has(activeProduct.id) ? "Remove from wishlist" : "Save to wishlist"}
+                    aria-label={has(activeProduct.id) ? "Remove from wishlist" : "Save to wishlist"}
+                    onClick={() => toggle(activeProduct.id)}
+                    className="grid h-10 w-10 place-items-center rounded-full bg-white/95 dark:bg-black/90 shadow-md border border-border/60 transition-all hover:scale-110 active:scale-95 cursor-pointer"
+                  >
+                    <Heart
+                      className={`h-5 w-5 transition-colors ${
+                        has(activeProduct.id) ? "fill-rose-500 text-rose-500" : "text-rose-500/80 fill-rose-50/50 hover:text-rose-600 hover:fill-rose-100"
+                      }`}
+                    />
+                  </button>
+                }
+              />
             </div>
 
             <div className="flex flex-col lg:col-span-6">

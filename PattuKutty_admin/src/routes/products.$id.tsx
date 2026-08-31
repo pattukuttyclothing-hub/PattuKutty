@@ -56,6 +56,11 @@ function ProductEditor() {
   const [saving, setSaving] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [successMsg, setSuccessMsg] = useState("");
+  const [showSoldOutConfirmModal, setShowSoldOutConfirmModal] = useState(false);
+  const [showRestockConfirmModal, setShowRestockConfirmModal] = useState(false);
+  const [showNetworkErrorModal, setShowNetworkErrorModal] = useState(false);
+  const [networkErrorMsg, setNetworkErrorMsg] = useState("");
+  const [updatingStatus, setUpdatingStatus] = useState(false);
 
   const replacementFileInputRef = useRef<HTMLInputElement | null>(null);
 
@@ -69,6 +74,37 @@ function ProductEditor() {
   const [adminCropMode, setAdminCropMode] = useState<"add" | "replace">("add");
   const [adminCropQueue, setAdminCropQueue] = useState<File[]>([]);
   const [targetReplaceUrl, setTargetReplaceUrl] = useState<string | null>(null);
+
+  const handleConfirmSoldOutToggle = async (targetSoldOut: boolean) => {
+    if (!draft?.id || isCreateMode) return;
+    setUpdatingStatus(true);
+    try {
+      const res = await updateProduct(draft.id, { soldOut: targetSoldOut });
+      if (res && res.id) {
+        const mergedProduct: AdminProduct = {
+          ...draft,
+          ...res,
+          soldOut: targetSoldOut,
+        };
+        saveProduct(mergedProduct);
+        setDraft(mergedProduct);
+        setShowSoldOutConfirmModal(false);
+        setShowRestockConfirmModal(false);
+        setSuccessMsg(targetSoldOut ? "Product marked as SOLD OUT in database" : "Product RESTOCKED successfully in database");
+        setShowSuccessModal(true);
+      } else {
+        throw new Error("Server response missing verified success output.");
+      }
+    } catch (err: any) {
+      const errorText = err?.message || "Failed to communicate with server. Please check your network connection.";
+      setNetworkErrorMsg(errorText);
+      setShowSoldOutConfirmModal(false);
+      setShowRestockConfirmModal(false);
+      setShowNetworkErrorModal(true);
+    } finally {
+      setUpdatingStatus(false);
+    }
+  };
 
   const addFromDevice = (files: FileList | null) => {
     if (!files?.length || uploading) return;
@@ -331,7 +367,6 @@ function ProductEditor() {
           badge: draft.badge,
           basePrice: draft.basePrice,
           mrp: draft.mrp,
-          expressFromPrice: draft.expressFromPrice,
           deliveryCharge: draft.deliveryCharge,
           isActive: draft.isActive,
           soldOut: draft.soldOut,
@@ -339,22 +374,26 @@ function ProductEditor() {
           variants: draft.variants,
         });
       } else {
-        result = await updateProduct(draft.id, {
-          name: draft.name,
-          description: draft.description,
-          blurb: draft.blurb,
-          badge: draft.badge,
-          category: draft.category,
-          sub: draft.sub,
-          basePrice: draft.basePrice,
-          mrp: draft.mrp,
-          expressFromPrice: draft.expressFromPrice,
-          deliveryCharge: draft.deliveryCharge,
-          isActive: draft.isActive,
-          soldOut: draft.soldOut,
-          images: draft.images,
-          variants: draft.variants,
-        });
+        const patchPayload: Record<string, unknown> = { id: draft.id };
+        if (!stored || draft.name !== stored.name) patchPayload["name"] = draft.name;
+        if (!stored || draft.description !== stored.description) patchPayload["description"] = draft.description;
+        if (!stored || draft.blurb !== stored.blurb) patchPayload["blurb"] = draft.blurb;
+        if (!stored || draft.badge !== stored.badge) patchPayload["badge"] = draft.badge;
+        if (!stored || draft.category !== stored.category) patchPayload["category"] = draft.category;
+        if (!stored || draft.sub !== stored.sub) patchPayload["sub"] = draft.sub;
+        if (!stored || draft.basePrice !== stored.basePrice) patchPayload["basePrice"] = draft.basePrice;
+        if (!stored || draft.mrp !== stored.mrp) patchPayload["mrp"] = draft.mrp;
+        if (!stored || draft.deliveryCharge !== stored.deliveryCharge) patchPayload["deliveryCharge"] = draft.deliveryCharge;
+        if (!stored || draft.isActive !== stored.isActive) patchPayload["isActive"] = draft.isActive;
+        if (!stored || draft.soldOut !== stored.soldOut) patchPayload["soldOut"] = draft.soldOut;
+        if (!stored || JSON.stringify(draft.images) !== JSON.stringify(stored.images)) patchPayload["images"] = draft.images;
+        if (!stored || JSON.stringify(draft.variants) !== JSON.stringify(stored.variants)) patchPayload["variants"] = draft.variants;
+
+        result = await updateProduct(draft.id, patchPayload as any);
+      }
+
+      if (!result || !result.id) {
+        throw new Error("Server response did not confirm verified save completion.");
       }
 
       const mergedProduct: AdminProduct = {
@@ -374,10 +413,12 @@ function ProductEditor() {
         void navigate({ to: "/products/$id", params: { id: result.id }, replace: true });
       }
 
-      setSuccessMsg(isCreateMode ? "Product created successfully" : "Design updated successfully");
+      setSuccessMsg(isCreateMode ? "Product created successfully in database" : "Design updated successfully in database");
       setShowSuccessModal(true);
     } catch (err: any) {
-      toast.error("Failed to save product: " + (err?.message || "Please check your network connection"));
+      const errorText = err?.message || "Action Failed: Server unreachable. Please check network connection.";
+      setNetworkErrorMsg(errorText);
+      setShowNetworkErrorModal(true);
     } finally {
       setSaving(false);
     }
@@ -524,19 +565,38 @@ function ProductEditor() {
         <div className="space-y-6">
           {!isCreateMode ? (
             <Section title="Product Status & Sold Out">
-              <div className="flex items-center justify-between rounded-2xl border border-pink-500/30 bg-pink-50/15 p-4">
+              <div className="flex items-center justify-between rounded-2xl border border-border bg-card p-4 shadow-soft">
                 <div>
-                  <span className="text-sm font-semibold text-foreground">Mark Product as Sold Out</span>
+                  <span className="text-sm font-semibold text-foreground">
+                    {draft.soldOut ? "Design Status: SOLD OUT" : "Design Status: IN STOCK & LIVE"}
+                  </span>
                   <p className="mt-0.5 text-xs text-muted-foreground">
-                    Shows "PRODUCT SOLD OUT" badge on cards and moves design to the bottom of catalogue.
+                    {draft.soldOut
+                      ? "Shows SOLD OUT seal on storefront cards and disables direct customer ordering."
+                      : "Active and available for customer orders on storefront."}
                   </p>
                 </div>
-                <input
-                  type="checkbox"
-                  checked={draft.soldOut}
-                  onChange={(e) => set({ soldOut: e.target.checked })}
-                  className="h-5 w-5 accent-pink-600 cursor-pointer"
-                />
+                <button
+                  type="button"
+                  role="switch"
+                  aria-checked={!draft.soldOut}
+                  onClick={() => {
+                    if (draft.soldOut) {
+                      setShowRestockConfirmModal(true);
+                    } else {
+                      setShowSoldOutConfirmModal(true);
+                    }
+                  }}
+                  className={`relative inline-flex h-7 w-14 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+                    !draft.soldOut ? "bg-emerald-600" : "bg-rose-600"
+                  }`}
+                >
+                  <span
+                    className={`pointer-events-none inline-block h-6 w-6 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out ${
+                      !draft.soldOut ? "translate-x-7" : "translate-x-0"
+                    }`}
+                  />
+                </button>
               </div>
             </Section>
           ) : null}
@@ -715,16 +775,6 @@ function ProductEditor() {
                   value={draft.mrp || ""}
                   placeholder="e.g. 4999"
                   onChange={(e) => set({ mrp: Math.max(0, Number(e.target.value)) })}
-                  className="input"
-                />
-              </Field>
-              <Field label="Express stitching from (₹)">
-                <input
-                  type="number"
-                  min={0}
-                  value={draft.expressFromPrice || ""}
-                  placeholder="e.g. 2299"
-                  onChange={(e) => set({ expressFromPrice: Math.max(0, Number(e.target.value)) })}
                   className="input"
                 />
               </Field>
@@ -920,19 +970,109 @@ function ProductEditor() {
           setTargetReplaceUrl(null);
         }}
       />
-      {/* Product Deletion Confirmation Modal */}
-      <DeleteConfirmationModal
-        open={showDeleteModal}
-        onClose={() => setShowDeleteModal(false)}
-        itemName={draft.name}
-        onConfirm={async () => {
-          if (draft?.id) {
-            await deleteProduct(draft.id);
-            toast.success(`Product "${draft.name}" deleted successfully.`);
-            void navigate({ to: "/products" });
-          }
-        }}
-      />
+      {/* Sold-out Confirmation Dialog */}
+      {showSoldOutConfirmModal ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+          <div className="mx-4 w-full max-w-md rounded-3xl border border-border bg-card p-6 shadow-2xl">
+            <div className="flex items-start gap-4">
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-rose-500/10 text-rose-600">
+                <AlertTriangle className="h-6 w-6" />
+              </div>
+              <div>
+                <h3 className="font-display text-base font-semibold text-foreground">
+                  Mark "{draft.name || "this design"}" as Sold Out?
+                </h3>
+                <p className="mt-2 text-xs leading-relaxed text-muted-foreground">
+                  Marking this design as sold out will display a prominent SOLD OUT badge on the storefront and disable direct customer ordering.
+                </p>
+              </div>
+            </div>
+            <div className="mt-6 flex items-center justify-end gap-3">
+              <button
+                type="button"
+                disabled={updatingStatus}
+                onClick={() => setShowSoldOutConfirmModal(false)}
+                className="rounded-full border border-border px-5 py-2.5 text-xs font-semibold text-foreground hover:bg-secondary"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                disabled={updatingStatus}
+                onClick={() => void handleConfirmSoldOutToggle(true)}
+                className="inline-flex items-center gap-2 rounded-full bg-rose-600 px-5 py-2.5 text-xs font-semibold text-white shadow-soft hover:bg-rose-700 disabled:opacity-50"
+              >
+                {updatingStatus ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />}
+                Yes, Mark Sold Out
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      {/* Restock Confirmation Dialog */}
+      {showRestockConfirmModal ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+          <div className="mx-4 w-full max-w-md rounded-3xl border border-border bg-card p-6 shadow-2xl">
+            <div className="flex items-start gap-4">
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-emerald-500/10 text-emerald-600">
+                <CheckCircle2 className="h-6 w-6" />
+              </div>
+              <div>
+                <h3 className="font-display text-base font-semibold text-foreground">
+                  Restock "{draft.name || "this design"}"?
+                </h3>
+                <p className="mt-2 text-xs leading-relaxed text-muted-foreground">
+                  Restocking will make this design active and open for customer orders on the storefront.
+                </p>
+              </div>
+            </div>
+            <div className="mt-6 flex items-center justify-end gap-3">
+              <button
+                type="button"
+                disabled={updatingStatus}
+                onClick={() => setShowRestockConfirmModal(false)}
+                className="rounded-full border border-border px-5 py-2.5 text-xs font-semibold text-foreground hover:bg-secondary"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                disabled={updatingStatus}
+                onClick={() => void handleConfirmSoldOutToggle(false)}
+                className="inline-flex items-center gap-2 rounded-full bg-emerald-600 px-5 py-2.5 text-xs font-semibold text-white shadow-soft hover:bg-emerald-700 disabled:opacity-50"
+              >
+                {updatingStatus ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />}
+                Yes, Restock Design
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      {/* Network / Server Error Modal (Zero Tolerance for False Success) */}
+      {showNetworkErrorModal ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+          <div className="mx-4 w-full max-w-md rounded-3xl border border-destructive/30 bg-card p-6 shadow-2xl text-center">
+            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-destructive/10 text-destructive mb-4">
+              <AlertTriangle className="h-8 w-8" />
+            </div>
+            <h3 className="font-display text-lg font-semibold text-foreground">Action Failed</h3>
+            <p className="mt-2 text-xs leading-relaxed text-muted-foreground">
+              {networkErrorMsg || "No internet connection or server unreachable. The action was NOT saved to database."}
+            </p>
+            <div className="mt-6 flex justify-center">
+              <button
+                type="button"
+                onClick={() => setShowNetworkErrorModal(false)}
+                className="inline-flex items-center justify-center rounded-full bg-destructive px-6 py-2.5 text-xs font-semibold text-destructive-foreground uppercase tracking-wider shadow-soft hover:bg-destructive/90"
+              >
+                Dismiss & Retry
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </AdminShell>
 
   );

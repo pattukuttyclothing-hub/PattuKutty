@@ -813,14 +813,16 @@ export class CatalogueRepository {
       updateData.updated_at = new Date().toISOString();
 
       if (this.isUUID(productId)) {
-        const { error } = await db
-          .from("products")
-          .update(updateData)
-          .eq("id", productId);
+        if (Object.keys(updateData).length > 1) {
+          const { error } = await db
+            .from("products")
+            .update(updateData)
+            .eq("id", productId);
 
-        if (error) {
-          const err = new Error(error.message || "Failed to update product");
-          throw err;
+          if (error) {
+            const err = new Error(error.message || "Failed to update product");
+            throw err;
+          }
         }
 
         // Handle variants update if provided

@@ -6,10 +6,12 @@ export function ProductGallery({
   images,
   alt,
   overlay,
+  isSoldOut,
 }: {
   images: string[];
   alt: string;
   overlay?: React.ReactNode;
+  isSoldOut?: boolean;
 }) {
   const [i, setI] = useState(0);
   const list = images?.filter(Boolean) ?? [];
@@ -29,7 +31,9 @@ export function ProductGallery({
     <div>
       <div className="group relative aspect-[3/4] sm:aspect-[3/4] lg:aspect-[3/4.2] w-full overflow-hidden rounded-3xl bg-card border border-border/70 shadow-lift min-h-[380px] sm:min-h-[460px] lg:min-h-[580px] max-h-[600px] lg:max-h-[720px]">
         <div
-          className="flex h-full w-full transition-transform duration-500 ease-out"
+          className={`flex h-full w-full transition-transform duration-500 ease-out ${
+            isSoldOut ? "opacity-50 blur-[2px]" : ""
+          }`}
           style={{ transform: `translateX(-${i * 100}%)` }}
         >
           {images.map((src, idx) => (
@@ -43,7 +47,17 @@ export function ProductGallery({
           ))}
         </div>
 
-        {overlay ? <div className="absolute top-3 right-3 z-10">{overlay}</div> : null}
+        {isSoldOut ? (
+          <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-black/40 backdrop-blur-[3px] p-4">
+            <div className="rotate-[-10deg] rounded-3xl border-2 border-dashed border-rose-300/90 bg-rose-600/95 px-6 py-3 text-center shadow-2xl backdrop-blur-md">
+              <span className="block font-display text-sm sm:text-base font-black tracking-[0.2em] text-white uppercase drop-shadow-md">
+                PRODUCT SOLD OUT
+              </span>
+            </div>
+          </div>
+        ) : null}
+
+        {overlay ? <div className="absolute top-4 right-4 z-25">{overlay}</div> : null}
 
         {n > 1 ? (
           <>

@@ -56,30 +56,8 @@ function ProductsPage() {
     [products, cat, sub, q],
   );
 
-  const create = (categoryId: CategoryId, subId: string) => {
-    const s = findSub(categoryId, subId)!;
-    const newId = `design-new-${Date.now().toString(36)}`;
-    const p: AdminProduct = {
-      id: newId,
-      name: "",
-      description: "",
-      category: categoryId,
-      sub: subId,
-      basePrice: 0,
-      mrp: 0,
-      blurb: s.blurb || "",
-      badge: "",
-      expressFromPrice: 0,
-      deliveryCharge: 0,
-      isActive: true,
-      soldOut: false,
-
-      images: [],
-      variants: (["S", "M", "L"] as const).map((size) => ({ size, available: true, stockQty: 1 })),
-    };
-    addProduct(p);
-    toast.success("New draft created — enter design details and upload photos.");
-    void navigate({ to: "/products/$id", params: { id: p.id } });
+  const create = (_categoryId: CategoryId, _subId: string) => {
+    void navigate({ to: "/products/$id", params: { id: "new" } });
   };
 
   return (

@@ -31,7 +31,7 @@ export function ProductCard({ product: p, index = 0 }: { product: Product; index
         <AutoImageFade
           images={imgs}
           alt={p.name}
-          className={`absolute inset-0 h-full w-full ${isSoldOut ? "opacity-75 blur-[1.5px]" : ""}`}
+          className={`absolute inset-0 h-full w-full ${isSoldOut ? "opacity-50 blur-[2px]" : ""}`}
           interval={7500}
           offset={index * 700}
         />
@@ -46,16 +46,18 @@ export function ProductCard({ product: p, index = 0 }: { product: Product; index
             e.stopPropagation();
             toggle(p.id);
           }}
-          className="absolute top-3 right-3 z-20 grid h-9 w-9 place-items-center rounded-full bg-card/80 backdrop-blur-md shadow-soft border border-border/50 transition-all hover:scale-110 active:scale-95"
+          className="absolute top-3 right-3 z-20 grid h-9 w-9 place-items-center rounded-full bg-white/95 dark:bg-black/90 shadow-md border border-border/60 transition-all hover:scale-110 active:scale-95 cursor-pointer"
         >
-          <Heart className={`h-4 w-4 transition-colors ${isLiked ? "fill-rose-500 text-rose-500" : "text-foreground/75 hover:text-rose-500"}`} />
+          <Heart className={`h-4 w-4 transition-colors ${isLiked ? "fill-rose-500 text-rose-500" : "text-rose-500/80 fill-rose-50/50 hover:text-rose-600 hover:fill-rose-100"}`} />
         </button>
 
         {/* Sold Out Seal or Ribbon Badge */}
         {isSoldOut ? (
-          <div className="absolute inset-0 z-10 flex items-center justify-center bg-black/20 backdrop-blur-[1px]">
-            <div className="rotate-[-12deg] rounded-2xl border-2 border-dashed border-rose-300/90 bg-rose-600/90 px-4 py-2 text-center text-xs font-black tracking-widest text-white uppercase shadow-xl backdrop-blur-md">
-              Product Sold Out
+          <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-black/40 backdrop-blur-[3px] p-2">
+            <div className="rotate-[-10deg] rounded-2xl border-2 border-dashed border-rose-300/90 bg-rose-600/95 px-4 py-2 text-center shadow-2xl backdrop-blur-md">
+              <span className="block text-xs font-black tracking-[0.2em] text-white uppercase drop-shadow-md">
+                PRODUCT SOLD OUT
+              </span>
             </div>
           </div>
         ) : badgeText ? (
