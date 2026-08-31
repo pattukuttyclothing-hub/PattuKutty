@@ -95,7 +95,7 @@ function DesignStudio() {
   useEffect(() => {
     if (profile?.phone && spec && !initialPhoneSetRef.current && !spec.phone) {
       initialPhoneSetRef.current = true;
-      setSpec((prev) => (prev ? { ...prev, phone: profile.phone! } : prev));
+      setSpec((prev) => (prev && profile?.phone ? { ...prev, phone: profile.phone } : prev));
     }
   }, [profile?.phone, spec]);
   const [done, setDone] = useState<string | null>(null);

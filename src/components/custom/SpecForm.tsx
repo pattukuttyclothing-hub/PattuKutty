@@ -117,7 +117,7 @@ export function SpecForm({
   onChange: (next: Spec) => void;
   compact?: boolean;
 }) {
-  const cat = findCategory(spec.category)!;
+  const cat = findCategory(spec?.category || "blouses")!;
   const colourFile = useRef<HTMLInputElement>(null);
   const [uploadingColour, setUploadingColour] = useState(false);
   const [colourError, setColourError] = useState<string | null>(null);
@@ -313,7 +313,7 @@ export function SpecForm({
         <div className="grid gap-6 sm:grid-cols-2">
           <Field label="Phone" hint={<InfoTip text="Prefilled from your saved profile details. Edit it if we should reach you on another number." />}>
             <input
-              value={spec.phone}
+              value={spec?.phone || ""}
               maxLength={18}
               onChange={(e) => set({ phone: e.target.value })}
               placeholder="+91 …"

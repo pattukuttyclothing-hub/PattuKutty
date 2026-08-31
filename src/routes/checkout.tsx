@@ -181,7 +181,7 @@ function CheckoutPage() {
   const addressValid =
     !!shipping &&
     shipping.fullName.trim().length > 0 &&
-    /^\d{10}$/.test(shipping.phone.replace(/\D/g, "").slice(-10)) &&
+    /^\d{10}$/.test((shipping.phone || "").replace(/\D/g, "").slice(-10)) &&
     shipping.line1.trim().length > 0 &&
     shipping.city.trim().length > 0 &&
     shipping.state.trim().length > 0 &&
@@ -639,7 +639,7 @@ function CheckoutPage() {
               ) : shipping ? (
                 <p className="mt-3 pl-11 text-xs leading-relaxed text-muted-foreground">
                   <span className="font-semibold text-foreground">{shipping.fullName}</span> ·{" "}
-                  {shipping.phone}
+                  {shipping.phone || ""}
                   <br />
                   {[shipping.line1, shipping.line2, shipping.city, shipping.pincode]
                     .filter(Boolean)

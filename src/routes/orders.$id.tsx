@@ -697,16 +697,16 @@ function OrderTrackingPage() {
                 </div>
               ) : order?.shipping ? (
                 <div className="space-y-1.5 text-sm text-muted-foreground">
-                  {order.shipping.fullName ? (
+                  {order.shipping?.fullName ? (
                     <p className="font-semibold text-foreground">{order.shipping.fullName}</p>
                   ) : null}
-                  {order.shipping.phone ? <p>{order.shipping.phone}</p> : null}
-                  {order.shipping.line1 ? <p>{order.shipping.line1}</p> : null}
-                  {order.shipping.landmark ? <p>Near {order.shipping.landmark}</p> : null}
-                  {order.shipping.city || order.shipping.state || order.shipping.pincode ? (
+                  {order.shipping?.phone ? <p>{order.shipping.phone}</p> : null}
+                  {order.shipping?.line1 ? <p>{order.shipping.line1}</p> : null}
+                  {order.shipping?.landmark ? <p>Near {order.shipping.landmark}</p> : null}
+                  {order.shipping?.city || order.shipping?.state || order.shipping?.pincode ? (
                     <p>
-                      {[order.shipping.city, order.shipping.state].filter(Boolean).join(", ")}
-                      {order.shipping.pincode ? ` — ${order.shipping.pincode}` : ""}
+                      {[order.shipping?.city, order.shipping?.state].filter(Boolean).join(", ")}
+                      {order.shipping?.pincode ? ` — ${order.shipping.pincode}` : ""}
                     </p>
                   ) : null}
                 </div>

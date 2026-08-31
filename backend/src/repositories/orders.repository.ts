@@ -308,8 +308,8 @@ export class OrdersRepository {
     }
 
     if (shipping) {
-      const fullName = (shipping.fullName as string) || (shipping.full_name as string);
-      const phone = (shipping.phone as string);
+      const fullName = (shipping?.fullName as string) || (shipping?.full_name as string) || "";
+      const phone = (shipping?.phone as string) || "";
       const line1 = (shipping.line1 as string);
       const city = (shipping.city as string);
       const state = (shipping.state as string);
