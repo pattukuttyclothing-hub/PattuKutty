@@ -146,6 +146,10 @@ function DesignStudio() {
       setErrorMsg("Please select your required turnaround timeline window.");
       return;
     }
+    if (!spec.fulfilment) {
+      setErrorMsg("Please select a fulfillment method (Doorstep delivery or Boutique pickup).");
+      return;
+    }
 
     gate(() => {
       setSubmitting(true);
@@ -299,6 +303,26 @@ function DesignStudio() {
           )}
         </div>
       </section>
+
+      {errorMsg ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
+          <div className="w-full max-w-md rounded-3xl border border-destructive/30 bg-card p-6 shadow-2xl space-y-4 text-center">
+            <h3 className="font-display text-xl font-bold text-destructive">
+              Mandatory Information Required
+            </h3>
+            <p className="text-sm leading-relaxed text-muted-foreground">{errorMsg}</p>
+            <div className="pt-2">
+              <button
+                type="button"
+                onClick={() => setErrorMsg(null)}
+                className="w-full rounded-full bg-primary py-3 text-sm font-semibold text-primary-foreground shadow-soft transition-transform hover:scale-[1.01]"
+              >
+                Understood & Complete Field
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </PageShell>
   );
 }

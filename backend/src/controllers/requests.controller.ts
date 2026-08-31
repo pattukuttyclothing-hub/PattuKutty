@@ -121,6 +121,17 @@ export class RequestsController {
     }
   }
 
+  static async acceptQuotation(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const id = String(req.params.id);
+      const customerId = req.user?.id || "";
+      const data = await RequestsService.acceptQuotation(id, customerId);
+      res.json({ success: true, data });
+    } catch (err) {
+      next(err);
+    }
+  }
+
   static async convertToOrderAdmin(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
     try {
       const id = String(req.params.id);

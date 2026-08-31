@@ -136,6 +136,7 @@ export async function fetchCustomRequestById(id: string): Promise<CustomRequest>
 export interface QuoteResponse {
   success: boolean;
   data: CustomRequest;
+  request?: CustomRequest | undefined;
   message?: string | undefined;
   whatsapp?: {
     sent: boolean;

@@ -468,6 +468,22 @@ export class RequestsRepository {
     return data;
   }
 
+  static async acceptQuotation(id: string, customerId: string) {
+    const { data, error } = await db
+      .from("custom_requests")
+      .update({
+        status: "accepted",
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", id)
+      .eq("customer_id", customerId)
+      .select()
+      .single();
+
+    if (error) throw error;
+    return data;
+  }
+
   static async updateRequestStatus(id: string, status: string, updates?: Record<string, unknown>) {
     const payload = { status, updated_at: new Date().toISOString(), ...updates };
     const { data, error } = await db
@@ -511,7 +527,9 @@ export class RequestsRepository {
       .eq("customer_id", customerId)
       .select()
       .single();
-    if (error) throw error;
+    if (error || !data) {
+      throw error || new Error("Failed to cancel design request in database.");
+    }
     return data;
   }
 
@@ -528,7 +546,9 @@ export class RequestsRepository {
       .eq("id", id)
       .select()
       .single();
-    if (error) throw error;
+    if (error || !data) {
+      throw error || new Error("Admin failed to cancel design request in database.");
+    }
     return data;
   }
 

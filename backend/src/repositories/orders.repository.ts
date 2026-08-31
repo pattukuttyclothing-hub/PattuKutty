@@ -46,18 +46,55 @@ export class OrdersRepository {
     if (orderErr) throw orderErr;
 
     // Insert line items (triggers atomic stock check via enforce_stock_on_order_item)
-    const formattedItems = items.map((item) => ({
-      order_id: order.id,
-      variant_id: item.variant_id ?? item.variantId ?? null,
-      product_name_snapshot: item.product_name_snapshot ?? item.productName ?? item.name ?? "Item",
-      size_snapshot: item.size_snapshot ?? item.size ?? "S",
-      colour_snapshot: item.colour_snapshot ?? item.colour ?? "Design Colour",
-      unit_price: Number(item.unit_price ?? item.unitPrice ?? item.price ?? 0),
-      qty: Number(item.qty ?? 1),
-      image_url_snapshot: (item.image_url_snapshot ?? item.imageUrl ?? item.image) as string | null,
-    }));
+    const formattedItems = items.map((item) => {
+      const customReqId =
+        (item.custom_request_id as string | undefined) ??
+        (item.customRequestId as string | undefined) ??
+        (cleanPayload.custom_request_id as string | undefined) ??
+        null;
+
+      return {
+        order_id: order.id,
+        custom_request_id: customReqId,
+        variant_id: item.variant_id ?? item.variantId ?? null,
+        product_name_snapshot: item.product_name_snapshot ?? item.productName ?? item.name ?? "Item",
+        size_snapshot: item.size_snapshot ?? item.size ?? "S",
+        colour_snapshot: item.colour_snapshot ?? item.colour ?? "Design Colour",
+        unit_price: Number(item.unit_price ?? item.unitPrice ?? item.price ?? 0),
+        qty: Number(item.qty ?? 1),
+        image_url_snapshot: (item.image_url_snapshot ?? item.imageUrl ?? item.image) as string | null,
+      };
+    });
+
     const { error: itemsErr } = await db.from("order_items").insert(formattedItems);
     if (itemsErr) throw itemsErr;
+
+    // Update custom_requests table status to 'ordered' in PostgreSQL DB for custom request items
+    const customReqIdsToUpdate = new Set<string>();
+    if (cleanPayload.custom_request_id && typeof cleanPayload.custom_request_id === "string") {
+      customReqIdsToUpdate.add(cleanPayload.custom_request_id);
+    }
+    for (const item of formattedItems) {
+      if (item.custom_request_id && typeof item.custom_request_id === "string") {
+        customReqIdsToUpdate.add(item.custom_request_id);
+      }
+    }
+
+    for (const crId of customReqIdsToUpdate) {
+      const { error: crErr } = await db
+        .from("custom_requests")
+        .update({
+          status: "ordered",
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", crId);
+
+      if (crErr) {
+        console.error(`[OrdersRepository] Failed to update custom_requests status for ${crId}:`, crErr.message);
+        throw crErr;
+      }
+    }
+
     return order;
   }
 
@@ -189,18 +226,54 @@ export class OrdersRepository {
     // Step 4: Insert order_items only if not already present and there are pending snapshots.
     // (fires enforce_stock_on_order_item trigger which atomically decrements stock)
     if (!itemsAlreadyInserted && pendingItems.length > 0) {
-      const formattedItems = pendingItems.map((item) => ({
-        order_id: orderId,
-        variant_id: item.variant_id ?? item.variantId ?? null,
-        product_name_snapshot: item.product_name_snapshot ?? item.productName ?? item.name ?? "Item",
-        size_snapshot: item.size_snapshot ?? item.size ?? "S",
-        colour_snapshot: item.colour_snapshot ?? item.colour ?? "Design Colour",
-        unit_price: Number(item.unit_price ?? item.unitPrice ?? item.price ?? 0),
-        qty: Number(item.qty ?? 1),
-        image_url_snapshot: (item.image_url_snapshot ?? item.imageUrl ?? item.image) as string | null,
-      }));
+      const formattedItems = pendingItems.map((item) => {
+        const customReqId =
+          (item.custom_request_id as string | undefined) ??
+          (item.customRequestId as string | undefined) ??
+          (claimed.custom_request_id as string | undefined) ??
+          null;
+
+        return {
+          order_id: orderId,
+          custom_request_id: customReqId,
+          variant_id: item.variant_id ?? item.variantId ?? null,
+          product_name_snapshot: item.product_name_snapshot ?? item.productName ?? item.name ?? "Item",
+          size_snapshot: item.size_snapshot ?? item.size ?? "S",
+          colour_snapshot: item.colour_snapshot ?? item.colour ?? "Design Colour",
+          unit_price: Number(item.unit_price ?? item.unitPrice ?? item.price ?? 0),
+          qty: Number(item.qty ?? 1),
+          image_url_snapshot: (item.image_url_snapshot ?? item.imageUrl ?? item.image) as string | null,
+        };
+      });
+
       const { error: itemsErr } = await db.from("order_items").insert(formattedItems);
       if (itemsErr) throw itemsErr;
+
+      // Update custom_requests table status to 'ordered' in PostgreSQL DB for custom request items
+      const customReqIdsToUpdate = new Set<string>();
+      if (claimed.custom_request_id && typeof claimed.custom_request_id === "string") {
+        customReqIdsToUpdate.add(claimed.custom_request_id);
+      }
+      for (const item of formattedItems) {
+        if (item.custom_request_id && typeof item.custom_request_id === "string") {
+          customReqIdsToUpdate.add(item.custom_request_id);
+        }
+      }
+
+      for (const crId of customReqIdsToUpdate) {
+        const { error: crErr } = await db
+          .from("custom_requests")
+          .update({
+            status: "ordered",
+            updated_at: new Date().toISOString(),
+          })
+          .eq("id", crId);
+
+        if (crErr) {
+          console.error(`[OrdersRepository] Failed to update custom_requests status for ${crId}:`, crErr.message);
+          throw crErr;
+        }
+      }
     }
 
     // Step 5: Update customer_notes to cleaned value (strip serialized pendingItems blob).

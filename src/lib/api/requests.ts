@@ -72,3 +72,15 @@ export async function cancelCustomRequest(requestId: string, reason: string): Pr
   return res.data;
 }
 
+export async function acceptQuotation(requestId: string): Promise<any> {
+  const res = await apiFetch<{ success: boolean; data: any }>(`/requests/${requestId}/accept`, {
+    method: "PATCH",
+  });
+
+  if (!res || !res.success) {
+    throw new Error("Failed to accept studio quotation on server.");
+  }
+
+  return res.data;
+}
+

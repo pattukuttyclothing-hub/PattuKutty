@@ -45,7 +45,7 @@ export const Route = createFileRoute("/requests/$id")({
 
 function RequestDetail() {
   const { id } = Route.useLoaderData() as { id: string };
-  const { find, cancel, rerequest, requestUpdate, refreshRequests } = useRequests();
+  const { find, cancel, rerequest, requestUpdate, acceptQuotation, refreshRequests } = useRequests();
   const navigate = useNavigate();
   const { add } = useCart();
   const req = find(id);
@@ -443,19 +443,29 @@ function RequestDetail() {
                   <>
                     <button
                       type="button"
-                      onClick={() => {
-                        add({
-                          id: req.id,
-                          customRequestId: req.id,
-                          isCustom: true,
-                          name: `${req.quote?.name ?? requestTypeLabel(req)} (Customised)`,
-                          image: req.images[0] ?? "",
-                          price: totalPayable,
-                          size: req.size,
-                          colour: req.colour,
-                          qty: req.qty,
-                        });
-                        navigate({ to: "/checkout" });
+                      onClick={async () => {
+                        try {
+                          await acceptQuotation(req.id);
+                          add({
+                            id: req.id,
+                            customRequestId: req.id,
+                            isCustom: true,
+                            name: `${req.quote?.name ?? requestTypeLabel(req)} (Customised)`,
+                            image: req.images[0] ?? "",
+                            price: totalPayable,
+                            size: req.size,
+                            colour: req.colour,
+                            qty: req.qty,
+                          });
+                          navigate({ to: "/checkout" });
+                        } catch (err: any) {
+                          setCancelResultModal({
+                            open: true,
+                            type: "failure",
+                            title: "Quotation Acceptance Warning",
+                            message: String(err?.message || "Could not accept studio quotation. Please try again."),
+                          });
+                        }
                       }}
                       className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-primary py-4 text-sm font-semibold text-primary-foreground shadow-soft transition-transform hover:scale-[1.02]"
                     >

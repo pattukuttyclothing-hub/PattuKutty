@@ -300,6 +300,10 @@ function RequestDetail() {
       const { cancelCustomRequestAdmin } = await import("@/lib/api/requests");
       const res = await cancelCustomRequestAdmin(r.id, rejectReason.trim());
 
+      if (!res || (!res.success && res?.request?.status !== "cancelled")) {
+        throw new Error(res?.message || "Failed to persist request cancellation on server.");
+      }
+
       saveRequest(r.id, {
         status: "cancelled",
         cancelReason: rejectReason.trim(),
@@ -324,7 +328,7 @@ function RequestDetail() {
 
       setTimeout(() => navigate({ to: "/requests" }), 1000);
     } catch (err: any) {
-      toast.error("Failed to persist request cancellation. Please try again.");
+      toast.error(String(err?.message || "Failed to persist request cancellation. Please try again."));
     }
   };
 

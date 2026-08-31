@@ -138,7 +138,24 @@ export class RequestsService {
       throw createError("Fulfilment method must be either 'pickup' or 'doorstep'.", 400);
     }
 
-    // 7. Reference Images Array Validation (Already extracted)
+    // 7. Contact Phone Number Validation (Mandatory for customer communication)
+    const rawPhone = payload.phone ?? payload.customerPhone ?? payload.contactPhone;
+    let cleanPhone = typeof rawPhone === "string" ? rawPhone.trim() : "";
+
+    if (!cleanPhone && customerId) {
+      const { data: cust } = await db.from("customers").select("phone").eq("id", customerId).maybeSingle();
+      if (cust && typeof cust.phone === "string" && cust.phone.trim()) {
+        cleanPhone = cust.phone.trim();
+      }
+    }
+
+    if (!cleanPhone) {
+      throw createError("Contact phone number is mandatory to submit a custom stitching request.", 400);
+    }
+    if (!fabricNotes.includes("[Contact Phone]:")) {
+      fabricNotes = `[Contact Phone]: ${cleanPhone}\n${fabricNotes}`;
+    }
+
     // 8. Category Resolution (UUID or Slug)
     const rawCategory = payload.categoryId ?? payload.category;
     let categoryUuid: string | null = null;
@@ -406,16 +423,16 @@ export class RequestsService {
   }
 
   static async cancelCustomRequest(id: string, customerId: string, reason: string) {
-    if (!reason || typeof reason !== "string" || !reason.trim()) {
-      throw createError("Cancellation reason is required.", 400);
+    if (!reason || typeof reason !== "string" || !reason.trim() || reason.trim().length < 3) {
+      throw createError("Cancellation reason is required (minimum 3 characters).", 400);
     }
     await this.getRequestById(id, customerId);
     return await RequestsRepository.cancelCustomRequest(id, customerId, reason.trim());
   }
 
   static async cancelCustomRequestAdmin(id: string, reason: string) {
-    if (!reason || typeof reason !== "string" || !reason.trim()) {
-      throw createError("Cancellation reason is required.", 400);
+    if (!reason || typeof reason !== "string" || !reason.trim() || reason.trim().length < 3) {
+      throw createError("Cancellation reason is required (minimum 3 characters).", 400);
     }
 
     const updated = await RequestsRepository.cancelCustomRequestAdmin(id, reason.trim());
@@ -525,6 +542,23 @@ export class RequestsService {
       cleanPayload.fabricNotes = String(payload.fabricNotes || "").trim();
     }
     return await RequestsRepository.updateRequestDesignAdmin(id, cleanPayload);
+  }
+
+  static async acceptQuotation(id: string, customerId: string) {
+    const req = await RequestsRepository.getRequestById(id);
+    if (!req) {
+      throw createError("Custom stitching request not found.", 404);
+    }
+    if (req.customer_id && String(req.customer_id) !== customerId) {
+      throw createError("Forbidden: You can only accept quotations for your own requests.", 403);
+    }
+    if (req.status !== "quoted" && req.status !== "accepted") {
+      throw createError("Quotation cannot be accepted at this request status stage.", 400);
+    }
+    if (!req.quote) {
+      throw createError("No active studio quotation found for this request.", 400);
+    }
+    return await RequestsRepository.acceptQuotation(id, customerId);
   }
 
   static async deleteStorageFile(filePathOrUrl: string, bucketType: "image" | "audio" | "product" = "image"): Promise<void> {

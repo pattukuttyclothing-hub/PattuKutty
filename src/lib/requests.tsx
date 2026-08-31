@@ -95,6 +95,7 @@ type RequestsValue = {
   create: (r: NewRequest) => Promise<CustomRequest>;
   update: (id: string, patch: Partial<CustomRequest>) => void;
   requestUpdate: (id: string, patch: Partial<CustomRequest>, note: string) => Promise<void>;
+  acceptQuotation: (id: string) => Promise<void>;
   cancel: (id: string, reason: string) => Promise<void>;
   rerequest: (id: string) => void;
 };
@@ -261,6 +262,16 @@ export function RequestsProvider({ children }: { children: ReactNode }) {
     [update],
   );
 
+  const acceptQuotation = useCallback(
+    async (id: string) => {
+      const { acceptQuotation: apiAccept } = await import("./api/requests");
+      const res = await apiAccept(id);
+      if (!res) throw new Error("Failed to accept studio quotation on server.");
+      update(id, { status: "accepted" });
+    },
+    [update],
+  );
+
   const cancel = useCallback(
     async (id: string, reason: string) => {
       const { cancelCustomRequest: apiCancel } = await import("./api/requests");
@@ -295,6 +306,7 @@ export function RequestsProvider({ children }: { children: ReactNode }) {
       create,
       update,
       requestUpdate,
+      acceptQuotation,
       cancel,
       rerequest,
     }),

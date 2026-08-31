@@ -10,6 +10,7 @@ router.post("/requests", requireAuth, RequestsController.submitCustomRequest);
 router.get("/requests", requireAuth, RequestsController.getCustomerRequests);
 router.get("/requests/:id", requireAuth, RequestsController.getRequestById);
 router.patch("/requests/:id/request-changes", requireAuth, RequestsController.requestChanges);
+router.patch("/requests/:id/accept", requireAuth, RequestsController.acceptQuotation);
 router.patch("/requests/:id/cancel", requireAuth, RequestsController.cancelCustomRequest);
 
 // Admin Management Routes
