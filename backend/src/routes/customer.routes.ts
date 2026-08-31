@@ -39,12 +39,39 @@ customerRouter.get("/customer/addresses", requireAuth, async (req, res, next) =>
   } catch (err) { next(err); }
 });
 
+import { z } from "zod";
+
+const addressBodySchema = z.object({
+  fullName: z.string().trim().min(1, "Full name is required").optional(),
+  full_name: z.string().trim().min(1, "Full name is required").optional(),
+  phone: z.string().trim().regex(/^[0-9]{10,15}$/, "Valid mobile number (10-15 digits) is required"),
+  line1: z.string().trim().min(3, "Address line 1 is required"),
+  line2: z.string().trim().optional().nullable(),
+  line_2: z.string().trim().optional().nullable(),
+  landmark: z.string().trim().optional().nullable(),
+  city: z.string().trim().min(2, "City is required"),
+  state: z.string().trim().min(2, "State is required"),
+  pincode: z.string().trim().regex(/^[1-9][0-9]{5}$/, "PIN code must be a valid 6-digit number"),
+  addressType: z.enum(["home", "work", "other"]).optional(),
+  address_type: z.enum(["home", "work", "other"]).optional(),
+  isDefault: z.boolean().optional(),
+  is_default: z.boolean().optional(),
+}).refine((data) => !!((data.fullName && data.fullName.trim().length > 0) || (data.full_name && data.full_name.trim().length > 0)), {
+  message: "Full name is required",
+  path: ["fullName"],
+});
+
 customerRouter.post("/customer/addresses", requireAuth, async (req, res, next) => {
   try {
     const customerId = (req as unknown as { user: { id: string } }).user.id;
+    const parsed = addressBodySchema.safeParse(req.body);
+    if (!parsed.success) {
+      res.status(400).json({ success: false, message: parsed.error.errors[0].message });
+      return;
+    }
     const data = await CustomerService.createAddress(customerId, req.body as Record<string, unknown>);
     if (!data) {
-      res.status(500).json({ success: false, message: "Failed to create address" });
+      res.status(400).json({ success: false, message: "Invalid or incomplete address fields provided." });
       return;
     }
     res.status(201).json({ success: true, data });

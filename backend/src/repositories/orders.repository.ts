@@ -310,15 +310,29 @@ export class OrdersRepository {
     if (shipping) {
       const fullName = (shipping?.fullName as string) || (shipping?.full_name as string) || "";
       const phone = (shipping?.phone as string) || "";
-      const line1 = (shipping.line1 as string);
-      const city = (shipping.city as string);
-      const state = (shipping.state as string);
-      const pincode = (shipping.pincode as string);
+      const line1 = (shipping.line1 as string) || "";
+      const city = (shipping.city as string) || "";
+      const state = (shipping.state as string) || "";
+      const pincode = (shipping.pincode as string) || "";
 
       if (!fullName?.trim() || !phone?.trim() || !line1?.trim() || !city?.trim() || !state?.trim() || !pincode?.trim()) {
         const err = new Error("Invalid address: Required shipping address fields (fullName, phone, line1, city, state, pincode) are missing.") as Error & { statusCode: number };
         err.statusCode = 400;
         throw err;
+      }
+
+      // Check if matching address already exists for this customer to prevent duplicate insertion
+      const { data: existing } = await db
+        .from("addresses")
+        .select("id")
+        .eq("customer_id", customerId)
+        .ilike("full_name", fullName.trim())
+        .ilike("line1", line1.trim())
+        .eq("pincode", pincode.trim())
+        .maybeSingle();
+
+      if (existing?.id) {
+        return existing.id;
       }
 
       const { data, error } = await db
@@ -347,7 +361,7 @@ export class OrdersRepository {
   static async getOrdersByCustomer(customerId: string) {
     const { data, error } = await db
       .from("orders")
-      .select("*, items:order_items(*)")
+      .select("*, items:order_items(*), address:addresses(*)")
       .eq("customer_id", customerId)
       .order("created_at", { ascending: false });
     if (error) throw error;

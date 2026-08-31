@@ -27,6 +27,8 @@ import { listAddresses, saveAddress, updateAddress, deleteAddress, type SavedAdd
 import { createBackendPaymentOrder, verifyBackendPayment, cancelBackendPaymentOrder, calculateOrderSummary } from "@/lib/api/orders";
 import { fmtDate, expectedDeliveryDate, courier } from "@/lib/tracking";
 
+import { toast } from "sonner";
+
 const title = "Secure Checkout — Pattu Kutty";
 const description =
   "Confirm your delivery address and pay securely with Razorpay — UPI, cards, netbanking or wallets — for your Pattu Kutty order.";
@@ -134,7 +136,7 @@ function StepHead({
 function CheckoutPage() {
   const navigate = useNavigate();
   const { user, profile, ready } = useAuth();
-  const { items, subtotal, delivery, total, clear } = useCart();
+  const { items, subtotal, delivery, total, clear, remove } = useCart();
   const { place } = useOrders();
 
   const [step, setStep] = useState<1 | 2 | 3>(1);
@@ -276,6 +278,39 @@ function CheckoutPage() {
     setShowForm(true);
   };
 
+  const validateFormFields = (addr: ShippingAddress | null): addr is ShippingAddress => {
+    if (!addr) {
+      toast.error("Please select or add a delivery address");
+      return false;
+    }
+    if (!addr.fullName || !addr.fullName.trim()) {
+      toast.error("Please enter your full name before saving address");
+      return false;
+    }
+    const cleanPhone = (addr.phone || "").replace(/\D/g, "");
+    if (!cleanPhone || cleanPhone.length < 10) {
+      toast.error("Please enter a valid 10-digit mobile number");
+      return false;
+    }
+    if (!addr.line1 || !addr.line1.trim()) {
+      toast.error("Please enter your flat / house number and street");
+      return false;
+    }
+    if (!addr.city || !addr.city.trim()) {
+      toast.error("Please enter your city");
+      return false;
+    }
+    if (!addr.state || !addr.state.trim()) {
+      toast.error("Please enter your state");
+      return false;
+    }
+    if (!addr.pincode || !/^\d{6}$/.test(addr.pincode.trim())) {
+      toast.error("Please enter a valid 6-digit PIN code");
+      return false;
+    }
+    return true;
+  };
+
   const handleDeleteAddress = async (id: string) => {
     if (!window.confirm("Remove this address from your account?")) return;
     setSaved((prev) => prev.filter((a) => a.id !== id));
@@ -285,22 +320,30 @@ function CheckoutPage() {
 
   const handleSaveForm = async () => {
     if (!user) return;
+    if (!validateFormFields(form)) return; // Block API call if missing fields!
     if (editingId) {
-      // Fix 4: Update existing address via PATCH
       const updated = await updateAddress(editingId, form);
       if (updated) {
         setSaved((prev) => prev.map((a) => (a.id === editingId ? updated : a)));
         setSelectedId(updated.id);
+        toast.success("Address updated successfully");
       }
       setEditingId(null);
+    } else {
+      const stored = await saveAddress(user.id, form, saved.length === 0);
+      if (stored) {
+        setSaved((prev) => [stored, ...prev]);
+        setSelectedId(stored.id);
+        toast.success("Address saved successfully");
+      }
     }
-    // (New address save during payNow is handled in payNow; this closes the form on edit)
     setShowForm(false);
     setForm(emptyAddress);
   };
 
   const payNow = async () => {
-    if (busy || !user || !shipping || !addressValid) return;
+    if (busy || !user) return;
+    if (!validateFormFields(shipping)) return; // Block payment request before initiation!
     setBusy(true);
     setError(null);
     try {
@@ -576,6 +619,20 @@ function CheckoutPage() {
 
                   {showForm ? (
                     <div className="grid gap-3 rounded-2xl border border-primary/40 bg-secondary/30 p-4 sm:grid-cols-2">
+                      {editingId ? (
+                        <div className="flex items-center justify-between border-b border-border/60 pb-2 sm:col-span-2">
+                          <span className="text-xs font-bold tracking-wider text-primary uppercase">
+                            Edit Address Details
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => { setShowForm(false); setEditingId(null); setForm(emptyAddress); }}
+                            className="text-xs font-semibold text-muted-foreground hover:text-foreground"
+                          >
+                            Cancel edit
+                          </button>
+                        </div>
+                      ) : null}
                       <Input
                         label="Full name"
                         value={form.fullName}
@@ -650,15 +707,24 @@ function CheckoutPage() {
                           ))}
                         </div>
                       </div>
-                      {saved.length ? (
+                      <div className="flex flex-wrap items-center gap-2 pt-2 sm:col-span-2">
                         <button
                           type="button"
-                          onClick={() => { setShowForm(false); setEditingId(null); setForm(emptyAddress); }}
-                          className="text-left text-xs font-semibold text-primary hover:underline sm:col-span-2"
+                          onClick={() => void handleSaveForm()}
+                          className="rounded-full bg-primary px-5 py-2.5 text-xs font-semibold text-primary-foreground shadow-soft transition-transform hover:scale-[1.01]"
                         >
-                          Use a saved address instead
+                          {editingId ? "Save Address Changes" : "Save & Select Address"}
                         </button>
-                      ) : null}
+                        {saved.length ? (
+                          <button
+                            type="button"
+                            onClick={() => { setShowForm(false); setEditingId(null); setForm(emptyAddress); }}
+                            className="rounded-full border border-border bg-card px-4 py-2.5 text-xs font-semibold text-muted-foreground hover:bg-secondary"
+                          >
+                            Cancel
+                          </button>
+                        ) : null}
+                      </div>
                     </div>
                   ) : (
                     <button
@@ -710,12 +776,12 @@ function CheckoutPage() {
                 <div className="mt-5 space-y-4">
                   <ul className="divide-y divide-border/60">
                     {items.map((i) => (
-                      <li key={i.key} className="flex gap-4 py-4">
+                      <li key={i.key} className="flex items-start gap-4 py-4">
                         <img
                           loading="lazy"
-                          src={i.image}
+                          src={i.image || "/placeholder.svg"}
                           alt={i.name}
-                          className="h-24 w-20 rounded-2xl object-cover"
+                          className="h-24 w-20 shrink-0 rounded-2xl object-cover"
                         />
                         <div className="min-w-0 flex-1">
                           <p className="font-display text-sm font-semibold text-foreground">
@@ -728,7 +794,18 @@ function CheckoutPage() {
                             <Truck className="h-3.5 w-3.5" /> Expected by {fmtDate(eta)}
                           </p>
                         </div>
-                        <p className="text-sm font-semibold text-foreground">{inr(i.price * i.qty)}</p>
+                        <div className="flex shrink-0 flex-col items-end justify-between gap-3 self-stretch">
+                          <p className="text-sm font-semibold text-foreground">{inr(i.price * i.qty)}</p>
+                          <button
+                            type="button"
+                            title={`Remove ${i.name} from checkout`}
+                            aria-label={`Remove ${i.name}`}
+                            onClick={() => remove(i.key)}
+                            className="grid h-8 w-8 place-items-center rounded-full bg-secondary text-primary transition-colors hover:bg-destructive/10 hover:text-destructive active:scale-95"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </button>
+                        </div>
                       </li>
                     ))}
                   </ul>

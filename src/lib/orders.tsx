@@ -129,6 +129,33 @@ function normalizeOrderItem(it: Record<string, unknown>): CartItem {
   return item;
 }
 
+function mapAddress(raw: Record<string, unknown> | null | undefined): ShippingAddress {
+  if (!raw || typeof raw !== "object") {
+    return {
+      fullName: "",
+      phone: "",
+      line1: "",
+      city: "",
+      state: "",
+      pincode: "",
+      addressType: "home",
+    };
+  }
+  const l2 = raw["line2"] ?? raw["line_2"];
+  const lm = raw["landmark"];
+  return {
+    fullName: String(raw["fullName"] ?? raw["full_name"] ?? ""),
+    phone: String(raw["phone"] ?? ""),
+    line1: String(raw["line1"] ?? ""),
+    line2: l2 ? String(l2) : undefined,
+    landmark: lm ? String(lm) : undefined,
+    city: String(raw["city"] ?? ""),
+    state: String(raw["state"] ?? ""),
+    pincode: String(raw["pincode"] ?? ""),
+    addressType: String(raw["addressType"] ?? raw["address_type"] ?? "home"),
+  };
+}
+
 export function mapOrder(row: Row): Order {
   if (!row || typeof row !== "object") return row as unknown as Order;
   const createdAt = String(
@@ -141,7 +168,7 @@ export function mapOrder(row: Row): Order {
     row["order_number"] ??
     `OR-${rawId.slice(-6).toUpperCase()}`
   );
-  const shipping = ((row["shipping_address"] ?? row["shipping"] ?? {}) as ShippingAddress);
+  const shipping = mapAddress((row["shipping_address"] ?? row["shipping"] ?? row["address"]) as Record<string, unknown>);
   const deliveryType = (
     row["delivery_type"] === "store_pickup" ||
     row["fulfilment"] === "store_pickup" ||
@@ -288,6 +315,10 @@ export function OrdersProvider({ children }: { children: ReactNode }) {
         items: o.items.map((it) => ({
           id: it.id,
           productId: it.id,
+          customRequestId: it.customRequestId || (it.isCustom ? it.id : undefined),
+          custom_request_id: it.customRequestId || (it.isCustom ? it.id : undefined),
+          isCustom: it.isCustom,
+          is_custom: it.isCustom,
           size: it.size,
           colour: it.colour,
           qty: it.qty,
