@@ -101,8 +101,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const signUp = useCallback(
     async (email: string, password: string, fullName: string, phone: string) => {
       try {
-        const cleanPhone = phone.trim();
-        if (cleanPhone) {
+        const cleanPhone = phone.replace(/\D/g, "").trim();
+        if (cleanPhone && cleanPhone.length === 10) {
           const { data: existingPhone } = await supabase
             .from("customers")
             .select("id")
@@ -112,27 +112,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           if (existingPhone) {
             return {
               error:
-                "An account with this phone number already exists. Please sign in instead.",
+                "An account with this mobile number already exists. Please sign in instead.",
             };
           }
         }
 
         const { data, error } = await supabase.auth.signUp({
-          email,
+          email: email.trim(),
           password,
           options: {
             emailRedirectTo: `${window.location.origin}/auth`,
-            data: { full_name: fullName, phone: cleanPhone },
+            data: { full_name: fullName.trim(), phone: cleanPhone },
           },
         });
 
         if (error) {
-          if (error.message?.toLowerCase().includes("database error saving new user")) {
-            return {
-              error:
-                "An account with this email or phone number already exists. Please sign in instead.",
-            };
-          }
+          console.error("[Supabase Auth SignUp Error]", error);
           if ((error as any).status === 429 || error.message?.toLowerCase().includes("rate limit")) {
             return {
               error:

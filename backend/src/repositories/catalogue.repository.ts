@@ -334,6 +334,8 @@ export class CatalogueRepository {
           mrp: p.mrp ?? 0,
           blurb: p.blurb ?? "",
           badge: p.badge ?? "",
+          expressFromPrice: p.express_from_price ?? 0,
+          express_from_price: p.express_from_price ?? 0,
           deliveryCharge: p.delivery_charge ?? 0,
           soldOut: Boolean(p.sold_out),
           sold_out: Boolean(p.sold_out),
@@ -786,8 +788,16 @@ export class CatalogueRepository {
           throw new Error("MRP cannot be less than base price.");
         }
       }
-      if (productPayload.expressFromPrice !== undefined) updateData.express_from_price = Number(productPayload.expressFromPrice);
-      if (productPayload.deliveryCharge !== undefined) updateData.delivery_charge = Number(productPayload.deliveryCharge);
+      if (productPayload.expressFromPrice !== undefined) {
+        updateData.express_from_price = Number(productPayload.expressFromPrice);
+      } else if (productPayload.express_from_price !== undefined) {
+        updateData.express_from_price = Number(productPayload.express_from_price);
+      }
+      if (productPayload.deliveryCharge !== undefined) {
+        updateData.delivery_charge = Number(productPayload.deliveryCharge);
+      } else if (productPayload.delivery_charge !== undefined) {
+        updateData.delivery_charge = Number(productPayload.delivery_charge);
+      }
       if (productPayload.soldOut !== undefined) {
         updateData.sold_out = Boolean(productPayload.soldOut);
       } else if (Array.isArray(productPayload.variants) && productPayload.variants.length > 0) {
@@ -947,22 +957,47 @@ export class CatalogueRepository {
         throw new Error("Invalid or missing category");
       }
 
-      const basePrice = Math.max(1, Number(payload.basePrice || 1999));
+      const rawName = String(payload.name || "").trim();
+      if (!rawName || rawName.toLowerCase() === "new design" || rawName.toLowerCase() === "new lehanga") {
+        const err = new Error("Product name is required to create a design") as Error & { statusCode?: number };
+        err.statusCode = 400;
+        throw err;
+      }
+
+      const basePrice = Math.max(1, Number(payload.basePrice || payload.base_price || 0));
+      if (!basePrice || basePrice <= 0) {
+        const err = new Error("Selling price must be greater than 0") as Error & { statusCode?: number };
+        err.statusCode = 400;
+        throw err;
+      }
+
       const rawMrp = Number(payload.mrp || 0);
       const mrp = rawMrp >= basePrice ? rawMrp : Math.round(basePrice * 1.38);
 
+      const expressPrice = payload.expressFromPrice !== undefined
+        ? Number(payload.expressFromPrice)
+        : payload.express_from_price !== undefined
+          ? Number(payload.express_from_price)
+          : 0;
+
+      const delCharge = payload.deliveryCharge !== undefined
+        ? Number(payload.deliveryCharge)
+        : payload.delivery_charge !== undefined
+          ? Number(payload.delivery_charge)
+          : 0;
+
       const insertData: Record<string, unknown> = {
         slug: slugStr,
-        name: String(payload.name || "New Design"),
+        name: rawName,
         category_id: catUuid,
         sub_category_id: subUuid,
-        description: String(payload.description || ""),
-        blurb: String(payload.blurb || ""),
-        badge: String(payload.badge || ""),
+        description: String(payload.description || "").trim(),
+        blurb: String(payload.blurb || "").trim(),
+        badge: String(payload.badge || "").trim(),
         base_price: basePrice,
         mrp: mrp,
-        express_from_price: payload.expressFromPrice ? Number(payload.expressFromPrice) : 2299,
-        delivery_charge: Number(payload.deliveryCharge ?? 0),
+        express_from_price: expressPrice,
+        delivery_charge: delCharge,
         sold_out: false,
         is_active: payload.isActive !== undefined ? Boolean(payload.isActive) : true,
       };
@@ -1058,9 +1093,14 @@ export class CatalogueRepository {
     try {
       const pid = this.isUUID(id) ? id : (await db.from("products").select("id").eq("slug", id).single()).data?.id;
       if (pid) {
+        await db.from("product_images").delete().eq("product_id", pid);
+        await db.from("product_variants").delete().eq("product_id", pid);
         await db.from("products").delete().eq("id", pid);
       }
-    } catch { /* ignore */ }
+    } catch (err) {
+      console.error(`[CatalogueRepository] Error deleting product ${id}:`, err);
+      throw err;
+    }
     return true;
   }
 

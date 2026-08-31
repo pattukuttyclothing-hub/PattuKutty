@@ -292,8 +292,11 @@ export type Product = {
   name: string;
   price: number;
   basePrice?: number;
+  base_price?: number;
   mrp: number;
   badge?: string;
+  expressFromPrice?: number;
+  express_from_price?: number;
   rating?: number;
   image: string;
   images: string[];
@@ -302,7 +305,9 @@ export type Product = {
   sizes: string[];
   variants: SizeVariant[];
   deliveryCharge: number;
+  delivery_charge?: number;
   soldOut: boolean;
+  sold_out?: boolean;
   description: string;
 };
 

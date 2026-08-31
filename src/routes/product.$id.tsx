@@ -278,10 +278,18 @@ function ProductPage() {
                 )}
               </div>
 
-              <div className="mt-3 flex items-center gap-2 text-xs text-muted-foreground">
+              <div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
                 <span>🚚 Delivery: {activeProduct.deliveryCharge ? inr(activeProduct.deliveryCharge) : "Free"}</span>
                 <span>•</span>
                 <span>⭐ {activeProduct.rating ?? 4.9} rating</span>
+                {Number((activeProduct as any).expressFromPrice || (activeProduct as any).express_from_price || activeProduct.expressFromPrice || 0) > 0 ? (
+                  <>
+                    <span>•</span>
+                    <span className="font-semibold text-amber-600 dark:text-amber-400">
+                      ⚡ Express stitching from {inr(Number((activeProduct as any).expressFromPrice || (activeProduct as any).express_from_price || activeProduct.expressFromPrice))}
+                    </span>
+                  </>
+                ) : null}
               </div>
 
               <p className="mt-4 text-sm leading-relaxed text-muted-foreground">

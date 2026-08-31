@@ -461,6 +461,7 @@ type Value = {
   findOrder: (id: string) => AdminOrder | undefined;
   saveProduct: (p: AdminProduct) => void;
   addProduct: (p: AdminProduct) => void;
+  deleteProduct: (id: string) => Promise<void>;
   saveRequest: (id: string, patch: Partial<CustomRequest>) => void;
   setOrderStage: (id: string, stage: OrderStage) => void;
   saveOrder: (id: string, patch: Partial<AdminOrder>) => void;
@@ -621,6 +622,15 @@ export function AdminStoreProvider({ children }: { children: ReactNode }) {
           deliveryCharge: p.deliveryCharge,
         }).catch(() => {});
       });
+    },
+    [setProducts],
+  );
+
+  const deleteProduct = useCallback(
+    async (id: string) => {
+      setProducts((l) => l.filter((x) => x.id !== id));
+      const { deleteProduct: apiDeleteProduct } = await import("./api/catalogue");
+      await apiDeleteProduct(id);
     },
     [setProducts],
   );
@@ -799,6 +809,7 @@ export function AdminStoreProvider({ children }: { children: ReactNode }) {
       findOrder: (id) => orders.find((o) => o.id === id),
       saveProduct,
       addProduct,
+      deleteProduct,
       saveRequest,
       setOrderStage,
       saveOrder,
@@ -822,6 +833,7 @@ export function AdminStoreProvider({ children }: { children: ReactNode }) {
       featuredIds,
       saveProduct,
       addProduct,
+      deleteProduct,
       saveRequest,
       setOrderStage,
       saveOrder,
@@ -856,6 +868,7 @@ export function useAdmin(): Value {
       findOrder: () => undefined,
       saveProduct: () => {},
       addProduct: () => {},
+      deleteProduct: async () => {},
       saveRequest: () => {},
       setOrderStage: () => {},
       saveOrder: () => {},

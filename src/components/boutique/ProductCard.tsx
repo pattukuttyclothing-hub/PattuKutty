@@ -1,10 +1,12 @@
 import { Link } from "@tanstack/react-router";
-import { Sparkles } from "lucide-react";
+import { Heart, Sparkles } from "lucide-react";
 import { inr } from "@/lib/cart";
+import { useWishlist } from "@/lib/wishlist";
 import { AutoImageFade } from "@/components/shared/AutoImageFade";
 import type { Product } from "@/data/boutique";
 
 export function ProductCard({ product: p, index = 0 }: { product: Product; index?: number }) {
+  const { has, toggle } = useWishlist();
   const priceVal = p.price ?? (p as any).basePrice ?? (p as any).base_price ?? 0;
   const mrpVal = p.mrp ?? priceVal;
   const rawImgs = Array.isArray(p.images)
@@ -12,6 +14,8 @@ export function ProductCard({ product: p, index = 0 }: { product: Product; index
     : [];
   const imgs = rawImgs.length ? rawImgs : p.image ? [p.image] : [];
   const isSoldOut = Boolean((p as any).sold_out || p.soldOut);
+  const badgeText = p.badge || (p as any).badge;
+  const isLiked = has(p.id);
 
   return (
     <Link
@@ -27,17 +31,36 @@ export function ProductCard({ product: p, index = 0 }: { product: Product; index
         <AutoImageFade
           images={imgs}
           alt={p.name}
-          className={`absolute inset-0 h-full w-full ${isSoldOut ? "opacity-75 blur-[0.5px]" : ""}`}
+          className={`absolute inset-0 h-full w-full ${isSoldOut ? "opacity-75 blur-[1.5px]" : ""}`}
           interval={7500}
           offset={index * 700}
         />
+
+        {/* Top-Right Heart / Wishlist Toggle */}
+        <button
+          type="button"
+          title={isLiked ? "Remove from wishlist" : "Add to wishlist"}
+          aria-label={isLiked ? "Remove from wishlist" : "Add to wishlist"}
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            toggle(p.id);
+          }}
+          className="absolute top-3 right-3 z-20 grid h-9 w-9 place-items-center rounded-full bg-card/80 backdrop-blur-md shadow-soft border border-border/50 transition-all hover:scale-110 active:scale-95"
+        >
+          <Heart className={`h-4 w-4 transition-colors ${isLiked ? "fill-rose-500 text-rose-500" : "text-foreground/75 hover:text-rose-500"}`} />
+        </button>
+
+        {/* Sold Out Seal or Ribbon Badge */}
         {isSoldOut ? (
-          <span className="absolute top-3 left-3 z-10 rounded-full bg-primary px-3 py-1 text-[0.65rem] font-bold tracking-wider text-primary-foreground shadow-soft uppercase">
-            PRODUCT SOLD OUT
-          </span>
-        ) : (p.badge || (p as any).badge) ? (
+          <div className="absolute inset-0 z-10 flex items-center justify-center bg-black/20 backdrop-blur-[1px]">
+            <div className="rotate-[-12deg] rounded-2xl border-2 border-dashed border-rose-300/90 bg-rose-600/90 px-4 py-2 text-center text-xs font-black tracking-widest text-white uppercase shadow-xl backdrop-blur-md">
+              Product Sold Out
+            </div>
+          </div>
+        ) : badgeText ? (
           <span className="absolute top-3 left-3 z-10 inline-flex items-center gap-1 rounded-full bg-primary/90 px-3 py-1 text-[0.65rem] font-bold tracking-wider text-primary-foreground shadow-soft uppercase backdrop-blur-sm">
-            <Sparkles className="h-3 w-3 text-accent" /> {p.badge || (p as any).badge}
+            <Sparkles className="h-3 w-3 text-accent" /> {badgeText}
           </span>
         ) : null}
       </div>
@@ -55,11 +78,11 @@ export function ProductCard({ product: p, index = 0 }: { product: Product; index
         <span
           className={`mt-4 inline-flex items-center justify-center rounded-full border py-2.5 text-xs font-medium transition-colors ${
             isSoldOut
-              ? "border-pink-300/60 bg-pink-100/50 text-pink-700 font-semibold"
+              ? "border-rose-300/60 bg-rose-100/50 text-rose-700 font-semibold"
               : "border-primary/30 bg-secondary text-primary group-hover:bg-primary group-hover:text-primary-foreground"
           }`}
         >
-          {isSoldOut ? "PRODUCT SOLD OUT" : "View & Order"}
+          {isSoldOut ? "Product Sold Out" : "View & Order"}
         </span>
       </div>
     </Link>

@@ -1,9 +1,10 @@
 import { useEffect, useMemo, useState, useRef } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { ArrowLeft, Save, Upload, X, AlertTriangle, CheckCircle2, Loader2, RefreshCw } from "lucide-react";
+import { ArrowLeft, Save, Upload, X, AlertTriangle, CheckCircle2, Loader2, RefreshCw, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { AdminShell, PageHead } from "@/components/admin/AdminShell";
 import { ProductGallery } from "@/components/shared/ProductGallery";
+import { DeleteConfirmationModal } from "@/components/shared/DeleteConfirmationModal";
 import {
   categories,
   findCategory,
@@ -14,7 +15,7 @@ import {
   type SizeOption,
 } from "@/data/boutique";
 import { useAdmin, totalStock, isProductSoldOut, type AdminProduct } from "@/lib/admin-store";
-import { createProduct, updateProduct, uploadProductImage, deleteProductImage, fetchProducts, toggleSizeAvailability } from "@/lib/api/catalogue";
+import { createProduct, updateProduct, uploadProductImage, deleteProductImage, fetchProducts, toggleSizeAvailability, deleteProduct as apiDeleteProduct } from "@/lib/api/catalogue";
 import { ImageCropModal } from "@/components/shared/ImageCropModal";
 import { inr } from "@/lib/format";
 
@@ -43,11 +44,12 @@ export const Route = createFileRoute("/products/$id")({
 function ProductEditor() {
   const { id } = Route.useParams();
   const navigate = useNavigate();
-  const { findProduct, saveProduct } = useAdmin();
+  const { findProduct, saveProduct, deleteProduct } = useAdmin();
   const stored = findProduct(id);
   const [draft, setDraft] = useState<AdminProduct | undefined>(stored);
   const [soldOutConfirm, setSoldOutConfirm] = useState<SizeOption | null>(null);
   const [deleteConfirmImage, setDeleteConfirmImage] = useState<string | null>(null);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [updateConfirmImage, setUpdateConfirmImage] = useState<string | null>(null);
   const [deletingImage, setDeletingImage] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -165,16 +167,16 @@ function ProductEditor() {
     } else if (!draft && isCreateMode) {
       setDraft({
         id: id || `design-new-${Date.now().toString(36)}`,
-        name: "New Design",
-        description: "Custom design stitched to exact measurements.",
+        name: "",
+        description: "",
         category: "blouses",
         sub: "bridal-blouses",
-        basePrice: 1999,
-        mrp: 2760,
-        blurb: "Handcrafted boutique design",
+        basePrice: 0,
+        mrp: 0,
+        blurb: "",
         badge: "",
-        expressFromPrice: 2299,
-        deliveryCharge: 49,
+        expressFromPrice: 0,
+        deliveryCharge: 0,
         isActive: true,
         soldOut: false,
         images: [],
@@ -287,8 +289,34 @@ function ProductEditor() {
     }
   };
 
+  const validateProductDraft = (d: AdminProduct): string[] => {
+    const missing: string[] = [];
+    const nameLower = (d.name || "").trim().toLowerCase();
+    if (!nameLower || nameLower === "new design" || nameLower === "new lehanga") {
+      missing.push("Product Name");
+    }
+    if (!d.category) {
+      missing.push("Category");
+    }
+    if (!d.basePrice || Number(d.basePrice) <= 0) {
+      missing.push("Selling Price (must be > 0)");
+    }
+    if (d.mrp === undefined || d.mrp === null || Number(d.mrp) < Number(d.basePrice)) {
+      missing.push("MRP (must be >= Selling Price)");
+    }
+    if (!d.images || !Array.isArray(d.images) || d.images.length === 0) {
+      missing.push("Product Images (at least 1 photo required)");
+    }
+    return missing;
+  };
+
   const save = async () => {
     if (!draft) return;
+    const missingFields = validateProductDraft(draft);
+    if (missingFields.length > 0) {
+      toast.error(`Please fill mandatory fields: ${missingFields.join(", ")}`);
+      return;
+    }
     setSaving(true);
     try {
       let result: AdminProduct;
@@ -362,7 +390,7 @@ function ProductEditor() {
     <AdminShell>
       <PageHead
         eyebrow={`${cat?.name ?? draft.category} · ${subName(draft.sub)}`}
-        title={isCreateMode ? `Create — ${draft.name}` : draft.name}
+        title={isCreateMode ? (draft.name.trim() ? `Create — ${draft.name}` : "Create New Design") : draft.name}
         subtitle={
           <span className="inline-flex flex-wrap items-center gap-2">
             {!isCreateMode ? (
@@ -383,6 +411,15 @@ function ProductEditor() {
         }
         actions={
           <>
+            {!isCreateMode ? (
+              <button
+                type="button"
+                onClick={() => setShowDeleteModal(true)}
+                className="inline-flex items-center gap-2 rounded-full border border-destructive/30 bg-destructive/10 px-4 py-2.5 text-xs font-semibold text-destructive hover:bg-destructive hover:text-destructive-foreground transition-colors"
+              >
+                <Trash2 className="h-4 w-4" /> Delete
+              </button>
+            ) : null}
             <Link
               to="/products"
               className="inline-flex items-center gap-2 rounded-full border border-border bg-card px-4 py-2.5 text-xs font-semibold"
@@ -505,9 +542,10 @@ function ProductEditor() {
           ) : null}
 
           <Section title="Basics">
-            <Field label="Design name">
+            <Field label="Design name *">
               <input
                 value={draft.name}
+                placeholder="e.g. Royal Peacock Zardosi Blouse"
                 onChange={(e) => set({ name: e.target.value })}
                 className="input"
               />
@@ -516,6 +554,7 @@ function ProductEditor() {
               <textarea
                 rows={6}
                 value={draft.description}
+                placeholder="Enter detailed design description, embroidery motifs, fabric details, etc..."
                 onChange={(e) => set({ description: e.target.value })}
                 className="input min-h-32 resize-y leading-relaxed"
               />
@@ -659,21 +698,23 @@ function ProductEditor() {
 
           <Section title="Pricing">
             <div className="grid gap-4 sm:grid-cols-2">
-              <Field label="Selling price (₹)">
+              <Field label="Selling price (₹) *">
                 <input
                   type="number"
-                  min={1}
-                  value={draft.basePrice}
-                  onChange={(e) => set({ basePrice: Math.max(1, Number(e.target.value)) })}
+                  min={0}
+                  value={draft.basePrice || ""}
+                  placeholder="e.g. 3499"
+                  onChange={(e) => set({ basePrice: Math.max(0, Number(e.target.value)) })}
                   className="input"
                 />
               </Field>
-              <Field label="MRP shown struck through (₹)">
+              <Field label="MRP shown struck through (₹) *">
                 <input
                   type="number"
-                  min={1}
-                  value={draft.mrp}
-                  onChange={(e) => set({ mrp: Math.max(1, Number(e.target.value)) })}
+                  min={0}
+                  value={draft.mrp || ""}
+                  placeholder="e.g. 4999"
+                  onChange={(e) => set({ mrp: Math.max(0, Number(e.target.value)) })}
                   className="input"
                 />
               </Field>
@@ -681,7 +722,8 @@ function ProductEditor() {
                 <input
                   type="number"
                   min={0}
-                  value={draft.expressFromPrice}
+                  value={draft.expressFromPrice || ""}
+                  placeholder="e.g. 2299"
                   onChange={(e) => set({ expressFromPrice: Math.max(0, Number(e.target.value)) })}
                   className="input"
                 />
@@ -876,6 +918,19 @@ function ProductEditor() {
           setPendingAdminCropFile(null);
           setAdminCropQueue([]);
           setTargetReplaceUrl(null);
+        }}
+      />
+      {/* Product Deletion Confirmation Modal */}
+      <DeleteConfirmationModal
+        open={showDeleteModal}
+        onClose={() => setShowDeleteModal(false)}
+        itemName={draft.name}
+        onConfirm={async () => {
+          if (draft?.id) {
+            await deleteProduct(draft.id);
+            toast.success(`Product "${draft.name}" deleted successfully.`);
+            void navigate({ to: "/products" });
+          }
         }}
       />
     </AdminShell>

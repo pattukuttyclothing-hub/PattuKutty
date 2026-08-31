@@ -78,7 +78,11 @@ export class OrdersService {
    * Helper to perform database-authoritative price calculation, stock validation, and item snapshotting.
    * NEVER trusts client-submitted prices or totals.
    */
-  private static async calculateAuthoritativeOrder(customerId: string, payload: PlaceOrderPayload) {
+  private static async calculateAuthoritativeOrder(
+    customerId: string,
+    payload: PlaceOrderPayload,
+    options?: { requireAddress?: boolean }
+  ) {
     if (!payload.items || !Array.isArray(payload.items) || payload.items.length === 0) {
       throw new Error("Order must contain at least one item.");
     }
@@ -266,7 +270,7 @@ export class OrdersService {
     }
 
     const deliveryType = payload.deliveryType || payload.delivery_type || "doorstep";
-    if (deliveryType === "doorstep" && !resolvedAddressId) {
+    if (options?.requireAddress && deliveryType === "doorstep" && !resolvedAddressId) {
       const err = new Error("Shipping address is required for doorstep delivery.") as any;
       err.statusCode = 400;
       throw err;
@@ -318,7 +322,7 @@ export class OrdersService {
    * Calculates backend-authoritative price summary for checkout items and address.
    */
   static async calculateOrderSummary(customerId: string, payload: PlaceOrderPayload) {
-    const calc = await this.calculateAuthoritativeOrder(customerId, payload);
+    const calc = await this.calculateAuthoritativeOrder(customerId, payload, { requireAddress: false });
     return {
       subtotal: calc.subtotal,
       taxableValue: calc.taxableValue,
@@ -334,7 +338,7 @@ export class OrdersService {
    * Calculates authoritative amount server-side and issues Razorpay order via Razorpay API.
    */
   static async createRazorpayOrder(customerId: string, payload: PlaceOrderPayload) {
-    const calc = await this.calculateAuthoritativeOrder(customerId, payload);
+    const calc = await this.calculateAuthoritativeOrder(customerId, payload, { requireAddress: true });
     const amountInPaise = Math.round(calc.totalPayable * 100);
     const receiptId = `bf_${Date.now()}`;
 
@@ -516,7 +520,7 @@ export class OrdersService {
       throw err;
     }
     const codPayload = { ...payload, paymentMethod: "cod", payment_method: "cod" };
-    const calc = await this.calculateAuthoritativeOrder(customerId, codPayload);
+    const calc = await this.calculateAuthoritativeOrder(customerId, codPayload, { requireAddress: true });
 
     // COD Guardrail 1: Maximum order value threshold check
     const maxCodValue = env.COD_MAX_ORDER_VALUE ?? 15000;
@@ -555,7 +559,7 @@ export class OrdersService {
       err.statusCode = 400;
       throw err;
     }
-    const calc = await this.calculateAuthoritativeOrder(customerId, payload);
+    const calc = await this.calculateAuthoritativeOrder(customerId, payload, { requireAddress: true });
     calc.orderPayload.payment_method = payload.paymentMethod || payload.payment_method || "cod";
     calc.orderPayload.payment_status = "pending";
     calc.orderPayload.stage = "placed";

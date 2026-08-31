@@ -4,6 +4,7 @@ import { Plus, Search } from "lucide-react";
 import { toast } from "sonner";
 import { AdminShell, PageHead } from "@/components/admin/AdminShell";
 import { ProductCard } from "@/components/admin/cards";
+import { DeleteConfirmationModal } from "@/components/shared/DeleteConfirmationModal";
 import { categories, findSub, type CategoryId } from "@/data/boutique";
 import { isProductSoldOut, useAdmin, type AdminProduct } from "@/lib/admin-store";
 import { uid } from "@/lib/format";
@@ -28,12 +29,13 @@ export const Route = createFileRoute("/products/")({
 });
 
 function ProductsPage() {
-  const { products, addProduct } = useAdmin();
+  const { products, addProduct, deleteProduct } = useAdmin();
   const navigate = useNavigate();
   const [cat, setCat] = useState<CategoryId | "all">("all");
   const [sub, setSub] = useState<string | "all">("all");
   const [q, setQ] = useState("");
   const [adding, setAdding] = useState(false);
+  const [deletingProduct, setDeletingProduct] = useState<{ id: string; name: string } | null>(null);
 
   const subs = cat === "all" ? [] : (categories.find((c) => c.id === cat)?.subs ?? []);
 
@@ -59,16 +61,16 @@ function ProductsPage() {
     const newId = `design-new-${Date.now().toString(36)}`;
     const p: AdminProduct = {
       id: newId,
-      name: `New ${s.name}`,
-      description: `${s.name} — ${s.blurb.toLowerCase()}, stitched to exact measurements.`,
+      name: "",
+      description: "",
       category: categoryId,
       sub: subId,
-      basePrice: 1999,
-      mrp: 2760,
-      blurb: s.blurb,
+      basePrice: 0,
+      mrp: 0,
+      blurb: s.blurb || "",
       badge: "",
-      expressFromPrice: 2299,
-      deliveryCharge: 49,
+      expressFromPrice: 0,
+      deliveryCharge: 0,
       isActive: true,
       soldOut: false,
 
@@ -76,7 +78,7 @@ function ProductsPage() {
       variants: (["S", "M", "L"] as const).map((size) => ({ size, available: true, stockQty: 1 })),
     };
     addProduct(p);
-    toast.success("Draft design created — add photos and set sizes.");
+    toast.success("New draft created — enter design details and upload photos.");
     void navigate({ to: "/products/$id", params: { id: p.id } });
   };
 
@@ -207,10 +209,27 @@ function ProductsPage() {
 
         <div className="mt-7 grid gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {list.map((p, i) => (
-            <ProductCard key={p.id} product={p} index={i} />
+            <ProductCard
+              key={p.id}
+              product={p}
+              index={i}
+              onDelete={(id, name) => setDeletingProduct({ id, name })}
+            />
           ))}
         </div>
       </div>
+
+      <DeleteConfirmationModal
+        open={Boolean(deletingProduct)}
+        onClose={() => setDeletingProduct(null)}
+        itemName={deletingProduct?.name}
+        onConfirm={async () => {
+          if (deletingProduct) {
+            await deleteProduct(deletingProduct.id);
+            toast.success(`Product "${deletingProduct.name}" deleted successfully.`);
+          }
+        }}
+      />
     </AdminShell>
   );
 }

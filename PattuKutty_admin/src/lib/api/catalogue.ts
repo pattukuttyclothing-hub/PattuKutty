@@ -85,6 +85,13 @@ export async function updateProduct(id: string, payload: UpdateProductPayload): 
   return "data" in res ? res.data : res;
 }
 
+export async function deleteProduct(id: string): Promise<boolean> {
+  await apiFetch<ApiResponse<{ message: string }> | { message: string }>(`/admin/products/${id}`, {
+    method: "DELETE",
+  });
+  return true;
+}
+
 export async function toggleSizeAvailability(productId: string, size: string, available: boolean): Promise<AdminProduct> {
   const res = await apiFetch<ApiResponse<AdminProduct> | AdminProduct>(`/admin/products/${productId}/variants/${size}`, {
     method: "PATCH",

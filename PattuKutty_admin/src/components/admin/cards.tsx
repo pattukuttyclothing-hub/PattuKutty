@@ -5,7 +5,7 @@
  */
 
 import { Link } from "@tanstack/react-router";
-import { MessageCircle, Phone, Store, Truck } from "lucide-react";
+import { MessageCircle, Phone, Store, Truck, Trash2 } from "lucide-react";
 import { EntityCard } from "@/components/shared/EntityCard";
 import { findCategory, subName, timelineById } from "@/data/boutique";
 import {
@@ -119,7 +119,15 @@ export function OrderCard({ order: o, index = 0 }: { order: AdminOrder; index?: 
   );
 }
 
-export function ProductCard({ product: p, index = 0 }: { product: AdminProduct; index?: number }) {
+export function ProductCard({
+  product: p,
+  index = 0,
+  onDelete,
+}: {
+  product: AdminProduct;
+  index?: number;
+  onDelete?: (id: string, name: string) => void;
+}) {
   const soldOut = isProductSoldOut(p);
   const available = totalStock(p);
   const total = (p?.variants ?? []).length;
@@ -141,17 +149,34 @@ export function ProductCard({ product: p, index = 0 }: { product: AdminProduct; 
         metaLines={[soldOut ? "Product Sold Out" : `${available} stock available`]}
         cta="Edit design"
         footer={
-          <span className={`rounded-full border px-3 py-1 text-[0.65rem] font-semibold ${
-            soldOut
-              ? "border-pink-500/40 bg-pink-500/15 text-pink-700 font-bold"
-              : available === total
-                ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-600"
-                : available > 0
-                  ? "border-amber-500/30 bg-amber-500/10 text-amber-600"
-                  : "border-destructive/30 bg-destructive/10 text-destructive"
-          }`}>
-            {soldOut ? "PRODUCT SOLD OUT" : `${available} in stock`}
-          </span>
+          <div className="flex w-full items-center justify-between gap-2">
+            <span className={`rounded-full border px-3 py-1 text-[0.65rem] font-semibold ${
+              soldOut
+                ? "border-pink-500/40 bg-pink-500/15 text-pink-700 font-bold"
+                : available === total
+                  ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-600"
+                  : available > 0
+                    ? "border-amber-500/30 bg-amber-500/10 text-amber-600"
+                    : "border-destructive/30 bg-destructive/10 text-destructive"
+            }`}>
+              {soldOut ? "PRODUCT SOLD OUT" : `${available} in stock`}
+            </span>
+            {onDelete ? (
+              <button
+                type="button"
+                title="Delete product"
+                aria-label={`Delete ${p.name}`}
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  onDelete(p.id, p.name);
+                }}
+                className="grid h-8 w-8 place-items-center rounded-full bg-destructive/10 text-destructive transition-colors hover:bg-destructive hover:text-destructive-foreground shrink-0"
+              >
+                <Trash2 className="h-4 w-4" />
+              </button>
+            ) : null}
+          </div>
         }
       />
     </Link>
