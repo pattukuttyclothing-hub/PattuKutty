@@ -140,8 +140,74 @@ export class RequestsRepository {
       .eq("customer_id", customerId)
       .order("created_at", { ascending: false });
     if (error) throw error;
-    return data;
+    if (!data || data.length === 0) return [];
+
+    // Batch-fetch the current active quote for each request
+    const requestIds = data.map((r: Record<string, unknown>) => r.id as string).filter(Boolean);
+    let quotesMap = new Map<string, Record<string, unknown>>();
+    if (requestIds.length > 0) {
+      try {
+        // Fetch all current quotes for these request IDs in one query
+        const { data: quotes } = await db
+          .from("custom_request_quotes")
+          .select("*")
+          .in("request_id", requestIds)
+          .eq("is_current", true);
+
+        if (quotes && quotes.length > 0) {
+          for (const q of quotes) {
+            quotesMap.set(String(q.request_id), q);
+          }
+        }
+
+        // For requests with no is_current=true quote, try latest quote fallback
+        const missingIds = requestIds.filter((id) => !quotesMap.has(id));
+        if (missingIds.length > 0) {
+          const { data: fallbackQuotes } = await db
+            .from("custom_request_quotes")
+            .select("*")
+            .in("request_id", missingIds)
+            .order("quoted_at", { ascending: false });
+
+          if (fallbackQuotes && fallbackQuotes.length > 0) {
+            const seenFallback = new Set<string>();
+            for (const q of fallbackQuotes) {
+              const rid = String(q.request_id);
+              if (!seenFallback.has(rid)) {
+                seenFallback.add(rid);
+                quotesMap.set(rid, q);
+              }
+            }
+          }
+        }
+      } catch {
+        // Ignore quote fetch failures — degrade gracefully
+      }
+    }
+
+    return (data as any[]).map((r: any) => {
+      const q = quotesMap.get(String(r.id));
+      let quote: Record<string, unknown> | null = null;
+      if (q) {
+        const priceNum = Number(q.price) || 0;
+        const gstNum = Number(q.gst_amount) || 0;
+        const deliveryNum = Number(q.delivery_fee) || 0;
+        const totalNum = Number(q.total_payable) || (priceNum + gstNum + deliveryNum);
+        quote = {
+          name: q.name || "Custom Design Stitching",
+          size: q.size || r.size,
+          price: priceNum,
+          gstAmount: gstNum,
+          deliveryFee: deliveryNum,
+          totalPayable: totalNum,
+          readyBy: q.ready_by,
+          quotedAt: q.quoted_at,
+        };
+      }
+      return { ...r, quote };
+    });
   }
+
 
   static async getAllRequests() {
     const { data, error } = await db

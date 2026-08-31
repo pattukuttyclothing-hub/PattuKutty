@@ -8,20 +8,9 @@ import { defineConfig } from "@lovable.dev/vite-tanstack-config";
 
 export default defineConfig({
   vite: {
-    build: {
-      rollupOptions: {
-        output: {
-          manualChunks(id: string) {
-            if (id.includes("node_modules")) {
-              if (id.includes("@radix-ui")) return "vendor-radix";
-              if (id.includes("recharts")) return "vendor-recharts";
-              if (id.includes("@supabase")) return "vendor-supabase";
-              if (id.includes("lucide-react")) return "vendor-lucide";
-            }
-          },
-        },
-      },
-    },
+    // Do not use manualChunks as it creates circular chunk dependencies in Nitro SSR builds
+    // resulting in runtime 'TypeError: __exportAll is not a function'.
+    build: {},
   },
   tanstackStart: {
     // Redirect TanStack Start's bundled server entry to src/server.ts (our SSR error wrapper).

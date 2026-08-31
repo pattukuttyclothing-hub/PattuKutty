@@ -14,7 +14,7 @@ import {
   type SizeOption,
 } from "@/data/boutique";
 import { useAdmin, totalStock, isProductSoldOut, type AdminProduct } from "@/lib/admin-store";
-import { createProduct, updateProduct, uploadProductImage, deleteProductImage, fetchProducts } from "@/lib/api/catalogue";
+import { createProduct, updateProduct, uploadProductImage, deleteProductImage, fetchProducts, toggleSizeAvailability } from "@/lib/api/catalogue";
 import { ImageCropModal } from "@/components/shared/ImageCropModal";
 import { inr } from "@/lib/format";
 
@@ -240,16 +240,25 @@ function ProductEditor() {
     if (variant.available) {
       setSoldOutConfirm(s);
     } else {
+      const restored = currentVariants.map((v) =>
+        v.size === s ? { ...v, available: true, stockQty: v.stockQty && v.stockQty > 0 ? v.stockQty : 1 } : v,
+      );
       set({
-        variants: currentVariants.map((v) =>
-          v.size === s ? { ...v, available: true, stockQty: v.stockQty && v.stockQty > 0 ? v.stockQty : 1 } : v,
-        ),
+        variants: restored,
         soldOut: false,
       });
+      // Immediately persist the re-enable to the backend
+      if (draft?.id && !isCreateMode) {
+        toggleSizeAvailability(draft.id, s, true).catch((err: any) => {
+          // Revert on failure
+          set({ variants: currentVariants });
+          toast.error("Failed to re-enable size: " + (err?.message || "Please try again."));
+        });
+      }
     }
   };
 
-  const confirmSoldOut = (s: SizeOption) => {
+  const confirmSoldOut = async (s: SizeOption) => {
     const updatedVariants = currentVariants.map((v) =>
       v.size === s ? { ...v, available: false, stockQty: 0 } : v,
     );
@@ -259,9 +268,23 @@ function ProductEditor() {
       ...(allSoldOut ? { soldOut: true } : {}),
     });
     setSoldOutConfirm(null);
-    toast("Size marked as sold out.", {
-      icon: <AlertTriangle className="h-4 w-4 text-amber-500" />,
-    });
+    // Immediately persist the size availability change to the backend
+    if (draft?.id && !isCreateMode) {
+      try {
+        await toggleSizeAvailability(draft.id, s, false);
+        toast("Size marked as sold out.", {
+          icon: <AlertTriangle className="h-4 w-4 text-amber-500" />,
+        });
+      } catch (err: any) {
+        // Revert the local draft on API failure
+        set({ variants: currentVariants });
+        toast.error("Failed to update size availability: " + (err?.message || "Please try again."));
+      }
+    } else {
+      toast("Size marked as sold out.", {
+        icon: <AlertTriangle className="h-4 w-4 text-amber-500" />,
+      });
+    }
   };
 
   const save = async () => {
@@ -759,7 +782,7 @@ function ProductEditor() {
               </button>
               <button
                 type="button"
-                onClick={() => confirmSoldOut(soldOutConfirm)}
+                onClick={() => void confirmSoldOut(soldOutConfirm)}
                 className="inline-flex items-center gap-2 rounded-full bg-amber-500 px-5 py-2.5 text-xs font-semibold text-white shadow-soft"
               >
                 <CheckCircle2 className="h-4 w-4" /> Yes, mark sold out

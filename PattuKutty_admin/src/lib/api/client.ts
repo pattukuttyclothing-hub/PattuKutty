@@ -11,6 +11,45 @@ export const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL ||
   (isLocalhost ? "http://localhost:3001/api/v1" : DEFAULT_PROD_API_URL);
 
+let refreshTokenPromise: Promise<string | null> | null = null;
+
+async function getOrRefreshAccessToken(): Promise<string | null> {
+  if (refreshTokenPromise) {
+    return refreshTokenPromise;
+  }
+
+  refreshTokenPromise = (async () => {
+    const refreshToken = typeof window !== "undefined" ? localStorage.getItem("butterflies_admin_refresh_token") : null;
+    if (!refreshToken) return null;
+
+    try {
+      const refreshRes = await fetch(`${API_BASE_URL}/admin/refresh`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ refreshToken }),
+      });
+
+      if (refreshRes.ok) {
+        const refreshData = (await refreshRes.json()) as { success: boolean; data?: { token?: string; refreshToken?: string } };
+        if (refreshData.success && refreshData.data?.token) {
+          localStorage.setItem("butterflies_admin_token", refreshData.data.token);
+          if (refreshData.data.refreshToken) {
+            localStorage.setItem("butterflies_admin_refresh_token", refreshData.data.refreshToken);
+          }
+          return refreshData.data.token;
+        }
+      }
+    } catch {
+      /* refresh network error */
+    }
+    return null;
+  })().finally(() => {
+    refreshTokenPromise = null;
+  });
+
+  return refreshTokenPromise;
+}
+
 export async function apiFetch<T>(
   endpoint: string,
   options: RequestInit = {},
@@ -62,30 +101,10 @@ export async function apiFetch<T>(
   // Intercept HTTP 401 Unauthorized for automatic token refresh (except public auth routes)
   if (response.status === 401 && !isPublicAuthRoute) {
     if (!isRetry) {
-      const refreshToken = typeof window !== "undefined" ? localStorage.getItem("butterflies_admin_refresh_token") : null;
-
-      if (refreshToken) {
-        try {
-          const refreshRes = await fetch(`${API_BASE_URL}/admin/refresh`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ refreshToken }),
-          });
-
-          if (refreshRes.ok) {
-            const refreshData = await refreshRes.json();
-            if (refreshData.success && refreshData.data?.token) {
-              localStorage.setItem("butterflies_admin_token", refreshData.data.token);
-              if (refreshData.data.refreshToken) {
-                localStorage.setItem("butterflies_admin_refresh_token", refreshData.data.refreshToken);
-              }
-              // Retry original request with new access token
-              return apiFetch<T>(endpoint, options, true);
-            }
-          }
-        } catch {
-          /* refresh network error fallback */
-        }
+      const newToken = await getOrRefreshAccessToken();
+      if (newToken) {
+        // Retry original request with new access token
+        return apiFetch<T>(endpoint, options, true);
       }
     }
 

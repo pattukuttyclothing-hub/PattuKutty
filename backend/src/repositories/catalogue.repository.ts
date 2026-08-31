@@ -518,8 +518,8 @@ export class CatalogueRepository {
         .from("reels")
         .select("*, reel_products(sort_order, products(*, images:product_images(*)))")
         .eq("is_active", true)
-        .order("position", { ascending: true });
-      if (error || !data || data.length === 0) return fallbackReels;
+      if (error || !data) return fallbackReels;
+      if (data.length === 0) return [];
       return data.map((reel: any) => {
         const prods = Array.isArray(reel.reel_products)
           ? reel.reel_products
