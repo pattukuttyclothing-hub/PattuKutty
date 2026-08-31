@@ -415,8 +415,8 @@ export class RequestsService {
   }
 
   static async requestChanges(id: string, customerId: string, note: string) {
-    if (!note || typeof note !== "string" || !note.trim()) {
-      throw createError("Modification note is required.", 400);
+    if (!note || typeof note !== "string" || !note.trim() || note.trim().length < 3) {
+      throw createError("Modification note is required (minimum 3 characters).", 400);
     }
     await this.getRequestById(id, customerId);
     return await RequestsRepository.requestChanges(id, customerId, note.trim());

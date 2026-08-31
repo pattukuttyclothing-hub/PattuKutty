@@ -509,7 +509,9 @@ export class RequestsRepository {
       .eq("customer_id", customerId)
       .select()
       .single();
-    if (error) throw error;
+    if (error || !data) {
+      throw error || new Error("Failed to submit design request modification note in database.");
+    }
     return data;
   }
 

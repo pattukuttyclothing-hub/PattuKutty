@@ -97,7 +97,7 @@ function RequestDetail() {
   const totalPayable = req.quote?.totalPayable ?? (rawPrice + split.gst + deliveryFee);
 
   const handleConfirmCancel = async () => {
-    if (!reason.trim()) return;
+    if (!reason.trim() || reason.trim().length < 3) return;
     try {
       await cancel(req.id, reason.trim());
       setCancelOpen(false);
@@ -107,15 +107,39 @@ function RequestDetail() {
         open: true,
         type: "success",
         title: "Order Cancelled Successfully",
-        message: "The order has been cancelled.",
+        message: "The design request has been cancelled in database.",
       });
-    } catch {
+    } catch (err: any) {
       setCancelOpen(false);
       setCancelResultModal({
         open: true,
         type: "failure",
-        title: "Unable to Cancel Order",
-        message: "Your order could not be cancelled. Please try again.",
+        title: "Unable to Cancel Request",
+        message: String(err?.message || "Your request could not be cancelled. Please try again."),
+      });
+    }
+  };
+
+  const handleConfirmUpdate = async () => {
+    if (!updateNoteText.trim() || updateNoteText.trim().length < 3) return;
+    try {
+      await requestUpdate(req.id, {}, updateNoteText.trim());
+      setUpdateOpen(false);
+      setUpdateNoteText("");
+      void refreshRequests();
+      setCancelResultModal({
+        open: true,
+        type: "success",
+        title: "Modification Request Submitted",
+        message: "Your modification notes have been saved in database and sent to our design studio.",
+      });
+    } catch (err: any) {
+      setUpdateOpen(false);
+      setCancelResultModal({
+        open: true,
+        type: "failure",
+        title: "Unable to Submit Modification",
+        message: String(err?.message || "Could not submit modification note. Please try again."),
       });
     }
   };
@@ -473,8 +497,15 @@ function RequestDetail() {
                     </button>
                     <button
                       type="button"
+                      onClick={() => setUpdateOpen(true)}
+                      className="inline-flex w-full items-center justify-center gap-2 rounded-full border border-primary/40 bg-card py-3 text-sm font-medium text-primary transition-colors hover:bg-primary/10"
+                    >
+                      <Edit3 className="h-4 w-4" /> Request Modification / Changes
+                    </button>
+                    <button
+                      type="button"
                       onClick={() => setCancelOpen(true)}
-                      className="inline-flex w-full items-center justify-center gap-2 rounded-full border border-destructive/40 bg-card py-3.5 text-sm font-medium text-destructive transition-colors hover:bg-destructive/10"
+                      className="inline-flex w-full items-center justify-center gap-2 rounded-full border border-destructive/40 bg-card py-3 text-sm font-medium text-destructive transition-colors hover:bg-destructive/10"
                     >
                       <XCircle className="h-4 w-4" /> Cancel request
                     </button>
@@ -490,22 +521,31 @@ function RequestDetail() {
                 ) : null}
 
                 {underReview ? (
-                  <div className="flex flex-col gap-3 sm:flex-row">
-                    <a
-                      href={requestWaLink(req)}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="inline-flex flex-1 items-center justify-center gap-2 rounded-full border border-border bg-card py-3.5 text-sm font-medium text-foreground transition-colors hover:bg-secondary"
-                    >
-                      <MessageCircle className="h-4 w-4" /> Contact Studio on WhatsApp
-                    </a>
+                  <div className="flex flex-col gap-3">
                     <button
                       type="button"
-                      onClick={() => setCancelOpen(true)}
-                      className="inline-flex flex-1 items-center justify-center gap-2 rounded-full border border-destructive/40 bg-card py-3.5 text-sm font-medium text-destructive transition-colors hover:bg-destructive/10"
+                      onClick={() => setUpdateOpen(true)}
+                      className="inline-flex w-full items-center justify-center gap-2 rounded-full border border-primary/40 bg-card py-3.5 text-sm font-medium text-primary transition-colors hover:bg-primary/10"
                     >
-                      <XCircle className="h-4 w-4" /> Cancel request
+                      <Edit3 className="h-4 w-4" /> Request Modification / Changes
                     </button>
+                    <div className="flex flex-col gap-3 sm:flex-row">
+                      <a
+                        href={requestWaLink(req)}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="inline-flex flex-1 items-center justify-center gap-2 rounded-full border border-border bg-card py-3.5 text-sm font-medium text-foreground transition-colors hover:bg-secondary"
+                      >
+                        <MessageCircle className="h-4 w-4" /> Contact Studio on WhatsApp
+                      </a>
+                      <button
+                        type="button"
+                        onClick={() => setCancelOpen(true)}
+                        className="inline-flex flex-1 items-center justify-center gap-2 rounded-full border border-destructive/40 bg-card py-3.5 text-sm font-medium text-destructive transition-colors hover:bg-destructive/10"
+                      >
+                        <XCircle className="h-4 w-4" /> Cancel request
+                      </button>
+                    </div>
                   </div>
                 ) : null}
               </div>
@@ -513,6 +553,28 @@ function RequestDetail() {
           </div>
         </div>
       </section>
+
+      {/* modification confirm dialog */}
+      <ConfirmDialog
+        open={updateOpen}
+        tone="primary"
+        title="Request Design Modification"
+        message="Describe the changes or adjustments you'd like our studio designer to make."
+        confirmLabel="Submit Modification"
+        cancelLabel="Cancel"
+        disabled={updateNoteText.trim().length < 3}
+        onClose={() => setUpdateOpen(false)}
+        onConfirm={handleConfirmUpdate}
+      >
+        <textarea
+          value={updateNoteText}
+          onChange={(e) => setUpdateNoteText(e.target.value)}
+          rows={3}
+          maxLength={300}
+          placeholder="Details of required modifications (e.g. adjust sleeve length, change neck pattern)..."
+          className="mt-3 w-full rounded-2xl border border-border bg-card p-3 text-sm outline-none focus:border-primary"
+        />
+      </ConfirmDialog>
 
       {/* cancel confirm with reason */}
       <ConfirmDialog
