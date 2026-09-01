@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useId } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import {
   BadgeCheck,
@@ -78,14 +78,21 @@ const emptyAddress: ShippingAddress = {
 
 function Input({
   label,
+  id,
+  name,
   ...props
 }: React.InputHTMLAttributes<HTMLInputElement> & { label: string }) {
+  const generatedId = useId();
+  const inputId = id || name || generatedId;
+  const inputName = name || id || inputId;
   return (
-    <label className="block">
+    <label htmlFor={inputId} className="block">
       <span className="mb-1.5 block text-xs font-medium tracking-wide text-muted-foreground uppercase">
         {label}
       </span>
       <input
+        id={inputId}
+        name={inputName}
         {...props}
         className="w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm text-foreground outline-none transition-colors placeholder:text-muted-foreground focus:border-primary"
       />
@@ -634,12 +641,16 @@ function CheckoutPage() {
                         </div>
                       ) : null}
                       <Input
+                        id="fullName"
+                        name="fullName"
                         label="Full name"
                         value={form.fullName}
                         onChange={(e) => setForm({ ...form, fullName: e.target.value })}
                         placeholder="Your name"
                       />
                       <Input
+                        id="phone"
+                        name="phone"
                         label="Phone"
                         inputMode="tel"
                         maxLength={13}
@@ -649,6 +660,8 @@ function CheckoutPage() {
                       />
                       <div className="sm:col-span-2">
                         <Input
+                          id="line1"
+                          name="line1"
                           label="Flat / house no, street"
                           value={form.line1}
                           onChange={(e) => setForm({ ...form, line1: e.target.value })}
@@ -656,29 +669,39 @@ function CheckoutPage() {
                         />
                       </div>
                       <Input
+                        id="line2"
+                        name="line2"
                         label="Area / locality (optional)"
                         value={form.line2 ?? ""}
                         onChange={(e) => setForm({ ...form, line2: e.target.value })}
                         placeholder="R.S. Puram"
                       />
                       <Input
+                        id="landmark"
+                        name="landmark"
                         label="Landmark (optional)"
                         value={form.landmark ?? ""}
                         onChange={(e) => setForm({ ...form, landmark: e.target.value })}
                         placeholder="Near temple"
                       />
                       <Input
+                        id="city"
+                        name="city"
                         label="City"
                         value={form.city}
                         onChange={(e) => setForm({ ...form, city: e.target.value })}
                         placeholder="Coimbatore"
                       />
                       <Input
+                        id="state"
+                        name="state"
                         label="State"
                         value={form.state}
                         onChange={(e) => setForm({ ...form, state: e.target.value })}
                       />
                       <Input
+                        id="pincode"
+                        name="pincode"
                         label="PIN code"
                         inputMode="numeric"
                         maxLength={6}
@@ -809,11 +832,13 @@ function CheckoutPage() {
                       </li>
                     ))}
                   </ul>
-                  <label className="block">
+                  <label htmlFor="checkoutNotes" className="block">
                     <span className="mb-1.5 block text-xs font-medium tracking-wide text-muted-foreground uppercase">
                       Stitching / delivery notes (optional)
                     </span>
                     <textarea
+                      id="checkoutNotes"
+                      name="checkoutNotes"
                       rows={3}
                       value={notes}
                       onChange={(e) => setNotes(e.target.value)}

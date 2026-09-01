@@ -17,7 +17,7 @@ export function Collections() {
           subtitle="Tap a collection to browse the designs we stitch, with photos straight from the studio."
         />
 
-        <div className="mt-10 grid grid-cols-2 items-stretch gap-3 sm:mt-12 sm:gap-6 lg:grid-cols-4 lg:gap-8">
+        <div className="mt-10 grid grid-cols-2 items-stretch gap-4 sm:mt-12 sm:gap-6 lg:grid-cols-3 xl:grid-cols-5 lg:gap-6">
           {categories.map((c, i) => {
             const designCount =
               c.designCount != null
@@ -32,7 +32,7 @@ export function Collections() {
                   to="/category/$category"
                   params={{ category: c.id }}
                   aria-label={`${c.name} — view designs`}
-                  className="group relative flex aspect-[3/4] w-full flex-col justify-end overflow-hidden rounded-2xl bg-card text-left shadow-lift ring-1 ring-accent/15 transition-all duration-500 ease-out hover:-translate-y-1.5 hover:shadow-2xl hover:ring-accent/45 focus-visible:ring-2 focus-visible:ring-accent focus-visible:outline-none sm:rounded-3xl"
+                  className="card-lift group relative flex aspect-[4/5] sm:aspect-[3/3.8] w-full flex-col justify-end overflow-hidden rounded-3xl bg-card text-left shadow-lift ring-1 ring-accent/15 transition-all duration-500 ease-out hover:-translate-y-1.5 hover:shadow-2xl hover:ring-accent/45 focus-visible:ring-2 focus-visible:ring-accent focus-visible:outline-none"
                 >
 
                   <img
@@ -44,7 +44,7 @@ export function Collections() {
                     alt={`${c.name} collection at Pattu Kutty`}
                     loading="lazy"
                     decoding="async"
-                    className="absolute inset-0 h-full w-full object-cover object-center transition-transform duration-[900ms] ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:scale-[1.08]"
+                    className="absolute inset-0 h-full w-full object-cover object-top transition-transform duration-[900ms] ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:scale-[1.08]"
                   />
                   <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-maroon/92 via-maroon/45 to-maroon/5 transition-opacity duration-500 group-hover:from-maroon/95" />
                   {/* gold sheen sweep */}

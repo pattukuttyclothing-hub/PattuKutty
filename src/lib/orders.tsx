@@ -249,8 +249,8 @@ export function OrdersProvider({ children }: { children: ReactNode }) {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const refresh = useCallback(async () => {
-    setLoading(true);
+  const refresh = useCallback(async (options?: { silent?: boolean }) => {
+    if (!options?.silent) setLoading(true);
     try {
       if (user) {
         const { fetchCustomerOrders } = await import("./api/orders");
@@ -279,7 +279,7 @@ export function OrdersProvider({ children }: { children: ReactNode }) {
         } catch {}
       }
     } finally {
-      setLoading(false);
+      if (!options?.silent) setLoading(false);
     }
   }, [user]);
 
@@ -289,7 +289,7 @@ export function OrdersProvider({ children }: { children: ReactNode }) {
 
     // Poll every 15 seconds so status updates from admin appear promptly
     const interval = window.setInterval(() => {
-      void refresh();
+      void refresh({ silent: true });
     }, 15_000);
 
     return () => window.clearInterval(interval);

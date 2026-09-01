@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useId } from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { Eye, EyeOff, Loader2, Lock, Mail, Phone, User as UserIcon } from "lucide-react";
 import { toast } from "sonner";
@@ -38,16 +38,23 @@ export const Route = createFileRoute("/auth")({
 function Field({
   icon,
   action,
+  id,
+  name,
   ...props
 }: React.InputHTMLAttributes<HTMLInputElement> & {
   icon: React.ReactNode;
   action?: React.ReactNode;
 }) {
+  const generatedId = useId();
+  const inputId = id || name || generatedId;
+  const inputName = name || id || inputId;
   return (
-    <label className="block">
+    <label htmlFor={inputId} className="block">
       <span className="relative flex items-center">
         <span className="pointer-events-none absolute left-4 text-muted-foreground">{icon}</span>
         <input
+          id={inputId}
+          name={inputName}
           {...props}
           className={`w-full rounded-2xl border border-border bg-background py-3.5 pl-11 text-sm text-foreground outline-none transition-colors placeholder:text-muted-foreground focus:border-primary ${
             action ? "pr-11" : "pr-4"
@@ -73,6 +80,8 @@ function AuthPage() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
+  const [infoModalOpen, setInfoModalOpen] = useState(false);
+  const [unconfirmedEmail, setUnconfirmedEmail] = useState("");
 
   useEffect(() => {
     if (!ready || !user) return;
@@ -105,6 +114,8 @@ function AuthPage() {
         setError(res.error);
         toast.error(res.error);
       } else if (res.needsConfirmation) {
+        setUnconfirmedEmail(email.trim());
+        setInfoModalOpen(true);
         setNotice("Almost there — check your inbox and confirm your email to finish signing up.");
         toast.info("Email confirmation sent to your inbox.");
       } else {
@@ -155,6 +166,8 @@ function AuthPage() {
               {mode === "signup" ? (
                 <>
                   <Field
+                    id="fullName"
+                    name="fullName"
                     icon={<UserIcon className="h-4 w-4" />}
                     placeholder="Full name"
                     autoComplete="name"
@@ -163,6 +176,8 @@ function AuthPage() {
                     required
                   />
                   <Field
+                    id="phone"
+                    name="phone"
                     icon={<Phone className="h-4 w-4" />}
                     placeholder="Phone number"
                     inputMode="tel"
@@ -175,6 +190,8 @@ function AuthPage() {
                 </>
               ) : null}
               <Field
+                id="email"
+                name="email"
                 icon={<Mail className="h-4 w-4" />}
                 type="email"
                 placeholder="Email address"
@@ -184,6 +201,8 @@ function AuthPage() {
                 required
               />
               <Field
+                id="password"
+                name="password"
                 icon={<Lock className="h-4 w-4" />}
                 type={showPassword ? "text" : "password"}
                 placeholder="Password"
@@ -250,6 +269,44 @@ function AuthPage() {
           </aside>
         </div>
       </section>
+
+      {/* Email Verification Required Info Popup Modal */}
+      {infoModalOpen ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
+          <div className="w-full max-w-md rounded-3xl border border-border bg-card p-6 shadow-2xl space-y-4 text-center">
+            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-primary/10 text-primary">
+              <Mail className="h-7 w-7" />
+            </div>
+            <h3 className="font-display text-xl font-semibold text-foreground">
+              Check Your Email to Confirm Registration
+            </h3>
+            <p className="text-sm leading-relaxed text-muted-foreground">
+              We have sent an email confirmation link to{" "}
+              <strong className="text-foreground">{unconfirmedEmail}</strong>.
+            </p>
+            <div className="rounded-2xl border border-primary/20 bg-primary/5 p-4 text-xs text-foreground text-left space-y-2">
+              <p className="font-semibold text-primary">Next steps to activate your account:</p>
+              <ol className="list-decimal pl-4 space-y-1.5 text-muted-foreground">
+                <li>Open your email inbox (and check spam folder if needed).</li>
+                <li>Click the <strong className="text-foreground">Confirm Email</strong> link inside the mail.</li>
+                <li>Return here to sign in with your password.</li>
+              </ol>
+            </div>
+            <div className="pt-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setInfoModalOpen(false);
+                  setMode("signin");
+                }}
+                className="w-full rounded-full bg-primary py-3.5 text-sm font-semibold text-primary-foreground shadow-soft transition-transform hover:scale-[1.01]"
+              >
+                Got it, I'll Check My Email
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </PageShell>
   );
 }

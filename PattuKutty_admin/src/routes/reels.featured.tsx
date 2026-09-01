@@ -259,6 +259,8 @@ function EditFeaturedPage() {
           <div className="flex items-center gap-2 rounded-full border border-border bg-background px-4 py-2">
             <Search className="h-4 w-4 text-muted-foreground" />
             <input
+              id="catalogueSearch"
+              name="catalogueSearch"
               autoFocus
               value={q}
               onChange={(e) => setQ(e.target.value)}

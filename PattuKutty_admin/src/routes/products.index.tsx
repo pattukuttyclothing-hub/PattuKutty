@@ -5,7 +5,7 @@ import { toast } from "sonner";
 import { AdminShell, PageHead } from "@/components/admin/AdminShell";
 import { ProductCard } from "@/components/admin/cards";
 import { DeleteConfirmationModal } from "@/components/shared/DeleteConfirmationModal";
-import { categories, findSub, type CategoryId } from "@/data/boutique";
+import { categories, findSub, getAllSubCategories, type CategoryId } from "@/data/boutique";
 import { isProductSoldOut, useAdmin, type AdminProduct } from "@/lib/admin-store";
 import { uid } from "@/lib/format";
 
@@ -37,7 +37,7 @@ function ProductsPage() {
   const [adding, setAdding] = useState(false);
   const [deletingProduct, setDeletingProduct] = useState<{ id: string; name: string } | null>(null);
 
-  const subs = cat === "all" ? [] : (categories.find((c) => c.id === cat)?.subs ?? []);
+  const subs = cat === "all" ? [] : (categories.find((c) => c.id === cat) ? getAllSubCategories(categories.find((c) => c.id === cat)!) : []);
 
   const list = useMemo(
     () =>
@@ -81,22 +81,22 @@ function ProductsPage() {
         {adding ? (
           <div className="mb-7 rounded-3xl border border-primary/25 bg-card p-5 shadow-soft">
             <p className="text-sm font-medium">Pick where the new design lives</p>
-            <div className="mt-4 grid gap-4 lg:grid-cols-4">
+            <div className="mt-4 grid gap-4 lg:grid-cols-5">
               {categories.map((c) => (
                 <div key={c.id} className="rounded-2xl border border-border p-3">
                   <div className="flex items-center gap-3">
-                    <img src={c.image} alt="" className="h-11 w-11 rounded-xl object-cover" />
+                    <img src={c.image} alt="" className="h-11 w-11 rounded-xl object-cover object-top shrink-0 border border-border/50" />
                     <span className="text-sm font-semibold">{c.name}</span>
                   </div>
                   <div className="mt-3 space-y-1.5">
-                    {c.subs.map((s) => (
+                    {getAllSubCategories(c).map((s) => (
                       <button
                         key={s.id}
                         type="button"
                         onClick={() => create(c.id, s.id)}
                         className="flex w-full items-center gap-2 rounded-xl px-2 py-1.5 text-left text-xs transition-colors hover:bg-secondary"
                       >
-                        <img src={s.images[0]} alt="" className="h-7 w-7 rounded-lg object-cover" />
+                        <img src={s.images[0]} alt="" className="h-7 w-7 rounded-lg object-cover object-top shrink-0 border border-border/50" />
                         {s.name}
                       </button>
                     ))}
@@ -139,7 +139,7 @@ function ProductsPage() {
                     : "border-border bg-card text-foreground"
                 }`}
               >
-                <img src={c.image} alt="" className="h-7 w-7 rounded-full object-cover" />
+                <img src={c.image} alt="" className="h-7 w-7 rounded-full object-cover object-top shrink-0 border border-border/50" />
                 {c.name} ({count})
               </button>
             );
@@ -177,7 +177,7 @@ function ProductsPage() {
                     sub === s.id ? "border-primary text-primary" : "border-border text-muted-foreground"
                   }`}
                 >
-                  <img src={s.images[0]} alt="" className="h-6 w-6 rounded-full object-cover" />
+                  <img src={s.images[0]} alt="" className="h-6 w-6 rounded-full object-cover object-top shrink-0 border border-border/50" />
                   {s.name} ({count})
                 </button>
               );

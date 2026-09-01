@@ -1,8 +1,10 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
-import { AlertCircle, RefreshCw, Sparkles } from "lucide-react";
+import { AlertCircle, ArrowRight, RefreshCw, Sparkles } from "lucide-react";
 import { PageHeader, PageShell } from "@/components/shared/Page";
 import { ProductCard } from "@/components/boutique/ProductCard";
-import { findCategory, findSub } from "@/data/boutique";
+import { Reveal, stagger } from "@/components/shared/Reveal";
+import { AutoImageFade } from "@/components/shared/AutoImageFade";
+import { findCategory, findSub, getAllSubCategories } from "@/data/boutique";
 import { subCopy } from "@/data/copy";
 import { useProductsBySubCategory } from "@/lib/useStorefront";
 import { abs, breadcrumbJsonLd, seoDescription, seoTitle, socialMeta } from "@/lib/seo";
@@ -49,6 +51,8 @@ function SubCategoryPage() {
     { name: sub.name, path: `/category/${cat.id}/${sub.id}` },
   ]);
 
+  const allSubs = getAllSubCategories(cat);
+
   return (
     <PageShell>
       <script
@@ -79,7 +83,7 @@ function SubCategoryPage() {
       <section className="bg-background py-8 lg:py-12">
         <div className="mx-auto max-w-7xl px-4 sm:px-6">
           <div className="flex flex-wrap gap-2">
-            {cat.subs.map((s) => (
+            {allSubs.map((s) => (
               <Link
                 key={s.id}
                 to="/category/$category/$sub"
@@ -94,6 +98,51 @@ function SubCategoryPage() {
               </Link>
             ))}
           </div>
+
+          {sub.subs && sub.subs.length > 0 ? (
+            <div className="mt-8 mb-6">
+              <div className="mb-4">
+                <h3 className="font-display text-lg font-semibold text-foreground">
+                  Select a Style in {sub.name}
+                </h3>
+                <p className="text-xs text-muted-foreground">
+                  Choose between Top or Kurthi to browse specific designs.
+                </p>
+              </div>
+              <div className="grid grid-cols-2 gap-4 sm:gap-6 lg:grid-cols-3">
+                {sub.subs.map((nestedSub, i) => (
+                  <Reveal key={nestedSub.id} delay={stagger(i, 80)}>
+                    <Link
+                      to="/category/$category/$sub"
+                      params={{ category: cat.id, sub: nestedSub.id }}
+                      className="card-lift group relative block aspect-[4/5] sm:aspect-[3/3.8] overflow-hidden rounded-3xl bg-card shadow-lift"
+                    >
+                      <AutoImageFade
+                        images={nestedSub.images}
+                        alt={`${nestedSub.name} designs`}
+                        className="absolute inset-0 h-full w-full object-cover object-top"
+                        interval={7000}
+                        offset={i * 1500}
+                      />
+                      <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-maroon/85 via-maroon/20 to-transparent" />
+                      <div className="absolute inset-x-0 bottom-0 z-10 p-5 sm:p-6">
+                        <h4 className="font-display text-xl leading-tight font-semibold text-primary-foreground sm:text-2xl">
+                          {nestedSub.name}
+                        </h4>
+                        <p className="mt-1.5 text-xs text-primary-foreground/85 sm:text-sm">
+                          {nestedSub.blurb}
+                        </p>
+                        <span className="mt-3.5 inline-flex items-center gap-1.5 text-[0.68rem] font-bold tracking-[0.18em] text-accent uppercase">
+                          View {nestedSub.name} Designs{" "}
+                          <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-1" />
+                        </span>
+                      </div>
+                    </Link>
+                  </Reveal>
+                ))}
+              </div>
+            </div>
+          ) : null}
 
           {loading ? (
             <div className="mt-8 grid grid-cols-2 gap-4 sm:gap-6 lg:grid-cols-4">

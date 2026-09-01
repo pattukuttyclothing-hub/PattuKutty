@@ -190,6 +190,8 @@ export function AddReelDialog({ open, onClose, editing }: Props) {
               )}
             </div>
             <input
+              id="reelVideoInput"
+              name="reelVideoInput"
               ref={fileRef}
               type="file"
               accept="video/*"
@@ -213,6 +215,8 @@ export function AddReelDialog({ open, onClose, editing }: Props) {
                 Reel caption
               </span>
               <input
+                id="reelTitle"
+                name="reelTitle"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 placeholder="Bridal lehenga reveal"
@@ -276,6 +280,8 @@ export function AddReelDialog({ open, onClose, editing }: Props) {
                     <div className="mt-4 flex items-center gap-2 rounded-full border border-border bg-card px-4 py-2">
                       <Search className="h-4 w-4 text-muted-foreground" />
                       <input
+                        id="reelDesignSearch"
+                        name="reelDesignSearch"
                         value={q}
                         onChange={(e) => setQ(e.target.value)}
                         placeholder="Search designs…"
@@ -328,6 +334,8 @@ export function AddReelDialog({ open, onClose, editing }: Props) {
                           Category
                         </span>
                         <select
+                          id="reelCategory"
+                          name="reelCategory"
                           value={nCat}
                           onChange={(e) => {
                             const c = e.target.value as CategoryId;
@@ -348,6 +356,8 @@ export function AddReelDialog({ open, onClose, editing }: Props) {
                           Sub-category
                         </span>
                         <select
+                          id="reelSubCategory"
+                          name="reelSubCategory"
                           value={nSub}
                           onChange={(e) => setNSub(e.target.value)}
                           className="mt-1.5 w-full rounded-2xl border border-border bg-card px-3 py-2 text-sm outline-none focus:border-primary"
@@ -364,6 +374,8 @@ export function AddReelDialog({ open, onClose, editing }: Props) {
                           Design name
                         </span>
                         <input
+                          id="reelDesignName"
+                          name="reelDesignName"
                           value={nName}
                           onChange={(e) => setNName(e.target.value)}
                           placeholder="Couture Bridal Lehenga"
@@ -375,6 +387,8 @@ export function AddReelDialog({ open, onClose, editing }: Props) {
                           Price ₹
                         </span>
                         <input
+                          id="reelPrice"
+                          name="reelPrice"
                           type="number"
                           value={nPrice}
                           onChange={(e) => setNPrice(Number(e.target.value))}
@@ -386,6 +400,8 @@ export function AddReelDialog({ open, onClose, editing }: Props) {
                           MRP ₹
                         </span>
                         <input
+                          id="reelMrp"
+                          name="reelMrp"
                           type="number"
                           value={nMrp}
                           onChange={(e) => setNMrp(Number(e.target.value))}
@@ -412,6 +428,8 @@ export function AddReelDialog({ open, onClose, editing }: Props) {
                         <label className="grid h-16 w-14 cursor-pointer place-items-center rounded-xl border border-dashed border-primary/40 text-primary">
                           <Upload className="h-4 w-4" />
                           <input
+                            id="reelPhotoInput"
+                            name="reelPhotoInput"
                             type="file"
                             accept="image/*"
                             multiple

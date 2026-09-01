@@ -115,6 +115,38 @@ export const subCopy: Record<string, SubCopy> = {
     product: (name) =>
       `${name} is a couture blouse with aari or maggam hand work done in our Coimbatore studio. Choose the motif density, the stone and thread colours, and the sleeve style; we draft the pattern to your measurements first. ${shipLine}`,
   },
+  "salwar-readymade": {
+    blurb: "Stitched tops and kurtis ready to wear",
+    meta: "Custom readymade salwar tops and kurtis in Coimbatore — stitched to your measurements, premium cottons and designer cuts. Fast delivery across India.",
+    intro:
+      "Stitched salwar tops, kurtis and tunic sets cut to your exact fit in our Coimbatore studio.",
+    product: (name) =>
+      `${name} is a ready-to-wear salwar outfit cut to your exact bust, waist and sleeve measurements. Express stitching and India-wide delivery available. ${shipLine}`,
+  },
+  "salwar-readymade-top": {
+    blurb: "Stitched salwar tops & tunics",
+    meta: "Custom stitched salwar tops in Coimbatore — choose necklines, sleeve lengths and side cuts. Delivered across India.",
+    intro:
+      "Salwar tops and tunics tailored to your comfort and preference.",
+    product: (name) =>
+      `${name} is a custom stitched salwar top tailored to your exact measurements. ${shipLine}`,
+  },
+  "salwar-readymade-kurthi": {
+    blurb: "Designer kurtis & tunic sets",
+    meta: "Designer kurtis and tunic sets in Coimbatore — soft cottons, silk blends and hand embroidery stitched to your size. Fast delivery across India.",
+    intro:
+      "Designer kurtis and tunic sets cut for everyday elegance and festive celebrations.",
+    product: (name) =>
+      `${name} is a designer kurti tailored to your measurements with fine finishing and premium lining. ${shipLine}`,
+  },
+  "salwar-materials": {
+    blurb: "Unstitched salwar materials & dress sets",
+    meta: "Unstitched salwar dress materials in Coimbatore — cotton, silk blend and chanderi unstitched suit sets with matching dupatta. Express custom stitching available.",
+    intro:
+      "Premium unstitched salwar materials with matching dupatta and bottom fabrics. Order as unstitched fabric or have our studio custom stitch it for you.",
+    product: (name) =>
+      `${name} is an unstitched salwar dress material set complete with top fabric, bottom material and dupatta. Available as unstitched fabric or stitched to your measurements. ${shipLine}`,
+  },
 };
 
 export const categoryCopy: Record<string, { blurb: string; meta: string; intro: string }> = {
@@ -141,6 +173,12 @@ export const categoryCopy: Record<string, { blurb: string; meta: string; intro: 
     meta: "Blouse stitching in Coimbatore — bridal zari, princess cut patterns and aari or maggam couture, fitted to your measurements. 1-hour express stitching available.",
     intro:
       "Blouse stitching is what Coimbatore knows us for: bridal zari, classic patterns and aari couture, all fitted at four points and available on our 1-hour express counter.",
+  },
+  salwar: {
+    blurb: "Stitched tops, kurtis & unstitched dress materials",
+    meta: "Salwar suits, ready-to-wear kurtis and unstitched dress materials custom stitched in Coimbatore. Express stitching and India-wide delivery.",
+    intro:
+      "From unstitched salwar dress materials to ready-to-wear tops and kurtis — tailored to your measurements in our Coimbatore studio.",
   },
 };
 

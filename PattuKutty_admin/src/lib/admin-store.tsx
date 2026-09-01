@@ -529,42 +529,49 @@ export function AdminStoreProvider({ children }: { children: ReactNode }) {
     let isMounted = true;
     setRequestsLoading(true);
     setRequestsError(null);
-    import("./api/requests").then(({ fetchCustomRequests }) => {
-      fetchCustomRequests()
-        .then((live) => {
-          if (isMounted && Array.isArray(live)) {
-            setRequests(live);
-            setRequestsError(null);
-          }
-        })
-        .catch((err: any) => {
-          if (isMounted) {
-            setRequestsError(err?.message || "Failed to load custom requests from server.");
-            setRequests([]); // NEVER fall back to mock requests
-          }
-        })
-        .finally(() => {
-          if (isMounted) setRequestsLoading(false);
-        });
-    });
+    import("./api/requests")
+      .then(({ fetchCustomRequests }) => {
+        return fetchCustomRequests()
+          .then((live) => {
+            if (isMounted && Array.isArray(live)) {
+              setRequests(live);
+              setRequestsError(null);
+            }
+          })
+          .catch((err: any) => {
+            if (isMounted) {
+              setRequestsError(err?.message || "Failed to load custom requests from server.");
+              setRequests([]); // NEVER fall back to mock requests
+            }
+          });
+      })
+      .catch((err: any) => {
+        if (isMounted) {
+          setRequestsError(err?.message || "Failed to load requests module.");
+          setRequests([]);
+        }
+      })
+      .finally(() => {
+        if (isMounted) setRequestsLoading(false);
+      });
     return () => { isMounted = false; };
   }, []);
 
   // Fetch live API data on mount when available
   useEffect(() => {
     let isMounted = true;
-    import("./api/catalogue").then(({ fetchProducts }) => {
-      fetchProducts()
-        .then((live) => {
+    import("./api/catalogue")
+      .then(({ fetchProducts }) => {
+        return fetchProducts().then((live) => {
           if (isMounted && Array.isArray(live)) setProducts(live);
-        })
-        .catch(() => {
-          /* Keep current store state on network failure */
-        })
-        .finally(() => {
-          if (isMounted) setProductsLoading(false);
         });
-    });
+      })
+      .catch(() => {
+        /* Keep current store state on network failure */
+      })
+      .finally(() => {
+        if (isMounted) setProductsLoading(false);
+      });
 
     const cleanupRequests = loadRequests();
 

@@ -274,6 +274,8 @@ function ReviewPanel({ order }: { order: Order }) {
           </p>
           {itemsList.length > 1 ? (
             <select
+              id="reviewProductId"
+              name="reviewProductId"
               value={productId}
               onChange={(e) => setProductId(e.target.value)}
               className="w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm text-foreground outline-none focus:border-primary"
@@ -287,6 +289,8 @@ function ReviewPanel({ order }: { order: Order }) {
           ) : null}
           <Stars value={rating} onChange={setRating} />
           <input
+            id="reviewTitle"
+            name="reviewTitle"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             maxLength={80}
@@ -294,6 +298,8 @@ function ReviewPanel({ order }: { order: Order }) {
             className="w-full rounded-2xl border border-border bg-background px-4 py-2.5 text-sm text-foreground outline-none focus:border-primary"
           />
           <textarea
+            id="reviewBody"
+            name="reviewBody"
             value={body}
             onChange={(e) => setBody(e.target.value)}
             rows={3}
@@ -360,7 +366,7 @@ function OrderTrackingPage() {
       })
       .catch(() => setDirectOrder(null))
       .finally(() => setDirectLoading(false));
-  }, [id, find]);
+  }, [id]);
 
   useEffect(() => {
     if (!order) return;

@@ -8,6 +8,7 @@ import { DeleteConfirmationModal } from "@/components/shared/DeleteConfirmationM
 import {
   categories,
   findCategory,
+  getAllSubCategories,
   getPermittedSizesForCategory,
   isSareeCategory,
   sizeOptions,
@@ -498,6 +499,8 @@ function ProductEditor() {
                   {uploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
                   {uploading ? "Uploading..." : "Upload from device"}
                   <input
+                    id="productUploadInput"
+                    name="productUploadInput"
                     type="file"
                     accept="image/*"
                     multiple
@@ -511,6 +514,8 @@ function ProductEditor() {
                 </label>
                 {/* Hidden File Input for Replacement Image Upload */}
                 <input
+                  id="replacementFileInput"
+                  name="replacementFileInput"
                   ref={replacementFileInputRef}
                   type="file"
                   accept="image/*"
@@ -604,6 +609,8 @@ function ProductEditor() {
           <Section title="Basics">
             <Field label="Design name *">
               <input
+                id="productName"
+                name="productName"
                 value={draft.name}
                 placeholder="e.g. Royal Peacock Zardosi Blouse"
                 onChange={(e) => set({ name: e.target.value })}
@@ -612,6 +619,8 @@ function ProductEditor() {
             </Field>
             <Field label="Description shown on the product page">
               <textarea
+                id="productDescription"
+                name="productDescription"
                 rows={6}
                 value={draft.description}
                 placeholder="Enter detailed design description, embroidery motifs, fabric details, etc..."
@@ -622,6 +631,8 @@ function ProductEditor() {
             <div className="grid gap-4 sm:grid-cols-2">
               <Field label="Short blurb on the storefront card">
                 <input
+                  id="productBlurb"
+                  name="productBlurb"
                   value={draft.blurb}
                   onChange={(e) => set({ blurb: e.target.value })}
                   placeholder="e.g. Hand-worked aari, stitched to your fit"
@@ -630,6 +641,8 @@ function ProductEditor() {
               </Field>
               <Field label="Ribbon badge (optional)">
                 <input
+                  id="productBadge"
+                  name="productBadge"
                   value={draft.badge}
                   onChange={(e) => set({ badge: e.target.value })}
                   placeholder="e.g. Bestseller"
@@ -640,26 +653,29 @@ function ProductEditor() {
             <div className="grid gap-4 sm:grid-cols-2">
               <Field label="Category">
                 <div className="flex flex-wrap gap-2">
-                  {categories.map((c) => (
-                    <button
-                      key={c.id}
-                      type="button"
-                      onClick={() => set({ category: c.id, sub: c.subs[0]!.id })}
-                      className={`flex items-center gap-2 rounded-full border py-1 pr-3 pl-1 text-[0.7rem] font-medium ${
-                        draft.category === c.id
-                          ? "border-primary bg-secondary text-primary"
-                          : "border-border"
-                      }`}
-                    >
-                      <img src={c.image} alt="" className="h-6 w-6 rounded-full object-cover" />
-                      {c.name}
-                    </button>
-                  ))}
+                  {categories.map((c) => {
+                    const firstSubId = getAllSubCategories(c)[0]?.id ?? c.subs[0]!.id;
+                    return (
+                      <button
+                        key={c.id}
+                        type="button"
+                        onClick={() => set({ category: c.id, sub: firstSubId })}
+                        className={`flex items-center gap-2 rounded-full border py-1 pr-3 pl-1 text-[0.7rem] font-medium ${
+                          draft.category === c.id
+                            ? "border-primary bg-secondary text-primary"
+                            : "border-border"
+                        }`}
+                      >
+                        <img src={c.image} alt="" className="h-6 w-6 rounded-full object-cover object-top shrink-0 border border-border/50" />
+                        {c.name}
+                      </button>
+                    );
+                  })}
                 </div>
               </Field>
               <Field label="Style">
                 <div className="flex flex-wrap gap-2">
-                  {(cat?.subs ?? []).map((s) => (
+                  {(cat ? getAllSubCategories(cat) : []).map((s) => (
                     <button
                       key={s.id}
                       type="button"
@@ -668,7 +684,7 @@ function ProductEditor() {
                         draft.sub === s.id ? "border-primary bg-secondary text-primary" : "border-border"
                       }`}
                     >
-                      <img src={s.images[0]} alt="" className="h-6 w-6 rounded-full object-cover" />
+                      <img src={s.images[0]} alt="" className="h-6 w-6 rounded-full object-cover object-top shrink-0 border border-border/50" />
                       {s.name}
                     </button>
                   ))}
@@ -677,6 +693,8 @@ function ProductEditor() {
             </div>
             <label className="flex items-center gap-3 text-sm">
               <input
+                id="productIsActive"
+                name="productIsActive"
                 type="checkbox"
                 checked={draft.isActive}
                 onChange={(e) => set({ isActive: e.target.checked })}
@@ -729,6 +747,8 @@ function ProductEditor() {
                       <div className="flex items-center gap-1.5">
                         <span className="text-[0.7rem] font-medium text-muted-foreground">Qty:</span>
                         <input
+                          id={`variant_stock_${v.size}`}
+                          name={`variant_stock_${v.size}`}
                           type="number"
                           min={0}
                           value={v.stockQty !== undefined ? v.stockQty : (v.available ? 1 : 0)}
@@ -760,6 +780,8 @@ function ProductEditor() {
             <div className="grid gap-4 sm:grid-cols-2">
               <Field label="Selling price (₹) *">
                 <input
+                  id="productBasePrice"
+                  name="productBasePrice"
                   type="number"
                   min={0}
                   value={draft.basePrice || ""}
@@ -770,6 +792,8 @@ function ProductEditor() {
               </Field>
               <Field label="MRP shown struck through (₹) *">
                 <input
+                  id="productMrp"
+                  name="productMrp"
                   type="number"
                   min={0}
                   value={draft.mrp || ""}
@@ -780,6 +804,8 @@ function ProductEditor() {
               </Field>
               <Field label="Delivery charge (₹)">
                 <input
+                  id="productDeliveryCharge"
+                  name="productDeliveryCharge"
                   type="number"
                   min={0}
                   value={draft.deliveryCharge}

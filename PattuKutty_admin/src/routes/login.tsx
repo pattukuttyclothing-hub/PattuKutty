@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { Loader2, Lock, Mail, ShieldCheck } from "lucide-react";
+import { Eye, EyeOff, Loader2, Lock, Mail, ShieldCheck } from "lucide-react";
 import { adminLogin } from "@/lib/api/auth";
 import { toast } from "sonner";
 import { storeInfo } from "@/data/boutique";
@@ -38,6 +38,7 @@ function AdminLoginPage() {
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -87,12 +88,14 @@ function AdminLoginPage() {
         <div className="rounded-3xl border border-border bg-card p-6 shadow-lift sm:p-8">
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="mb-1.5 block text-xs font-semibold text-foreground">
+              <label htmlFor="email" className="mb-1.5 block text-xs font-semibold text-foreground">
                 Admin Email
               </label>
               <div className="relative flex items-center">
                 <Mail className="pointer-events-none absolute left-3.5 h-4 w-4 text-muted-foreground" />
                 <input
+                  id="email"
+                  name="email"
                   type="email"
                   required
                   value={email}
@@ -104,19 +107,34 @@ function AdminLoginPage() {
             </div>
 
             <div>
-              <label className="mb-1.5 block text-xs font-semibold text-foreground">
+              <label htmlFor="password" className="mb-1.5 block text-xs font-semibold text-foreground">
                 Password
               </label>
               <div className="relative flex items-center">
                 <Lock className="pointer-events-none absolute left-3.5 h-4 w-4 text-muted-foreground" />
                 <input
-                  type="password"
+                  id="password"
+                  name="password"
+                  type={showPassword ? "text" : "password"}
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"
-                  className="w-full rounded-2xl border border-border bg-background py-3 pr-4 pl-10 text-sm text-foreground outline-none transition-colors placeholder:text-muted-foreground focus:border-primary"
+                  className="w-full rounded-2xl border border-border bg-background py-3 pr-11 pl-10 text-sm text-foreground outline-none transition-colors placeholder:text-muted-foreground focus:border-primary"
                 />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((prev) => !prev)}
+                  className="absolute right-3.5 flex items-center text-muted-foreground transition-colors hover:text-foreground focus:outline-none"
+                  aria-label={showPassword ? "Hide password" : "Show password"}
+                  title={showPassword ? "Hide password" : "Show password"}
+                >
+                  {showPassword ? (
+                    <EyeOff className="h-4 w-4 shrink-0" />
+                  ) : (
+                    <Eye className="h-4 w-4 shrink-0" />
+                  )}
+                </button>
               </div>
             </div>
 

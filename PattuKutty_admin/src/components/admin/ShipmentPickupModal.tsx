@@ -89,10 +89,12 @@ export function ShipmentPickupModal({
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-xs font-medium text-stone-700 mb-1 flex items-center gap-1.5">
+            <label htmlFor="pickupDate" className="block text-xs font-medium text-stone-700 mb-1 flex items-center gap-1.5">
               <Calendar className="h-3.5 w-3.5 text-stone-400" /> Pickup Date
             </label>
             <input
+              id="pickupDate"
+              name="pickupDate"
               type="date"
               min={todayStr}
               value={pickupDate}
@@ -104,10 +106,12 @@ export function ShipmentPickupModal({
           </div>
 
           <div>
-            <label className="block text-xs font-medium text-stone-700 mb-1 flex items-center gap-1.5">
+            <label htmlFor="pickupTime" className="block text-xs font-medium text-stone-700 mb-1 flex items-center gap-1.5">
               <Clock className="h-3.5 w-3.5 text-stone-400" /> Pickup Time Window
             </label>
             <select
+              id="pickupTime"
+              name="pickupTime"
               value={pickupTime}
               onChange={(e) => setPickupTime(e.target.value)}
               disabled={loading}

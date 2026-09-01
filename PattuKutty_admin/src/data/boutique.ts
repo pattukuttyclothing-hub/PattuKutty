@@ -66,9 +66,9 @@ export const imagePools = pools;
 
 const rotate = <T,>(arr: T[], by: number) => arr.map((_, i) => arr[(i + by) % arr.length]!);
 
-export type CategoryId = "half-saree" | "frocks" | "sarees" | "blouses";
+export type CategoryId = "half-saree" | "frocks" | "sarees" | "blouses" | "salwar";
 
-export type SubCategory = { id: string; name: string; blurb: string; images: string[] };
+export type SubCategory = { id: string; name: string; blurb: string; images: string[]; subs?: SubCategory[] };
 
 export type Category = {
   id: CategoryId;
@@ -183,13 +183,74 @@ export const categories: Category[] = [
       },
     ],
   },
+  {
+    id: "salwar",
+    name: "Salwar",
+    blurb: "Stitched tops, kurtis & unstitched dress materials",
+    image: `${CDN}/v1786514177/Kurti_7.jpg`,
+    subs: [
+      {
+        id: "salwar-readymade",
+        name: "Readymade",
+        blurb: "Stitched tops & kurtis ready to wear",
+        images: rotate(pools.frock, 1),
+        subs: [
+          {
+            id: "salwar-readymade-top",
+            name: "Top",
+            blurb: "Stitched salwar tops & tunics",
+            images: rotate(pools.frock, 2),
+          },
+          {
+            id: "salwar-readymade-kurthi",
+            name: "Kurthi",
+            blurb: "Designer kurtis & tunic sets",
+            images: rotate(pools.frock, 4),
+          },
+        ],
+      },
+      {
+        id: "salwar-materials",
+        name: "Materials",
+        blurb: "Unstitched dress materials & fabric sets",
+        images: rotate(pools.frock, 0),
+      },
+    ],
+  },
 ];
 
+export const getAllSubCategories = (cat: Category): SubCategory[] => {
+  const list: SubCategory[] = [];
+  for (const s of cat.subs) {
+    list.push(s);
+    if (s.subs && s.subs.length > 0) {
+      list.push(...s.subs);
+    }
+  }
+  return list;
+};
+
 export const findCategory = (id: string) => categories.find((c) => c.id === id);
-export const findSub = (categoryId: string, subId: string) =>
-  findCategory(categoryId)?.subs.find((s) => s.id === subId);
-export const subName = (subId: string) =>
-  categories.flatMap((c) => c.subs).find((s) => s.id === subId)?.name ?? subId;
+export const findSub = (categoryId: string, subId: string): SubCategory | undefined => {
+  const cat = findCategory(categoryId);
+  if (!cat) return undefined;
+  for (const s of cat.subs) {
+    if (s.id === subId) return s;
+    if (s.subs) {
+      const child = s.subs.find((n) => n.id === subId);
+      if (child) return child;
+    }
+  }
+  return undefined;
+};
+export const subName = (subId: string) => {
+  for (const c of categories) {
+    for (const s of getAllSubCategories(c)) {
+      if (s.id === subId) return s.name;
+    }
+  }
+  return subId;
+};
 
 /** product_variants.size options */
 export const sareeSizeOptions = [

@@ -225,7 +225,7 @@ function DesignStudio() {
                 <h2 className="text-xs font-semibold tracking-[0.18em] text-muted-foreground uppercase">
                   Step 1 · Pick Category
                 </h2>
-                <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
+                <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
                   {categoriesList.map((c) => {
                     const isSelected = chosen === c.id;
                     return (

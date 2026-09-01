@@ -331,6 +331,7 @@ export function Reviews() {
             </label>
             <select
               id="review-product"
+              name="review-product"
               value={productId}
               onChange={(e) => setProductId(e.target.value)}
               className="mt-2 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm text-foreground outline-none transition-colors focus:border-gold"
@@ -365,6 +366,7 @@ export function Reviews() {
             </label>
             <input
               id="review-name"
+              name="review-name"
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="e.g. Divya Ramesh"
@@ -381,6 +383,7 @@ export function Reviews() {
             </label>
             <textarea
               id="review-text"
+              name="review-text"
               value={quote}
               onChange={(e) => setQuote(e.target.value)}
               rows={4}

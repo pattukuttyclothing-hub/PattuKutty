@@ -127,13 +127,14 @@ export const imagePools = pools;
 
 const rotate = <T,>(arr: T[], by: number) => arr.map((_, i) => arr[(i + by) % arr.length]!);
 
-export type CategoryId = "half-saree" | "frocks" | "sarees" | "blouses";
+export type CategoryId = "half-saree" | "frocks" | "sarees" | "blouses" | "salwar";
 
 export type SubCategory = {
   id: string;
   name: string;
   blurb: string;
   images: string[];
+  subs?: SubCategory[];
   designCount?: number;
   design_count?: number;
 };
@@ -253,7 +254,53 @@ export const categories: Category[] = [
       },
     ],
   },
+  {
+    id: "salwar",
+    name: "Salwar",
+    blurb: "Stitched tops, kurtis & unstitched dress materials",
+    image: `${CDN}/v1786514177/Kurti_7.jpg`,
+    subs: [
+      {
+        id: "salwar-readymade",
+        name: "Readymade",
+        blurb: "Stitched tops & kurtis ready to wear",
+        images: rotate(pools.frock, 1),
+        subs: [
+          {
+            id: "salwar-readymade-top",
+            name: "Top",
+            blurb: "Stitched salwar tops & tunics",
+            images: rotate(pools.frock, 2),
+          },
+          {
+            id: "salwar-readymade-kurthi",
+            name: "Kurthi",
+            blurb: "Designer kurtis & tunic sets",
+            images: rotate(pools.frock, 4),
+          },
+        ],
+      },
+      {
+        id: "salwar-materials",
+        name: "Materials",
+        blurb: "Unstitched dress materials & fabric sets",
+        images: rotate(pools.frock, 0),
+      },
+    ],
+  },
 ];
+
+// Helper function to flatten all subcategories including nested ones
+export const getAllSubCategories = (cat: Category): SubCategory[] => {
+  const list: SubCategory[] = [];
+  for (const s of cat.subs) {
+    list.push(s);
+    if (s.subs && s.subs.length > 0) {
+      list.push(...s.subs);
+    }
+  }
+  return list;
+};
 
 // Apply real brand marketing copy over the structural seed data.
 for (const cat of categories) {
@@ -262,6 +309,12 @@ for (const cat of categories) {
   for (const sub of cat.subs) {
     const sc = subCopy[sub.id];
     if (sc) sub.blurb = sc.blurb;
+    if (sub.subs) {
+      for (const nestedSub of sub.subs) {
+        const nsc = subCopy[nestedSub.id];
+        if (nsc) nestedSub.blurb = nsc.blurb;
+      }
+    }
   }
 }
 
@@ -271,6 +324,8 @@ export const findCategory = (id?: string) => {
   if (cat) return cat;
 
   const clean = id.toLowerCase().trim();
+  if (clean === "salwar" || clean === "salwars" || clean === "churidhar" || clean === "kurti" || clean === "kurthi")
+    return categories.find((c) => c.id === "salwar")!;
   if (clean === "blouse" || clean === "blouses") return categories.find((c) => c.id === "blouses")!;
   if (clean === "frock" || clean === "frocks") return categories.find((c) => c.id === "frocks")!;
   if (clean === "saree" || clean === "sarees") return categories.find((c) => c.id === "sarees")!;
@@ -278,8 +333,19 @@ export const findCategory = (id?: string) => {
 
   return categories[0]!;
 };
-export const findSub = (categoryId: string, subId: string) =>
-  findCategory(categoryId)?.subs.find((s) => s.id === subId);
+
+export const findSub = (categoryId: string, subId: string): SubCategory | undefined => {
+  const cat = findCategory(categoryId);
+  if (!cat) return undefined;
+  for (const s of cat.subs) {
+    if (s.id === subId) return s;
+    if (s.subs) {
+      const child = s.subs.find((n) => n.id === subId);
+      if (child) return child;
+    }
+  }
+  return undefined;
+};
 
 export type SizeVariant = {
   size: string;
@@ -333,7 +399,7 @@ const nameBits = ["Signature", "Heritage", "Studio", "Festive", "Couture", "Clas
 
 /** PRODUCTS — boutique model (one-of-a-kind design) */
 export const products: Product[] = categories.flatMap((cat) =>
-  cat.subs.flatMap((sub, sIdx) =>
+  getAllSubCategories(cat).flatMap((sub, sIdx) =>
     Array.from({ length: 4 }, (_, i) => {
       const imgs = rotate(sub.images, i);
       const base = 1499 + sIdx * 1800 + i * 950 + (cat.id === "half-saree" ? 5200 : 0);
@@ -364,8 +430,16 @@ export const products: Product[] = categories.flatMap((cat) =>
   ),
 );
 
-export const productsBySub = (categoryId: string, subId: string) =>
-  products.filter((p) => p.category === categoryId && p.sub === subId);
+export const productsBySub = (categoryId: string, subId: string) => {
+  const sub = findSub(categoryId, subId);
+  const targetSubIds = new Set<string>([subId]);
+  if (sub?.subs) {
+    for (const child of sub.subs) {
+      targetSubIds.add(child.id);
+    }
+  }
+  return products.filter((p) => p.category === categoryId && targetSubIds.has(p.sub));
+};
 export const productsByCategory = (categoryId: string) =>
   products.filter((p) => p.category === categoryId);
 export const findProduct = (id: string) => products.find((p) => p.id === id);

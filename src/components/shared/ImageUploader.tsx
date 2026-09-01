@@ -230,6 +230,8 @@ export function ImageUploader({
       </div>
 
       <input
+        id="addRefFileInput"
+        name="addRefFileInput"
         ref={addRef}
         type="file"
         accept="image/*"
@@ -241,6 +243,8 @@ export function ImageUploader({
         }}
       />
       <input
+        id="replaceRefFileInput"
+        name="replaceRefFileInput"
         ref={replaceRef}
         type="file"
         accept="image/*"

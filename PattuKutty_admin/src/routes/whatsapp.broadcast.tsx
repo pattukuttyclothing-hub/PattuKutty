@@ -81,22 +81,26 @@ function BroadcastPage() {
       <div className="mx-auto grid max-w-6xl gap-6 px-4 py-7 sm:px-6 lg:grid-cols-[1fr_380px]">
         <div className="space-y-6">
           <section className="space-y-4 rounded-3xl border border-border bg-card p-5 shadow-soft">
-            <label className="block">
+            <label htmlFor="broadcastTitle" className="block">
               <span className="text-[0.62rem] font-semibold tracking-[0.16em] text-muted-foreground uppercase">
                 Title
               </span>
               <input
+                id="broadcastTitle"
+                name="broadcastTitle"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 className="mt-1.5 w-full rounded-2xl border border-border bg-background p-3 text-sm text-foreground outline-none focus:border-primary"
               />
             </label>
 
-            <label className="block">
+            <label htmlFor="broadcastMessage" className="block">
               <span className="text-[0.62rem] font-semibold tracking-[0.16em] text-muted-foreground uppercase">
                 Message
               </span>
               <textarea
+                id="broadcastMessage"
+                name="broadcastMessage"
                 value={message}
                 onChange={(e) => setMessage(e.target.value)}
                 rows={5}
@@ -104,11 +108,13 @@ function BroadcastPage() {
               />
             </label>
 
-            <label className="block">
+            <label htmlFor="broadcastNote" className="block">
               <span className="text-[0.62rem] font-semibold tracking-[0.16em] text-muted-foreground uppercase">
                 Note from the studio
               </span>
               <input
+                id="broadcastNote"
+                name="broadcastNote"
                 value={note}
                 onChange={(e) => setNote(e.target.value)}
                 className="mt-1.5 w-full rounded-2xl border border-border bg-background p-3 text-sm text-foreground outline-none focus:border-primary"

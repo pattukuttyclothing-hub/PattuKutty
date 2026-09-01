@@ -298,6 +298,8 @@ export function ImageCropModal({
           <div className="flex items-center gap-3">
             <ZoomOut className="h-4 w-4 text-muted-foreground" />
             <input
+              id="zoomRange"
+              name="zoomRange"
               type="range"
               min="1.0"
               max="3.0"

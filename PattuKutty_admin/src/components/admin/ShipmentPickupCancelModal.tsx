@@ -98,10 +98,12 @@ export function ShipmentPickupCancelModal({
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-xs font-medium text-stone-700 mb-1">
+            <label htmlFor="pickupCancelReason" className="block text-xs font-medium text-stone-700 mb-1">
               Cancellation Reason (Optional)
             </label>
             <textarea
+              id="pickupCancelReason"
+              name="pickupCancelReason"
               value={reason}
               onChange={(e) => setReason(e.target.value)}
               placeholder="e.g. Customer requested dispatch date change or package delay"

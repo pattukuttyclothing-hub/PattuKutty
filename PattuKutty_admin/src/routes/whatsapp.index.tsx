@@ -209,6 +209,8 @@ function WhatsAppStudio() {
             <div className="relative max-w-md">
               <Search className="absolute top-1/2 left-4 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <input
+                id="waSearch"
+                name="waSearch"
                 value={q}
                 onChange={(e) => setQ(e.target.value)}
                 placeholder="Search by design name or campaign ID"

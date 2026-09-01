@@ -63,12 +63,23 @@ const categoryMeasurementFields: Record<string, { key: string; label: string }[]
     { key: "bust_round", label: "Bust Round (in)" },
     { key: "waist_round", label: "Waist Round (in)" },
   ],
+  salwar: [
+    { key: "bust_round", label: "Bust Round (in)" },
+    { key: "waist_round", label: "Waist Round (in)" },
+    { key: "hip_round", label: "Hip Round (in)" },
+    { key: "shoulder_width", label: "Shoulder Width (in)" },
+    { key: "sleeve_length", label: "Sleeve Length (in)" },
+    { key: "top_length", label: "Top / Kurthi Length (in)" },
+    { key: "bottom_length", label: "Bottom Length (in)" },
+  ],
 };
 
 export const makeSpec = (category?: string, sub?: string): Spec => {
   const cat = findCategory(category || "blouses");
   const validCategory = cat.id as CategoryId;
-  const validSub = sub && cat.subs?.some((s) => s.id === sub) ? sub : (cat.subs?.[0]?.id ?? "bridal-blouses");
+  const validSub = sub && cat.subs?.some((s) => s.id === sub || s.subs?.some((child) => child.id === sub))
+    ? sub
+    : (cat.subs?.[0]?.id ?? "bridal-blouses");
 
   return {
     category: validCategory,
@@ -180,12 +191,15 @@ export function SpecForm({
         <Field label={`${cat.name} style`}>
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
             {cat.subs.map((s) => {
-              const on = spec.sub === s.id;
+              const on = spec.sub === s.id || (s.subs && s.subs.some((child) => child.id === spec.sub));
               return (
                 <button
                   key={s.id}
                   type="button"
-                  onClick={() => set({ sub: s.id })}
+                  onClick={() => {
+                    const targetSub = s.subs && s.subs.length > 0 ? s.subs[0]!.id : s.id;
+                    set({ sub: targetSub });
+                  }}
                   className={`group relative overflow-hidden rounded-2xl border-2 text-left transition-all ${
                     on
                       ? "border-primary shadow-lift"
@@ -213,6 +227,38 @@ export function SpecForm({
               );
             })}
           </div>
+
+          {cat.subs.map((s) => {
+            const hasSubs = s.subs && s.subs.length > 0;
+            const isActiveParent = hasSubs && (spec.sub === s.id || s.subs!.some((child) => child.id === spec.sub));
+            if (!isActiveParent || !s.subs) return null;
+            return (
+              <div key={`nested-${s.id}`} className="mt-4 rounded-2xl border border-primary/30 bg-secondary/30 p-4">
+                <p className="mb-2 text-xs font-semibold tracking-wide text-foreground">
+                  Select {s.name} Type:
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  {s.subs.map((nestedSub) => {
+                    const isNestedOn = spec.sub === nestedSub.id;
+                    return (
+                      <button
+                        key={nestedSub.id}
+                        type="button"
+                        onClick={() => set({ sub: nestedSub.id })}
+                        className={`rounded-full border px-4 py-2 text-xs font-semibold transition-colors ${
+                          isNestedOn
+                            ? "border-primary bg-primary text-primary-foreground shadow-soft"
+                            : "border-border bg-card text-foreground hover:bg-secondary"
+                        }`}
+                      >
+                        {nestedSub.name}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            );
+          })}
         </Field>
 
         <Field
@@ -271,6 +317,8 @@ export function SpecForm({
               </span>
             ) : null}
             <input
+              id="colourFile"
+              name="colourFile"
               ref={colourFile}
               type="file"
               accept="image/*"
@@ -298,6 +346,8 @@ export function SpecForm({
 
         <Field label="Design details">
           <textarea
+            id="specDescription"
+            name="specDescription"
             value={spec.description}
             maxLength={1000}
             onChange={(e) => set({ description: e.target.value })}
@@ -313,6 +363,8 @@ export function SpecForm({
         <div className="grid gap-6 sm:grid-cols-2">
           <Field label="Phone" hint={<InfoTip text="Prefilled from your saved profile details. Edit it if we should reach you on another number." />}>
             <input
+              id="specPhone"
+              name="specPhone"
               value={spec?.phone || ""}
               maxLength={18}
               onChange={(e) => set({ phone: e.target.value })}
@@ -346,6 +398,8 @@ export function SpecForm({
             {(!sizeOptions.slice(0, -1).includes(spec.size) || spec.size === "Custom") ? (
               <div className="mt-3">
                 <input
+                  id="customSizeInput"
+                  name="customSizeInput"
                   type="text"
                   value={customSizeInput}
                   placeholder="Enter custom size label (e.g. Custom-42, 4XL)"
@@ -374,10 +428,12 @@ export function SpecForm({
                 const currentVal = spec.measurements?.[f.key];
                 return (
                   <div key={f.key} className="space-y-1">
-                    <label className="text-[0.7rem] font-medium text-foreground block">
+                    <label htmlFor={`meas_${f.key}`} className="text-[0.7rem] font-medium text-foreground block">
                       {f.label}
                     </label>
                     <input
+                      id={`meas_${f.key}`}
+                      name={`meas_${f.key}`}
                       type="number"
                       step="0.5"
                       min="1"

@@ -756,6 +756,8 @@ function RequestDetail() {
                     Name this design for the customer
                   </span>
                   <input
+                    id="quoteName"
+                    name="quoteName"
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     placeholder="e.g. Royal Peacock Zardosi Aari Blouse"
@@ -769,6 +771,8 @@ function RequestDetail() {
                       Reason for modification (Visible to customer)
                     </span>
                     <input
+                      id="quoteUpdateReason"
+                      name="quoteUpdateReason"
                       value={updateReason}
                       onChange={(e) => setUpdateReason(e.target.value)}
                       placeholder="e.g. Updated sleeve length & fabric colour per customer request"
@@ -787,6 +791,8 @@ function RequestDetail() {
                         ₹
                       </span>
                       <input
+                        id="quotePrice"
+                        name="quotePrice"
                         type="number"
                         min={0}
                         inputMode="numeric"
@@ -807,6 +813,8 @@ function RequestDetail() {
                         ₹
                       </span>
                       <input
+                        id="quoteDeliveryFee"
+                        name="quoteDeliveryFee"
                         type="number"
                         min={0}
                         inputMode="numeric"
@@ -823,6 +831,8 @@ function RequestDetail() {
                       Ready By Date
                     </span>
                     <input
+                      id="quoteReadyBy"
+                      name="quoteReadyBy"
                       type="date"
                       value={readyBy}
                       onChange={(e) => setReadyBy(e.target.value)}
@@ -962,6 +972,8 @@ function RequestDetail() {
                     Outfit Size
                   </span>
                   <select
+                    id="editSize"
+                    name="editSize"
                     value={editSize}
                     onChange={(e) => setEditSize(e.target.value)}
                     className="input w-full"
@@ -982,6 +994,8 @@ function RequestDetail() {
                     Quantity
                   </span>
                   <input
+                    id="editQty"
+                    name="editQty"
                     type="number"
                     min={1}
                     value={editQty}
@@ -996,6 +1010,8 @@ function RequestDetail() {
                   Requested Colour
                 </span>
                 <input
+                  id="editColour"
+                  name="editColour"
                   type="text"
                   value={editColour}
                   onChange={(e) => setEditColour(e.target.value)}
@@ -1009,6 +1025,8 @@ function RequestDetail() {
                   Fabric & Design Notes / Sizing Measurements
                 </span>
                 <textarea
+                  id="editNotes"
+                  name="editNotes"
                   value={editNotes}
                   onChange={(e) => setEditNotes(e.target.value)}
                   rows={4}
@@ -1066,6 +1084,8 @@ function RequestDetail() {
               Please enter the reason for rejecting this request. This will update the status to cancelled and display the reason to the customer.
             </p>
             <textarea
+              id="rejectReason"
+              name="rejectReason"
               value={rejectReason}
               onChange={(e) => setRejectReason(e.target.value)}
               placeholder="e.g., Fabric specification unavailable or out of capacity"

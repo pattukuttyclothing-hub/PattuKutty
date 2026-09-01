@@ -111,7 +111,7 @@ function OrderDetail() {
     return () => {
       active = false;
     };
-  }, [id, storeOrder]);
+  }, [id]);
 
   const o = fetchedOrder || storeOrder;
 
@@ -382,6 +382,8 @@ function OrderDetail() {
               Please enter the reason for cancelling this order. This will cancel any active BlueDart shipment and update the status.
             </p>
             <textarea
+              id="cancelReason"
+              name="cancelReason"
               value={cancelReason}
               onChange={(e) => setCancelReason(e.target.value)}
               placeholder="e.g. Customer requested cancellation before dispatch"

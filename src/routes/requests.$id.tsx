@@ -567,6 +567,8 @@ function RequestDetail() {
         onConfirm={handleConfirmUpdate}
       >
         <textarea
+          id="updateNoteText"
+          name="updateNoteText"
           value={updateNoteText}
           onChange={(e) => setUpdateNoteText(e.target.value)}
           rows={3}
@@ -589,6 +591,8 @@ function RequestDetail() {
         onConfirm={handleConfirmCancel}
       >
         <textarea
+          id="cancelReasonText"
+          name="cancelReasonText"
           value={reason}
           onChange={(e) => setReason(e.target.value)}
           rows={3}
