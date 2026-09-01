@@ -301,19 +301,7 @@ export class CatalogueRepository {
           .filter((p: any) => p && p.id && p.is_active !== false);
       }
 
-      // If fewer than 8 featured slots exist, supplement with remaining active catalogue products
-      let dbProducts: any[] = [];
-      if (featuredFromSlots.length < 8) {
-        const { data: catProducts } = await db
-          .from("products")
-          .select("*, images:product_images(*)")
-          .neq("is_active", false)
-          .order("created_at", { ascending: false })
-          .limit(12);
-        dbProducts = catProducts ?? [];
-      }
-
-      const rawProducts = [...featuredFromSlots, ...dbProducts];
+      const rawProducts = featuredFromSlots;
       if (!rawProducts.length) return [];
 
       // Deduplicate products strictly by product ID (preserving slot order)

@@ -40,6 +40,12 @@ const STORAGE_KEY = "butterflies-cart";
 
 export const inr = (n: number) => `₹${Math.round(n).toLocaleString("en-IN", { maximumFractionDigits: 0 })}`;
 
+export const matchesKey = (item: CartItem, key: string) =>
+  item.key === key ||
+  (Boolean(item.isCustom) && Boolean(item.customRequestId) && (key.includes(String(item.customRequestId)) || item.customRequestId === key)) ||
+  `${item.id}|${item.size}|${item.colour}` === key ||
+  item.id === key;
+
 export function CartProvider({ children }: { children: ReactNode }) {
   const [items, setItems] = useState<CartItem[]>([]);
 
@@ -74,14 +80,14 @@ export function CartProvider({ children }: { children: ReactNode }) {
     }
   }, [items]);
 
-  const matchesKey = (item: CartItem, key: string) =>
-    item.key === key || `${item.id}|${item.size}|${item.colour}` === key || item.id === key;
-
   const add = useCallback((item: Omit<CartItem, "key">) => {
     const key = `${item.id}|${item.size}|${item.colour}`;
     setItems((prev) => {
       const found = prev.find((p) => matchesKey(p, key));
       if (found) {
+        if (item.isCustom) {
+          return prev.map((p) => (matchesKey(p, key) ? { ...p, ...item, qty: item.qty } : p));
+        }
         return prev.map((p) => (matchesKey(p, key) ? { ...p, qty: p.qty + item.qty } : p));
       }
       return [...prev, { ...item, key }];

@@ -295,7 +295,7 @@ function ProductEditor() {
   };
 
   const updateVariantStock = (s: SizeOption, qty: number) => {
-    const safeQty = Math.max(0, qty);
+    const safeQty = Number.isNaN(qty) ? 0 : Math.max(0, qty);
     set({
       variants: currentVariants.map((v) =>
         v.size === s ? { ...v, stockQty: safeQty, available: safeQty > 0 } : v
@@ -826,7 +826,7 @@ function ProductEditor() {
                           name={`variant_stock_${v.size}`}
                           type="number"
                           min={0}
-                          value={v.stockQty !== undefined ? v.stockQty : (v.available ? 1 : 0)}
+                          value={v.stockQty ?? 0}
                           onChange={(e) => updateVariantStock(v.size, Number(e.target.value))}
                           className="w-16 rounded-xl border border-border bg-card px-2.5 py-1 text-xs outline-none focus:border-primary"
                         />

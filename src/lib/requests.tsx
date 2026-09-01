@@ -333,9 +333,9 @@ export const requestLabels: Record<RequestStatus, { label: string; tone: "review
 const isUuidString = (val?: string) =>
   !!val && /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(val);
 
-/** A request is treated as paid once the studio quotation has been accepted & settled. */
-export const isRequestPaid = (r: Pick<CustomRequest, "status">) =>
-  r.status === "accepted" || r.status === "ordered";
+/** A request is treated as paid once the studio quotation has been settled with a confirmed order. */
+export const isRequestPaid = (r: Pick<CustomRequest, "status" | "orderId">) =>
+  r.status === "ordered" || Boolean(r.orderId);
 
 export const requestTypeLabel = (r: CustomRequest) => {
   // 1. If admin assigned a quote title/name, prioritize it

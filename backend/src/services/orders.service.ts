@@ -365,7 +365,9 @@ export class OrdersService {
       if (!res.ok) {
         const errorText = await res.text();
         console.error("Razorpay Order Creation Failed:", res.status, errorText);
-        throw new Error("Payment gateway is temporarily unavailable. Please try again later.");
+        const gatewayErr = new Error(`Payment gateway unavailable (${res.status}): ${errorText || "Failed to create payment order"}`) as any;
+        gatewayErr.statusCode = 502;
+        throw gatewayErr;
       }
 
       const rzpData = (await res.json()) as { id: string };

@@ -628,9 +628,15 @@ export function AdminStoreProvider({ children }: { children: ReactNode }) {
           categoryId: p.category,
           subCategoryId: p.sub,
           description: p.description,
+          blurb: p.blurb,
+          badge: p.badge,
           basePrice: p.basePrice,
           mrp: p.mrp,
           deliveryCharge: p.deliveryCharge,
+          soldOut: p.soldOut,
+          isActive: p.isActive,
+          images: p.images,
+          variants: p.variants,
         }).catch(() => {});
       });
     },

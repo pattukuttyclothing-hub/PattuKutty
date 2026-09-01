@@ -265,6 +265,22 @@ function CheckoutPage() {
       ...(payment.razorpayOrderId ? { razorpayOrderId: payment.razorpayOrderId } : {}),
       ...(payment.razorpayPaymentId ? { razorpayPaymentId: payment.razorpayPaymentId } : {}),
     });
+
+    const customItems = items.filter((it) => it.isCustom && (it.customRequestId || it.id));
+    if (customItems.length > 0) {
+      const { acceptQuotation: apiAccept } = await import("@/lib/api/requests");
+      for (const it of customItems) {
+        try {
+          const reqId = it.customRequestId || it.id;
+          if (reqId) {
+            await apiAccept(reqId);
+          }
+        } catch (err) {
+          console.error("Failed to accept custom request post-order:", err);
+        }
+      }
+    }
+
     clear();
     setCelebration({ id: created.id, orderNo: created.orderNo, total: inr(created.total || total) });
   };
@@ -450,6 +466,21 @@ function CheckoutPage() {
                 if (!confirmedOrder || !confirmedOrder.id) {
                   reject(new Error("We couldn't verify that payment. No order was placed."));
                   return;
+                }
+
+                const customItems = items.filter((it) => it.isCustom && (it.customRequestId || it.id));
+                if (customItems.length > 0) {
+                  const { acceptQuotation: apiAccept } = await import("@/lib/api/requests");
+                  for (const it of customItems) {
+                    try {
+                      const reqId = it.customRequestId || it.id;
+                      if (reqId) {
+                        await apiAccept(reqId);
+                      }
+                    } catch (err) {
+                      console.error("Failed to accept custom request post-payment:", err);
+                    }
+                  }
                 }
 
                 clear();

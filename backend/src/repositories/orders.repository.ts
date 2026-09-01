@@ -46,6 +46,11 @@ export class OrdersRepository {
     if (orderErr) throw orderErr;
 
     // Insert line items (triggers atomic stock check via enforce_stock_on_order_item)
+    const customReqIdsToUpdate = new Set<string>();
+    if (cleanPayload.custom_request_id && typeof cleanPayload.custom_request_id === "string") {
+      customReqIdsToUpdate.add(cleanPayload.custom_request_id);
+    }
+
     const formattedItems = items.map((item) => {
       const customReqId =
         (item.custom_request_id as string | undefined) ??
@@ -53,9 +58,12 @@ export class OrdersRepository {
         (cleanPayload.custom_request_id as string | undefined) ??
         null;
 
+      if (customReqId && typeof customReqId === "string") {
+        customReqIdsToUpdate.add(customReqId);
+      }
+
       return {
         order_id: order.id,
-        custom_request_id: customReqId,
         variant_id: item.variant_id ?? item.variantId ?? null,
         product_name_snapshot: item.product_name_snapshot ?? item.productName ?? item.name ?? "Item",
         size_snapshot: item.size_snapshot ?? item.size ?? "S",
@@ -69,29 +77,22 @@ export class OrdersRepository {
     const { error: itemsErr } = await db.from("order_items").insert(formattedItems);
     if (itemsErr) throw itemsErr;
 
-    // Update custom_requests table status to 'ordered' in PostgreSQL DB for custom request items
-    const customReqIdsToUpdate = new Set<string>();
-    if (cleanPayload.custom_request_id && typeof cleanPayload.custom_request_id === "string") {
-      customReqIdsToUpdate.add(cleanPayload.custom_request_id);
-    }
-    for (const item of formattedItems) {
-      if (item.custom_request_id && typeof item.custom_request_id === "string") {
-        customReqIdsToUpdate.add(item.custom_request_id);
-      }
-    }
-
     for (const crId of customReqIdsToUpdate) {
-      const { error: crErr } = await db
+      const { data: updatedCr, error: crErr } = await db
         .from("custom_requests")
         .update({
           status: "ordered",
           updated_at: new Date().toISOString(),
         })
-        .eq("id", crId);
+        .eq("id", crId)
+        .select();
 
       if (crErr) {
         console.error(`[OrdersRepository] Failed to update custom_requests status for ${crId}:`, crErr.message);
         throw crErr;
+      }
+      if (!updatedCr || updatedCr.length === 0) {
+        throw new Error(`Failed to update custom request status for ${crId}: zero rows updated.`);
       }
     }
 
@@ -226,6 +227,11 @@ export class OrdersRepository {
     // Step 4: Insert order_items only if not already present and there are pending snapshots.
     // (fires enforce_stock_on_order_item trigger which atomically decrements stock)
     if (!itemsAlreadyInserted && pendingItems.length > 0) {
+      const customReqIdsToUpdate = new Set<string>();
+      if (claimed.custom_request_id && typeof claimed.custom_request_id === "string") {
+        customReqIdsToUpdate.add(claimed.custom_request_id);
+      }
+
       const formattedItems = pendingItems.map((item) => {
         const customReqId =
           (item.custom_request_id as string | undefined) ??
@@ -233,9 +239,12 @@ export class OrdersRepository {
           (claimed.custom_request_id as string | undefined) ??
           null;
 
+        if (customReqId && typeof customReqId === "string") {
+          customReqIdsToUpdate.add(customReqId);
+        }
+
         return {
           order_id: orderId,
-          custom_request_id: customReqId,
           variant_id: item.variant_id ?? item.variantId ?? null,
           product_name_snapshot: item.product_name_snapshot ?? item.productName ?? item.name ?? "Item",
           size_snapshot: item.size_snapshot ?? item.size ?? "S",
@@ -248,17 +257,6 @@ export class OrdersRepository {
 
       const { error: itemsErr } = await db.from("order_items").insert(formattedItems);
       if (itemsErr) throw itemsErr;
-
-      // Update custom_requests table status to 'ordered' in PostgreSQL DB for custom request items
-      const customReqIdsToUpdate = new Set<string>();
-      if (claimed.custom_request_id && typeof claimed.custom_request_id === "string") {
-        customReqIdsToUpdate.add(claimed.custom_request_id);
-      }
-      for (const item of formattedItems) {
-        if (item.custom_request_id && typeof item.custom_request_id === "string") {
-          customReqIdsToUpdate.add(item.custom_request_id);
-        }
-      }
 
       for (const crId of customReqIdsToUpdate) {
         const { error: crErr } = await db
