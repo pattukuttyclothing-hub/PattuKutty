@@ -51,7 +51,11 @@ function SubCategoryPage() {
     { name: sub.name, path: `/category/${cat.id}/${sub.id}` },
   ]);
 
-  const allSubs = getAllSubCategories(cat);
+  const topLevelSubs = cat.subs;
+  const readymadeParent = cat.subs.find(
+    (s) => s.subs && (s.id === sub.id || s.subs.some((c) => c.id === sub.id))
+  );
+  const childStyles = readymadeParent?.subs;
 
   return (
     <PageShell>
@@ -82,22 +86,49 @@ function SubCategoryPage() {
 
       <section className="bg-background py-8 lg:py-12">
         <div className="mx-auto max-w-7xl px-4 sm:px-6">
-          <div className="flex flex-wrap gap-2">
-            {allSubs.map((s) => (
-              <Link
-                key={s.id}
-                to="/category/$category/$sub"
-                params={{ category: cat.id, sub: s.id }}
-                className={`rounded-full border px-4 py-2 text-xs font-medium transition-colors ${
-                  s.id === sub.id
-                    ? "border-primary bg-primary text-primary-foreground"
-                    : "border-border bg-card text-foreground hover:bg-secondary"
-                }`}
-              >
-                {s.name}
-              </Link>
-            ))}
+          {/* Primary Subcategory Navigation Pills */}
+          <div className="flex flex-wrap items-center gap-2">
+            {topLevelSubs.map((s) => {
+              const isActive = s.id === sub.id || (s.subs && s.subs.some((c) => c.id === sub.id));
+              return (
+                <Link
+                  key={s.id}
+                  to="/category/$category/$sub"
+                  params={{ category: cat.id, sub: s.id }}
+                  className={`rounded-full border px-4 py-2 text-xs font-medium transition-colors ${
+                    isActive
+                      ? "border-primary bg-primary text-primary-foreground font-semibold"
+                      : "border-border bg-card text-foreground hover:bg-secondary"
+                  }`}
+                >
+                  {s.name}
+                </Link>
+              );
+            })}
           </div>
+
+          {/* Child Style Pills (ONLY shown for Readymade family: Top & Kurthi) */}
+          {childStyles && childStyles.length > 0 ? (
+            <div className="mt-3 flex flex-wrap items-center gap-2 border-t border-border/40 pt-3">
+              <span className="text-[0.7rem] font-semibold tracking-wider text-muted-foreground uppercase mr-1">
+                Styles:
+              </span>
+              {childStyles.map((s) => (
+                <Link
+                  key={s.id}
+                  to="/category/$category/$sub"
+                  params={{ category: cat.id, sub: s.id }}
+                  className={`rounded-full border px-3.5 py-1.5 text-xs font-medium transition-colors ${
+                    s.id === sub.id
+                      ? "border-primary bg-primary/10 text-primary font-semibold ring-1 ring-primary"
+                      : "border-border/70 bg-card text-foreground hover:bg-secondary"
+                  }`}
+                >
+                  {s.name}
+                </Link>
+              ))}
+            </div>
+          ) : null}
 
           {sub.subs && sub.subs.length > 0 ? (
             <div className="mt-8 mb-6">
@@ -109,13 +140,17 @@ function SubCategoryPage() {
                   Choose between Top or Kurthi to browse specific designs.
                 </p>
               </div>
-              <div className="grid grid-cols-2 gap-4 sm:gap-6 lg:grid-cols-3">
+              <div className="flex flex-wrap justify-center gap-4 sm:gap-6 lg:gap-8">
                 {sub.subs.map((nestedSub, i) => (
-                  <Reveal key={nestedSub.id} delay={stagger(i, 80)}>
+                  <Reveal
+                    key={nestedSub.id}
+                    delay={stagger(i, 80)}
+                    className="w-full sm:w-[calc(50%-0.75rem)] lg:w-[calc(33.333%-1.35rem)] max-w-[420px]"
+                  >
                     <Link
                       to="/category/$category/$sub"
                       params={{ category: cat.id, sub: nestedSub.id }}
-                      className="card-lift group relative block aspect-[4/5] sm:aspect-[3/3.8] overflow-hidden rounded-3xl bg-card shadow-lift"
+                      className="card-lift group relative block aspect-[4/5] sm:aspect-[3/3.8] w-full overflow-hidden rounded-3xl bg-card shadow-lift"
                     >
                       <AutoImageFade
                         images={nestedSub.images}

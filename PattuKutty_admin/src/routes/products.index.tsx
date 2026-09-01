@@ -56,8 +56,12 @@ function ProductsPage() {
     [products, cat, sub, q],
   );
 
-  const create = (_categoryId: CategoryId, _subId: string) => {
-    void navigate({ to: "/products/$id", params: { id: "new" } });
+  const create = (categoryId: CategoryId, subId: string) => {
+    void navigate({
+      to: "/products/$id",
+      params: { id: "new" },
+      search: { category: categoryId, sub: subId },
+    });
   };
 
   return (

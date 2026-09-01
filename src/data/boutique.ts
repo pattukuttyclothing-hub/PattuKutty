@@ -87,39 +87,37 @@ export const heroStats = [
   { value: "1 Hr", label: "Express Stitching" },
 ];
 
-const CDN = "https://res.cloudinary.com/vy7aodsr/image/upload";
-
 /** IMAGE POOLS — controlled by System Admin */
 const pools = {
   saree: [
-    `${CDN}/v1786514182/Saree_2.jpg`,
-    `${CDN}/v1786514182/Saree_1.jpg`,
-    `${CDN}/v1786514181/Saree_Carousel_Banner.jpg`,
-    `${CDN}/v1786514176/Saree_3_1.jpg`,
-    `${CDN}/v1786514179/Hero_1.jpg`,
+    "https://res.cloudinary.com/vy7aodsr/image/upload/v1786514182/Saree_2.jpg",
+    "https://res.cloudinary.com/vy7aodsr/image/upload/v1786514182/Saree_1.jpg",
+    "https://res.cloudinary.com/vy7aodsr/image/upload/v1786514181/Saree_Carousel_Banner.jpg",
+    "https://res.cloudinary.com/vy7aodsr/image/upload/v1786514176/Saree_3_1.jpg",
+    "https://res.cloudinary.com/vy7aodsr/image/upload/v1786514179/Hero_1.jpg",
   ],
   halfSaree: [
-    `${CDN}/v1786514177/Half_Saree_Carousel_Banner.jpg`,
-    `${CDN}/v1786514188/Half_Saree_3.jpg`,
-    `${CDN}/v1786514187/Half_Saree_4.jpg`,
-    `${CDN}/v1786514187/Half_Saree_5.jpg`,
-    `${CDN}/v1786514186/ClipDown.com_653704456_18349411366235782_5258352626430629678_n.jpg`,
-    `${CDN}/v1786514185/ClipDown.com_655209410_18349411375235782_4734640962354729668_n.jpg`,
+    "https://res.cloudinary.com/vy7aodsr/image/upload/v1786514177/Half_Saree_Carousel_Banner.jpg",
+    "https://res.cloudinary.com/vy7aodsr/image/upload/v1786514188/Half_Saree_3.jpg",
+    "https://res.cloudinary.com/vy7aodsr/image/upload/v1786514187/Half_Saree_4.jpg",
+    "https://res.cloudinary.com/vy7aodsr/image/upload/v1786514187/Half_Saree_5.jpg",
+    "https://res.cloudinary.com/vy7aodsr/image/upload/v1786514186/ClipDown.com_653704456_18349411366235782_5258352626430629678_n.jpg",
+    "https://res.cloudinary.com/vy7aodsr/image/upload/v1786514185/ClipDown.com_655209410_18349411375235782_4734640962354729668_n.jpg",
   ],
   blouse: [
-    `${CDN}/v1786515414/ClipDown.com_636776992_1234791172100082_8411992496655131403_n.jpg`,
-    `${CDN}/v1786515413/ClipDown.com_637145115_1234791462100053_6149715155187710123_n.jpg`,
-    `${CDN}/v1786515415/ClipDown.com_635728507_1234791218766744_5137578646251161937_n.jpg`,
-    `${CDN}/v1786515413/ClipDown.com_637799249_1234791785433354_6533404444269247280_n.jpg`,
+    "https://res.cloudinary.com/vy7aodsr/image/upload/v1786515414/ClipDown.com_636776992_1234791172100082_8411992496655131403_n.jpg",
+    "https://res.cloudinary.com/vy7aodsr/image/upload/v1786515413/ClipDown.com_637145115_1234791462100053_6149715155187710123_n.jpg",
+    "https://res.cloudinary.com/vy7aodsr/image/upload/v1786515415/ClipDown.com_635728507_1234791218766744_5137578646251161937_n.jpg",
+    "https://res.cloudinary.com/vy7aodsr/image/upload/v1786515413/ClipDown.com_637799249_1234791785433354_6533404444269247280_n.jpg",
   ],
   frock: [
-    `${CDN}/v1786514177/Kurti_7.jpg`,
-    `${CDN}/v1786514176/Kurti_Carousel_Banner.jpg`,
-    `${CDN}/v1786514175/Kurti_6_1.jpg`,
-    `${CDN}/v1786514178/Kurti_5.jpg`,
-    `${CDN}/v1786514182/Kurti_1.jpg`,
-    `${CDN}/v1786514183/Kurti_4.jpg`,
-    `${CDN}/v1786514184/Kurti_2.jpg`,
+    "https://res.cloudinary.com/vy7aodsr/image/upload/v1786514177/Kurti_7.jpg",
+    "https://res.cloudinary.com/vy7aodsr/image/upload/v1786514176/Kurti_Carousel_Banner.jpg",
+    "https://res.cloudinary.com/vy7aodsr/image/upload/v1786514175/Kurti_6_1.jpg",
+    "https://res.cloudinary.com/vy7aodsr/image/upload/v1786514178/Kurti_5.jpg",
+    "https://res.cloudinary.com/vy7aodsr/image/upload/v1786514182/Kurti_1.jpg",
+    "https://res.cloudinary.com/vy7aodsr/image/upload/v1786514183/Kurti_4.jpg",
+    "https://res.cloudinary.com/vy7aodsr/image/upload/v1786514184/Kurti_2.jpg",
   ],
 };
 
@@ -154,7 +152,7 @@ export const categories: Category[] = [
     id: "half-saree",
     name: "Half Saree",
     blurb: "Ceremony sets & bridal drapes",
-    image: `${CDN}/v1786514176/Saree_3_1.jpg`,
+    image: "https://res.cloudinary.com/vy7aodsr/image/upload/v1786514176/Saree_3_1.jpg",
     subs: [
       {
         id: "half-saree-classic",
@@ -180,7 +178,7 @@ export const categories: Category[] = [
     id: "frocks",
     name: "Frocks",
     blurb: "Everyday to wedding wear",
-    image: `${CDN}/v1786514176/Kurti_Carousel_Banner.jpg`,
+    image: "https://res.cloudinary.com/vy7aodsr/image/upload/v1786514176/Kurti_Carousel_Banner.jpg",
     subs: [
       {
         id: "normal-frocks",
@@ -206,7 +204,7 @@ export const categories: Category[] = [
     id: "sarees",
     name: "Sarees",
     blurb: "Silk, fancy & designer drapes",
-    image: `${CDN}/v1786514181/Saree_Carousel_Banner.jpg`,
+    image: "https://res.cloudinary.com/vy7aodsr/image/upload/v1786514181/Saree_Carousel_Banner.jpg",
     subs: [
       {
         id: "silk-sarees",
@@ -232,7 +230,7 @@ export const categories: Category[] = [
     id: "blouses",
     name: "Blouses",
     blurb: "Aari, maggam & designer work",
-    image: `${CDN}/v1786515414/ClipDown.com_636776992_1234791172100082_8411992496655131403_n.jpg`,
+    image: "https://res.cloudinary.com/vy7aodsr/image/upload/v1786515414/ClipDown.com_636776992_1234791172100082_8411992496655131403_n.jpg",
     subs: [
       {
         id: "bridal-blouses",
@@ -258,7 +256,7 @@ export const categories: Category[] = [
     id: "salwar",
     name: "Salwar",
     blurb: "Stitched tops, kurtis & unstitched dress materials",
-    image: `${CDN}/v1786514177/Kurti_7.jpg`,
+    image: "https://res.cloudinary.com/vy7aodsr/image/upload/v1786514177/Kurti_7.jpg",
     subs: [
       {
         id: "salwar-readymade",
@@ -545,7 +543,7 @@ export const reels = [
     title: "Bridal Lehenga Reveal",
     videoUrl:
       "https://res.cloudinary.com/vy7aodsr/video/upload/v1786515894/ClipDown.com_AQPPSE7-Q4Y4RtJooqD9SmiTlqWeE1O_c51iUC_p6PhhK521S4I3ABZScPvIne2E34NdDPeoqeKCGIrzRs2hxHzJ.mp4",
-    posterUrl: `${CDN}/v1786514177/Half_Saree_Carousel_Banner.jpg`,
+    posterUrl: "https://res.cloudinary.com/vy7aodsr/image/upload/v1786514177/Half_Saree_Carousel_Banner.jpg",
     productId: "lehenga-1",
   },
   {
@@ -553,7 +551,7 @@ export const reels = [
     title: "Aari Sleeve Embroidery",
     videoUrl:
       "https://res.cloudinary.com/vy7aodsr/video/upload/v1786515894/ClipDown.com_AQPPSE7-Q4Y4RtJooqD9SmiTlqWeE1O_c51iUC_p6PhhK521S4I3ABZScPvIne2E34NdDPeoqeKCGIrzRs2hxHzJ.mp4",
-    posterUrl: `${CDN}/v1786515414/ClipDown.com_636776992_1234791172100082_8411992496655131403_n.jpg`,
+    posterUrl: "https://res.cloudinary.com/vy7aodsr/image/upload/v1786515414/ClipDown.com_636776992_1234791172100082_8411992496655131403_n.jpg",
     productId: "bridal-blouses-1",
   },
   {
@@ -561,7 +559,7 @@ export const reels = [
     title: "Half Saree Drape Styling",
     videoUrl:
       "https://res.cloudinary.com/vy7aodsr/video/upload/v1786515894/ClipDown.com_AQPPSE7-Q4Y4RtJooqD9SmiTlqWeE1O_c51iUC_p6PhhK521S4I3ABZScPvIne2E34NdDPeoqeKCGIrzRs2hxHzJ.mp4",
-    posterUrl: `${CDN}/v1786514188/Half_Saree_3.jpg`,
+    posterUrl: "https://res.cloudinary.com/vy7aodsr/image/upload/v1786514188/Half_Saree_3.jpg",
     productId: "half-saree-classic-1",
   },
   {
@@ -569,7 +567,7 @@ export const reels = [
     title: "Kanchi Silk Blouse Stitch",
     videoUrl:
       "https://res.cloudinary.com/vy7aodsr/video/upload/v1786515894/ClipDown.com_AQPPSE7-Q4Y4RtJooqD9SmiTlqWeE1O_c51iUC_p6PhhK521S4I3ABZScPvIne2E34NdDPeoqeKCGIrzRs2hxHzJ.mp4",
-    posterUrl: `${CDN}/v1786514181/Saree_Carousel_Banner.jpg`,
+    posterUrl: "https://res.cloudinary.com/vy7aodsr/image/upload/v1786514181/Saree_Carousel_Banner.jpg",
     productId: "silk-sarees-1",
   },
   {
@@ -577,7 +575,7 @@ export const reels = [
     title: "1-Hour Express Fitting",
     videoUrl:
       "https://res.cloudinary.com/vy7aodsr/video/upload/v1786515894/ClipDown.com_AQPPSE7-Q4Y4RtJooqD9SmiTlqWeE1O_c51iUC_p6PhhK521S4I3ABZScPvIne2E34NdDPeoqeKCGIrzRs2hxHzJ.mp4",
-    posterUrl: `${CDN}/v1786514176/Kurti_Carousel_Banner.jpg`,
+    posterUrl: "https://res.cloudinary.com/vy7aodsr/image/upload/v1786514176/Kurti_Carousel_Banner.jpg",
     productId: "wedding-frocks-1",
   },
 ];

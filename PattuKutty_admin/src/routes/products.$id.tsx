@@ -13,6 +13,7 @@ import {
   isSareeCategory,
   sizeOptions,
   subName,
+  type CategoryId,
   type SizeOption,
 } from "@/data/boutique";
 import { useAdmin, totalStock, isProductSoldOut, type AdminProduct } from "@/lib/admin-store";
@@ -21,7 +22,13 @@ import { ImageCropModal } from "@/components/shared/ImageCropModal";
 import { inr } from "@/lib/format";
 
 
+type ProductEditorSearch = { category?: string | undefined; sub?: string | undefined };
+
 export const Route = createFileRoute("/products/$id")({
+  validateSearch: (s: Record<string, unknown>): ProductEditorSearch => ({
+    category: typeof s["category"] === "string" ? s["category"] : undefined,
+    sub: typeof s["sub"] === "string" ? s["sub"] : undefined,
+  }),
   head: () => ({
     meta: [
       { title: "Edit design — Pattu Kutty Admin" },
@@ -44,6 +51,7 @@ export const Route = createFileRoute("/products/$id")({
 
 function ProductEditor() {
   const { id } = Route.useParams();
+  const search = Route.useSearch();
   const navigate = useNavigate();
   const { findProduct, saveProduct, deleteProduct } = useAdmin();
   const stored = findProduct(id);
@@ -202,12 +210,14 @@ function ProductEditor() {
     if (stored && !draft) {
       setDraft(stored);
     } else if (!draft && isCreateMode) {
+      const initialCat = (search.category as CategoryId) || "blouses";
+      const initialSub = search.sub || "bridal-blouses";
       setDraft({
         id: id || `design-new-${Date.now().toString(36)}`,
         name: "",
         description: "",
-        category: "blouses",
-        sub: "bridal-blouses",
+        category: initialCat,
+        sub: initialSub,
         basePrice: 0,
         mrp: 0,
         blurb: "",
@@ -334,6 +344,9 @@ function ProductEditor() {
     }
     if (!d.category) {
       missing.push("Category");
+    }
+    if (!d.sub) {
+      missing.push("Sub-Category");
     }
     if (!d.basePrice || Number(d.basePrice) <= 0) {
       missing.push("Selling Price (must be > 0)");
@@ -650,20 +663,20 @@ function ProductEditor() {
                 />
               </Field>
             </div>
-            <div className="grid gap-4 sm:grid-cols-2">
+            <div className="space-y-4">
               <Field label="Category">
                 <div className="flex flex-wrap gap-2">
                   {categories.map((c) => {
-                    const firstSubId = getAllSubCategories(c)[0]?.id ?? c.subs[0]!.id;
+                    const firstSubId = c.subs[0]!.id;
                     return (
                       <button
                         key={c.id}
                         type="button"
                         onClick={() => set({ category: c.id, sub: firstSubId })}
-                        className={`flex items-center gap-2 rounded-full border py-1 pr-3 pl-1 text-[0.7rem] font-medium ${
+                        className={`flex items-center gap-2 rounded-full border py-1.5 pr-3.5 pl-1.5 text-[0.75rem] font-medium transition-colors ${
                           draft.category === c.id
-                            ? "border-primary bg-secondary text-primary"
-                            : "border-border"
+                            ? "border-primary bg-secondary text-primary font-bold shadow-xs"
+                            : "border-border hover:bg-secondary/50"
                         }`}
                       >
                         <img src={c.image} alt="" className="h-6 w-6 rounded-full object-cover object-top shrink-0 border border-border/50" />
@@ -673,23 +686,63 @@ function ProductEditor() {
                   })}
                 </div>
               </Field>
-              <Field label="Style">
+
+              <Field label="Sub-Category">
                 <div className="flex flex-wrap gap-2">
-                  {(cat ? getAllSubCategories(cat) : []).map((s) => (
-                    <button
-                      key={s.id}
-                      type="button"
-                      onClick={() => set({ sub: s.id })}
-                      className={`flex items-center gap-2 rounded-full border py-1 pr-3 pl-1 text-[0.7rem] font-medium ${
-                        draft.sub === s.id ? "border-primary bg-secondary text-primary" : "border-border"
-                      }`}
-                    >
-                      <img src={s.images[0]} alt="" className="h-6 w-6 rounded-full object-cover object-top shrink-0 border border-border/50" />
-                      {s.name}
-                    </button>
-                  ))}
+                  {(cat?.subs ?? []).map((s) => {
+                    const isMainSubActive =
+                      draft.sub === s.id || (s.subs && s.subs.some((child) => child.id === draft.sub));
+                    return (
+                      <button
+                        key={s.id}
+                        type="button"
+                        onClick={() => {
+                          const targetSub = s.subs && s.subs.length > 0 ? s.subs[0]!.id : s.id;
+                          set({ sub: targetSub });
+                        }}
+                        className={`flex items-center gap-2 rounded-full border py-1.5 pr-3.5 pl-1.5 text-[0.75rem] font-medium transition-colors ${
+                          isMainSubActive
+                            ? "border-primary bg-secondary text-primary font-bold shadow-xs"
+                            : "border-border hover:bg-secondary/50"
+                        }`}
+                      >
+                        <img src={s.images[0]} alt="" className="h-6 w-6 rounded-full object-cover object-top shrink-0 border border-border/50" />
+                        {s.name}
+                      </button>
+                    );
+                  })}
                 </div>
               </Field>
+
+              {/* Render child style options ONLY if active subcategory has sub-styles (e.g. Readymade -> Top / Kurthi) */}
+              {(cat?.subs ?? []).map((s) => {
+                const hasChildren = s.subs && s.subs.length > 0;
+                const isActiveParent =
+                  hasChildren && (draft.sub === s.id || s.subs!.some((child) => child.id === draft.sub));
+                if (!isActiveParent || !s.subs) return null;
+
+                return (
+                  <Field key={`admin-child-${s.id}`} label={`${s.name} Style Option`}>
+                    <div className="flex flex-wrap gap-2">
+                      {s.subs.map((child) => (
+                        <button
+                          key={child.id}
+                          type="button"
+                          onClick={() => set({ sub: child.id })}
+                          className={`flex items-center gap-2 rounded-full border py-1.5 pr-3.5 pl-1.5 text-[0.75rem] font-medium transition-colors ${
+                            draft.sub === child.id
+                              ? "border-primary bg-primary text-primary-foreground font-bold shadow-xs"
+                              : "border-border bg-card text-foreground hover:bg-secondary"
+                          }`}
+                        >
+                          <img src={child.images[0]} alt="" className="h-5 w-5 rounded-full object-cover object-top shrink-0 border border-border/50" />
+                          {child.name}
+                        </button>
+                      ))}
+                    </div>
+                  </Field>
+                );
+              })}
             </div>
             <label className="flex items-center gap-3 text-sm">
               <input

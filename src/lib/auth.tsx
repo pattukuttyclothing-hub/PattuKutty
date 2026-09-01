@@ -120,7 +120,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const prodWorkerUrl = "https://pattukutty.pattukuttyclothing.workers.dev";
         const currentOrigin = typeof window !== "undefined" ? window.location.origin : "";
         const isLocal = !currentOrigin || currentOrigin.includes("localhost") || currentOrigin.includes("127.0.0.1");
-        const redirectOrigin = isLocal ? (import.meta.env["VITE_SITE_URL"] || prodWorkerUrl) : currentOrigin;
+        const redirectOrigin = isLocal ? prodWorkerUrl : currentOrigin;
 
         const { data, error } = await supabase.auth.signUp({
           email: email.trim(),

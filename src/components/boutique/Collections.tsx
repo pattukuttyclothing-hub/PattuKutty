@@ -17,7 +17,7 @@ export function Collections() {
           subtitle="Tap a collection to browse the designs we stitch, with photos straight from the studio."
         />
 
-        <div className="mt-10 grid grid-cols-2 items-stretch gap-4 sm:mt-12 sm:gap-6 lg:grid-cols-3 xl:grid-cols-5 lg:gap-6">
+        <div className="mt-10 flex flex-wrap justify-center gap-4 sm:mt-12 sm:gap-6 lg:gap-8">
           {categories.map((c, i) => {
             const designCount =
               c.designCount != null
@@ -27,7 +27,11 @@ export function Collections() {
                   : c.subs.reduce((sum, s) => sum + (s.designCount || 0), 0);
 
             return (
-              <Reveal key={c.id} delay={stagger(i, 80)} className="flex h-full">
+              <Reveal
+                key={c.id}
+                delay={stagger(i, 80)}
+                className="w-[calc(50%-0.5rem)] sm:w-[calc(50%-0.75rem)] lg:w-[calc(33.333%-1.35rem)] max-w-[420px] min-w-[260px]"
+              >
                 <Link
                   to="/category/$category"
                   params={{ category: c.id }}

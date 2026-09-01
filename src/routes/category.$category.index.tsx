@@ -62,25 +62,29 @@ function CategoryPage() {
       />
 
       <PageSection>
-        <div className="grid grid-cols-2 gap-4 sm:gap-6 lg:grid-cols-3 lg:gap-8">
+        <div className="flex flex-wrap justify-center gap-4 sm:gap-6 lg:gap-8">
           {cat.subs.map((sub, i) => {
-              const count =
-                sub.designCount != null
-                  ? sub.designCount
-                  : sub.design_count;
-              // count === -1 means "no live DB data yet" — hide badge entirely
-              const badgeText = (count != null && count >= 0) ? `${count} ${count === 1 ? "design" : "designs"}` : null;
-              return (
-                <Reveal key={sub.id} delay={stagger(i, 80)}>
+            const count =
+              sub.designCount != null
+                ? sub.designCount
+                : sub.design_count;
+            // count === -1 means "no live DB data yet" — hide badge entirely
+            const badgeText = (count != null && count >= 0) ? `${count} ${count === 1 ? "design" : "designs"}` : null;
+            return (
+              <Reveal
+                key={sub.id}
+                delay={stagger(i, 80)}
+                className="w-full sm:w-[calc(50%-0.75rem)] lg:w-[calc(33.333%-1.35rem)] max-w-[420px]"
+              >
                 <Link
                   to="/category/$category/$sub"
                   params={{ category: cat.id, sub: sub.id }}
-                  className="card-lift group relative block aspect-[4/5] sm:aspect-[3/3.8] overflow-hidden rounded-3xl bg-card shadow-lift"
+                  className="card-lift group relative block aspect-[4/5] sm:aspect-[3/3.8] w-full overflow-hidden rounded-3xl bg-card shadow-lift"
                 >
                   <AutoImageFade
                     images={sub.images}
                     alt={`${sub.name} designs`}
-                    className="absolute inset-0 h-full w-full"
+                    className="absolute inset-0 h-full w-full object-cover object-top"
                     interval={7000}
                     offset={i * 1500}
                   />
@@ -104,10 +108,10 @@ function CategoryPage() {
                     </span>
                   </div>
                 </Link>
-                </Reveal>
-              );
-            })}
-          </div>
+              </Reveal>
+            );
+          })}
+        </div>
       </PageSection>
     </PageShell>
   );

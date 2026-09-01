@@ -49,6 +49,16 @@ const fallbackCategories = [
       { id: "designer-blouses", name: "Designer Blouses", blurb: "Aari and maggam couture" },
     ],
   },
+  {
+    id: "salwar",
+    name: "Salwar",
+    blurb: "Stitched tops, kurtis & unstitched dress materials",
+    image: "https://res.cloudinary.com/vy7aodsr/image/upload/v1786514177/Kurti_7.jpg",
+    subs: [
+      { id: "salwar-readymade", name: "Readymade", blurb: "Stitched tops & kurtis ready to wear" },
+      { id: "salwar-materials", name: "Materials", blurb: "Unstitched dress materials & fabric sets" },
+    ],
+  },
 ];
 
 const fallbackProducts = [
