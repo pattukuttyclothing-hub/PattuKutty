@@ -79,13 +79,46 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       .select("id, full_name, phone")
       .eq("id", userId)
       .maybeSingle()
-      .then(({ data }) => {
-        if (active) setProfile((data as Profile | null) ?? { id: userId, full_name: null, phone: null });
+      .then(async ({ data }) => {
+        if (!active) return;
+        let userProfile = data as Profile | null;
+        const meta = session?.user?.user_metadata as { full_name?: string; phone?: string } | undefined;
+        const nameFromMeta = meta?.full_name?.trim();
+        const phoneFromMeta = meta?.phone?.trim();
+
+        if ((!userProfile || !userProfile.full_name || !userProfile.phone) && (nameFromMeta || phoneFromMeta)) {
+          try {
+            await supabase.from("customers").upsert({
+              id: userId,
+              full_name: nameFromMeta || userProfile?.full_name || null,
+              phone: phoneFromMeta || userProfile?.phone || null,
+              updated_at: new Date().toISOString(),
+            });
+            userProfile = {
+              id: userId,
+              full_name: nameFromMeta || userProfile?.full_name || null,
+              phone: phoneFromMeta || userProfile?.phone || null,
+            };
+          } catch {
+            /* ignore auto-sync error */
+          }
+        }
+
+        setProfile(userProfile ?? { id: userId, full_name: nameFromMeta || null, phone: phoneFromMeta || null });
+
+        // Broadcast signin event to sync other open tabs
+        try {
+          if (typeof window !== "undefined") {
+            localStorage.setItem("pk_auth_broadcast", JSON.stringify({ userId, timestamp: Date.now() }));
+          }
+        } catch {
+          /* ignore */
+        }
       });
     return () => {
       active = false;
     };
-  }, [userId]);
+  }, [userId, session]);
 
   const signIn = useCallback(async (email: string, password: string) => {
     const { error } = await supabase.auth.signInWithPassword({ email, password });

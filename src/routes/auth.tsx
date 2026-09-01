@@ -1,6 +1,6 @@
 import { useEffect, useState, useId } from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { Eye, EyeOff, Loader2, Lock, Mail, Phone, User as UserIcon } from "lucide-react";
+import { ArrowRight, CheckCircle2, ExternalLink, Eye, EyeOff, Loader2, Lock, Mail, Phone, User as UserIcon } from "lucide-react";
 import { toast } from "sonner";
 import { PageHeader, PageShell } from "@/components/shared/Page";
 import { LotusMotif } from "@/components/boutique/Motifs";
@@ -82,12 +82,35 @@ function AuthPage() {
   const [notice, setNotice] = useState<string | null>(null);
   const [infoModalOpen, setInfoModalOpen] = useState(false);
   const [unconfirmedEmail, setUnconfirmedEmail] = useState("");
+  const [registrationSuccessModalOpen, setRegistrationSuccessModalOpen] = useState(false);
 
+  // Cross-tab authentication listener (detects when user confirms in another tab)
+  useEffect(() => {
+    const handleStorage = (e: StorageEvent) => {
+      if (e.key === "pk_auth_broadcast" && e.newValue) {
+        setInfoModalOpen(false);
+        setRegistrationSuccessModalOpen(true);
+      }
+    };
+    window.addEventListener("storage", handleStorage);
+    return () => window.removeEventListener("storage", handleStorage);
+  }, []);
+
+  // Process authenticated user state & email confirmation redirects
   useEffect(() => {
     if (!ready || !user) return;
-    const stored = readStoredNext();
-    void navigate({ to: (next ?? stored ?? "/") as string });
-  }, [ready, user, next, navigate]);
+    const isConfirmationRedirect =
+      typeof window !== "undefined" &&
+      (window.location.hash.includes("access_token") || window.location.search.includes("code="));
+
+    if (isConfirmationRedirect || infoModalOpen) {
+      setInfoModalOpen(false);
+      setRegistrationSuccessModalOpen(true);
+    } else if (!registrationSuccessModalOpen) {
+      const stored = readStoredNext();
+      void navigate({ to: (next ?? stored ?? "/") as string });
+    }
+  }, [ready, user, next, navigate, registrationSuccessModalOpen, infoModalOpen]);
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -287,21 +310,72 @@ function AuthPage() {
             <div className="rounded-2xl border border-primary/20 bg-primary/5 p-4 text-xs text-foreground text-left space-y-2">
               <p className="font-semibold text-primary">Next steps to activate your account:</p>
               <ol className="list-decimal pl-4 space-y-1.5 text-muted-foreground">
-                <li>Open your email inbox (and check spam folder if needed).</li>
-                <li>Click the <strong className="text-foreground">Confirm Email</strong> link inside the mail.</li>
-                <li>Return here to sign in with your password.</li>
+                <li>Open your email inbox (or spam folder).</li>
+                <li>Click <strong className="text-foreground">Confirm Email</strong> inside the message.</li>
+                <li>Return to this tab or continue where you left off.</li>
               </ol>
             </div>
-            <div className="pt-2">
+            <div className="pt-2 space-y-2.5">
+              <button
+                type="button"
+                onClick={() => {
+                  if (typeof window !== "undefined") {
+                    window.open("https://mail.google.com", "_blank", "noopener,noreferrer");
+                  }
+                }}
+                className="flex w-full items-center justify-center gap-2 rounded-full bg-primary py-3.5 text-sm font-semibold text-primary-foreground shadow-soft transition-transform hover:scale-[1.01]"
+              >
+                <ExternalLink className="h-4 w-4" /> Open Email Inbox
+              </button>
               <button
                 type="button"
                 onClick={() => {
                   setInfoModalOpen(false);
                   setMode("signin");
                 }}
-                className="w-full rounded-full bg-primary py-3.5 text-sm font-semibold text-primary-foreground shadow-soft transition-transform hover:scale-[1.01]"
+                className="w-full rounded-full border border-border py-2.5 text-xs font-medium text-muted-foreground hover:bg-secondary hover:text-foreground"
               >
-                Got it, I'll Check My Email
+                I'll Check My Email Later
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      {/* Zero False Success — Verified Registration Success Modal */}
+      {registrationSuccessModalOpen ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
+          <div className="w-full max-w-md rounded-3xl border border-emerald-500/30 bg-card p-6 shadow-2xl space-y-4 text-center">
+            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-emerald-500/15 text-emerald-600">
+              <CheckCircle2 className="h-9 w-9" />
+            </div>
+            <h3 className="font-display text-2xl font-semibold text-foreground">
+              Registration Confirmed!
+            </h3>
+            <p className="text-sm leading-relaxed text-muted-foreground">
+              Thank you for registering with <strong className="text-foreground font-medium">Pattu Kutty</strong>. Your email has been verified successfully and your account is active.
+            </p>
+            <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/5 p-4 text-xs text-foreground text-left">
+              <p className="font-semibold text-emerald-700 dark:text-emerald-400">Account Active & Synced:</p>
+              <p className="mt-1 text-muted-foreground">
+                Your saved measurements, delivery address, and design requests are ready for your orders.
+              </p>
+            </div>
+            <div className="pt-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setRegistrationSuccessModalOpen(false);
+                  const stored = readStoredNext();
+                  const target = (next ?? stored ?? "/") as string;
+                  void navigate({ to: target });
+                }}
+                className="flex w-full items-center justify-center gap-2 rounded-full bg-primary py-3.5 text-sm font-semibold text-primary-foreground shadow-soft transition-transform hover:scale-[1.01]"
+              >
+                {next?.includes("checkout") || readStoredNext()?.includes("checkout")
+                  ? "Continue to Checkout"
+                  : "Explore Collections"}
+                <ArrowRight className="h-4 w-4" />
               </button>
             </div>
           </div>

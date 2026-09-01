@@ -105,14 +105,26 @@ export function ImageCropModal({
     (e.target as HTMLElement).releasePointerCapture?.(e.pointerId);
   };
 
-  // Wheel zoom handler
-  const handleWheel = (e: React.WheelEvent) => {
-    e.preventDefault();
-    const delta = e.deltaY < 0 ? 0.1 : -0.1;
-    const nextZoom = Math.min(3.0, Math.max(1.0, zoom + delta));
-    setZoom(nextZoom);
-    setOffset((prev) => clampOffset(prev.x, prev.y, nextZoom, rotation));
-  };
+  // Non-passive wheel zoom handler to prevent "Unable to preventDefault inside passive event listener invocation"
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container || !open) return;
+
+    const handleWheel = (e: WheelEvent) => {
+      e.preventDefault();
+      const delta = e.deltaY < 0 ? 0.1 : -0.1;
+      setZoom((prevZoom) => {
+        const nextZoom = Math.min(3.0, Math.max(1.0, prevZoom + delta));
+        setOffset((prevOffset) => clampOffset(prevOffset.x, prevOffset.y, nextZoom, rotation));
+        return nextZoom;
+      });
+    };
+
+    container.addEventListener("wheel", handleWheel, { passive: false });
+    return () => {
+      container.removeEventListener("wheel", handleWheel);
+    };
+  }, [open, rotation, clampOffset]);
 
   const handleRotate = () => {
     const nextRot = (rotation + 90) % 360;
@@ -253,7 +265,6 @@ export function ImageCropModal({
         <div
           ref={containerRef}
           style={{ width: cropBoxWidth, height: cropBoxHeight }}
-          onWheel={handleWheel}
           onPointerDown={handlePointerDown}
           onPointerMove={handlePointerMove}
           onPointerUp={handlePointerUp}
