@@ -514,6 +514,18 @@ export class RequestsService {
     }
 
     return pubData.publicUrl;
+
+    /*
+    // ── FUTURE CLOUDFLARE R2 UPLOAD ALTERNATIVE (UNCOMMENT WHEN R2 IS ACTIVE FOR CUSTOM IMAGES) ──
+    // if (bucketType === "image" || bucketType === "colour") {
+    //   return await R2StorageService.uploadFile(
+    //     "R2_CUSTOM_IMAGES",
+    //     pathInBucket,
+    //     filePayload.buffer,
+    //     finalMime
+    //   );
+    // }
+    */
   }
 
   static async updateDesignAdmin(

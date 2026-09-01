@@ -65,7 +65,7 @@ export async function saveAddress(
         method: "POST",
         body: JSON.stringify({
           fullName: address.fullName,
-          phone: address.phone,
+          phone: address.phone ? address.phone.replace(/\D/g, "") : "",
           line1: address.line1,
           line2: address.line2 ?? null,
           landmark: address.landmark ?? null,
@@ -98,7 +98,7 @@ export async function updateAddress(
         method: "PATCH",
         body: JSON.stringify({
           fullName: address.fullName,
-          phone: address.phone,
+          phone: address.phone ? address.phone.replace(/\D/g, "") : "",
           line1: address.line1,
           line2: address.line2 ?? null,
           landmark: address.landmark ?? null,

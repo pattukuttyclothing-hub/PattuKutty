@@ -44,7 +44,7 @@ import { z } from "zod";
 const addressBodySchema = z.object({
   fullName: z.string().trim().min(1, "Full name is required").optional(),
   full_name: z.string().trim().min(1, "Full name is required").optional(),
-  phone: z.string().trim().regex(/^[0-9]{10,15}$/, "Valid mobile number (10-15 digits) is required"),
+  phone: z.string().transform((val) => val.replace(/\D/g, "")).pipe(z.string().regex(/^[0-9]{10,15}$/, "Valid mobile number (10-15 digits) is required")),
   line1: z.string().trim().min(3, "Address line 1 is required"),
   line2: z.string().trim().optional().nullable(),
   line_2: z.string().trim().optional().nullable(),

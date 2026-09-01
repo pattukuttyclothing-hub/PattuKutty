@@ -94,7 +94,7 @@ function Input({
         id={inputId}
         name={inputName}
         {...props}
-        className="w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm text-foreground outline-none transition-colors placeholder:text-muted-foreground focus:border-primary"
+        className="w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm text-foreground outline-none transition-colors placeholder:text-muted-foreground/45 focus:border-primary"
       />
     </label>
   );
@@ -677,7 +677,7 @@ function CheckoutPage() {
                         label="Full name"
                         value={form.fullName}
                         onChange={(e) => setForm({ ...form, fullName: e.target.value })}
-                        placeholder="Your name"
+                        placeholder="Enter your full name"
                       />
                       <Input
                         id="phone"
@@ -687,7 +687,7 @@ function CheckoutPage() {
                         maxLength={13}
                         value={form.phone}
                         onChange={(e) => setForm({ ...form, phone: e.target.value })}
-                        placeholder="10-digit mobile"
+                        placeholder="Enter 10-digit mobile number"
                       />
                       <div className="sm:col-span-2">
                         <Input
@@ -696,7 +696,7 @@ function CheckoutPage() {
                           label="Flat / house no, street"
                           value={form.line1}
                           onChange={(e) => setForm({ ...form, line1: e.target.value })}
-                          placeholder="12, Gandhi Street"
+                          placeholder="Enter flat / house no, building, street"
                         />
                       </div>
                       <Input
@@ -705,7 +705,7 @@ function CheckoutPage() {
                         label="Area / locality (optional)"
                         value={form.line2 ?? ""}
                         onChange={(e) => setForm({ ...form, line2: e.target.value })}
-                        placeholder="R.S. Puram"
+                        placeholder="Enter area / locality"
                       />
                       <Input
                         id="landmark"
@@ -713,7 +713,7 @@ function CheckoutPage() {
                         label="Landmark (optional)"
                         value={form.landmark ?? ""}
                         onChange={(e) => setForm({ ...form, landmark: e.target.value })}
-                        placeholder="Near temple"
+                        placeholder="Enter nearby landmark"
                       />
                       <Input
                         id="city"
@@ -721,7 +721,7 @@ function CheckoutPage() {
                         label="City"
                         value={form.city}
                         onChange={(e) => setForm({ ...form, city: e.target.value })}
-                        placeholder="Coimbatore"
+                        placeholder="Enter city"
                       />
                       <Input
                         id="state"
@@ -729,6 +729,7 @@ function CheckoutPage() {
                         label="State"
                         value={form.state}
                         onChange={(e) => setForm({ ...form, state: e.target.value })}
+                        placeholder="Enter state"
                       />
                       <Input
                         id="pincode"
@@ -738,7 +739,7 @@ function CheckoutPage() {
                         maxLength={6}
                         value={form.pincode}
                         onChange={(e) => setForm({ ...form, pincode: e.target.value })}
-                        placeholder="Enter your PIN code"
+                        placeholder="Enter 6-digit PIN code"
                       />
                       <div className="sm:col-span-2">
                         <span className="mb-1.5 block text-xs font-medium tracking-wide text-muted-foreground uppercase">
@@ -865,7 +866,7 @@ function CheckoutPage() {
                   </ul>
                   <label htmlFor="checkoutNotes" className="block">
                     <span className="mb-1.5 block text-xs font-medium tracking-wide text-muted-foreground uppercase">
-                      Stitching / delivery notes (optional)
+                      Stitching / delivery notes (optional — leave blank to skip)
                     </span>
                     <textarea
                       id="checkoutNotes"
@@ -874,10 +875,13 @@ function CheckoutPage() {
                       value={notes}
                       onChange={(e) => setNotes(e.target.value)}
                       maxLength={500}
-                      placeholder="Sleeve length, lining preference, delivery timing…"
-                      className="w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm text-foreground outline-none focus:border-primary"
+                      placeholder="Sleeve length, lining preference, or delivery timing (optional)…"
+                      className="w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm text-foreground outline-none focus:border-primary placeholder:text-muted-foreground/45"
                     />
                   </label>
+                  <p className="mt-2 text-center text-xs text-muted-foreground">
+                    Ready to pay? Click below to select payment method (Razorpay or Pay on Delivery).
+                  </p>
                   <button
                     type="button"
                     onClick={() => setStep(3)}

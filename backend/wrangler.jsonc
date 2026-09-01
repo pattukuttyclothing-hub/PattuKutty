@@ -11,5 +11,18 @@
     "NODE_ENV": "production",
     "SUPABASE_URL": "https://tfdpnrdnoxriwdbzuxrv.supabase.co",
     "ALLOWED_ORIGINS": "https://pattukutty.pattukuttyclothing.workers.dev,https://pattukutty-admin.pattukuttyclothing.workers.dev"
+    // "R2_PUBLIC_DOMAIN": "https://pub-xxxxxxxx.r2.dev"
   }
+  /*
+  ,"r2_buckets": [
+    {
+      "binding": "R2_PRODUCT_IMAGES",
+      "bucket_name": "pattukutty-product-images"
+    },
+    {
+      "binding": "R2_CUSTOM_IMAGES",
+      "bucket_name": "pattukutty-custom-request-images"
+    }
+  ]
+  */
 }

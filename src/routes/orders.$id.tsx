@@ -642,6 +642,19 @@ function OrderTrackingPage() {
               </div>
             </div>
 
+            {/* Stitching / Delivery Notes */}
+            {order.notes ? (
+              <div className="rounded-3xl border border-border bg-card p-6 shadow-soft">
+                <div className="flex items-center gap-2">
+                  <MessageCircle className="h-5 w-5 text-primary" />
+                  <h2 className="font-display text-lg font-semibold text-foreground">Stitching / Delivery Notes</h2>
+                </div>
+                <p className="mt-3 rounded-2xl bg-secondary/50 p-4 text-sm leading-relaxed text-foreground whitespace-pre-wrap">
+                  {order.notes}
+                </p>
+              </div>
+            ) : null}
+
             {/* Reviews */}
             <ReviewPanel order={order} />
           </div>

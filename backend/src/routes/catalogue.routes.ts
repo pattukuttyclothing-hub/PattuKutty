@@ -200,6 +200,16 @@ catalogueRouter.post("/admin/upload/product-image", requireAuth, requireAdmin, a
     const url = publicUrlData?.publicUrl || `${env.SUPABASE_URL}/storage/v1/object/public/product-images/${filename}`;
     console.log(`[PRODUCT-IMAGE-UPLOAD] Generated Public URL: '${url}'`);
 
+    /*
+    // ── FUTURE CLOUDFLARE R2 UPLOAD ALTERNATIVE (UNCOMMENT WHEN R2 IS ACTIVE) ──
+    // const url = await R2StorageService.uploadFile(
+    //   "R2_PRODUCT_IMAGES",
+    //   filename,
+    //   filePayload.buffer,
+    //   filePayload.mimeType
+    // );
+    */
+
     // Optional DB Record Insertion if productId is passed
     const targetProductId = (req.query?.productId || (req.body && typeof req.body === "object" ? req.body.productId : undefined)) as string | undefined;
     if (targetProductId && typeof targetProductId === "string") {
