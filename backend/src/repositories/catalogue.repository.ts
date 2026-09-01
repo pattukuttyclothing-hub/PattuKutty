@@ -632,17 +632,69 @@ export class CatalogueRepository {
     if (!catIdOrSlug) return null;
     if (this.isUUID(catIdOrSlug)) return catIdOrSlug;
     try {
-      const { data } = await db.from("categories").select("id").eq("slug", catIdOrSlug).single();
-      return data?.id ?? null;
+      const { data } = await db.from("categories").select("id").eq("slug", catIdOrSlug).maybeSingle();
+      if (data?.id) return data.id;
+
+      // Auto-create category row in PostgreSQL if missing
+      const categoryNames: Record<string, string> = {
+        "half-saree": "Half Saree",
+        "frocks": "Frocks",
+        "sarees": "Sarees",
+        "blouses": "Blouses",
+        "salwar": "Salwar",
+      };
+      const name = categoryNames[catIdOrSlug] || catIdOrSlug.replace(/-/g, " ").replace(/\b\w/g, (l) => l.toUpperCase());
+      const { data: newCat } = await db.from("categories").insert({ slug: catIdOrSlug, name }).select("id").maybeSingle();
+      return newCat?.id ?? null;
     } catch { return null; }
   }
 
-  private static async resolveSubCategoryUuid(subIdOrSlug?: string): Promise<string | null> {
+  private static async resolveSubCategoryUuid(subIdOrSlug?: string, categorySlugOrUuid?: string): Promise<string | null> {
     if (!subIdOrSlug) return null;
     if (this.isUUID(subIdOrSlug)) return subIdOrSlug;
     try {
-      const { data } = await db.from("sub_categories").select("id").eq("slug", subIdOrSlug).single();
-      return data?.id ?? null;
+      const { data } = await db.from("sub_categories").select("id").eq("slug", subIdOrSlug).maybeSingle();
+      if (data?.id) return data.id;
+
+      // Auto-create sub_category row in PostgreSQL if missing
+      let parentCatUuid: string | null = null;
+      if (categorySlugOrUuid) {
+        parentCatUuid = await this.resolveCategoryUuid(categorySlugOrUuid);
+      }
+      if (!parentCatUuid) {
+        // Find default category
+        const { data: defaultCat } = await db.from("categories").select("id").limit(1).maybeSingle();
+        parentCatUuid = defaultCat?.id ?? null;
+      }
+
+      if (parentCatUuid) {
+        const subNames: Record<string, string> = {
+          "half-saree-classic": "Half Saree",
+          "lehenga": "Lehenga",
+          "pattu-pudavai": "Pattu Pudavai",
+          "normal-frocks": "Normal Frocks",
+          "wedding-frocks": "Wedding Frocks",
+          "designer-frocks": "Designer Frocks",
+          "silk-sarees": "Silk Sarees",
+          "fancy-sarees": "Fancy Sarees",
+          "designer-sarees": "Designer Sarees",
+          "bridal-blouses": "Bridal Blouses",
+          "pattern-blouses": "Pattern Blouses",
+          "designer-blouses": "Designer Blouses",
+          "salwar-readymade": "Readymade",
+          "salwar-materials": "Materials",
+          "salwar-readymade-top": "Top",
+          "salwar-readymade-kurthi": "Kurthi",
+        };
+        const name = subNames[subIdOrSlug] || subIdOrSlug.replace(/-/g, " ").replace(/\b\w/g, (l) => l.toUpperCase());
+        const { data: newSub } = await db
+          .from("sub_categories")
+          .insert({ category_id: parentCatUuid, slug: subIdOrSlug, name })
+          .select("id")
+          .maybeSingle();
+        return newSub?.id ?? null;
+      }
+      return null;
     } catch { return null; }
   }
 
@@ -962,8 +1014,8 @@ export class CatalogueRepository {
         counter++;
       }
 
-      const catUuid = await this.resolveCategoryUuid(String(payload.categoryId || payload.category || "blouse"));
-      const subUuid = await this.resolveSubCategoryUuid(String(payload.subCategoryId || payload.sub || ""));
+      const catUuid = await this.resolveCategoryUuid(String(payload.categoryId || payload.category || "blouses"));
+      const subUuid = await this.resolveSubCategoryUuid(String(payload.subCategoryId || payload.sub || ""), catUuid ?? undefined);
 
       if (!catUuid) {
         throw new Error("Invalid or missing category");

@@ -53,12 +53,13 @@ function ProductEditor() {
   const { id } = Route.useParams();
   const search = Route.useSearch();
   const navigate = useNavigate();
-  const { findProduct, saveProduct, deleteProduct } = useAdmin();
+  const { findProduct, saveProduct, deleteProduct, reloadProducts } = useAdmin();
   const stored = findProduct(id);
   const [draft, setDraft] = useState<AdminProduct | undefined>(stored);
   const [soldOutConfirm, setSoldOutConfirm] = useState<SizeOption | null>(null);
   const [deleteConfirmImage, setDeleteConfirmImage] = useState<string | null>(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deletingProduct, setDeletingProduct] = useState(false);
   const [updateConfirmImage, setUpdateConfirmImage] = useState<string | null>(null);
   const [deletingImage, setDeletingImage] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -77,6 +78,26 @@ function ProductEditor() {
     () => id === "new" || id === "create" || id.startsWith("design-new"),
     [id],
   );
+
+  const handleConfirmDeleteProduct = async () => {
+    if (!draft?.id || isCreateMode) return;
+    setDeletingProduct(true);
+    try {
+      await apiDeleteProduct(draft.id);
+      deleteProduct(draft.id);
+      reloadProducts();
+      toast.success("Design deleted from database successfully.");
+      setShowDeleteModal(false);
+      void navigate({ to: "/products", replace: true });
+    } catch (err: any) {
+      const errorText = err?.message || "Failed to delete design from server. Please try again.";
+      setNetworkErrorMsg(errorText);
+      setShowDeleteModal(false);
+      setShowNetworkErrorModal(true);
+    } finally {
+      setDeletingProduct(false);
+    }
+  };
 
   // Crop State for Admin
   const [pendingAdminCropFile, setPendingAdminCropFile] = useState<File | null>(null);
@@ -422,6 +443,7 @@ function ProductEditor() {
 
       saveProduct(mergedProduct);
       setDraft(mergedProduct);
+      reloadProducts();
 
       if (isCreateMode && result?.id) {
         void navigate({ to: "/products/$id", params: { id: result.id }, replace: true });
@@ -1152,6 +1174,15 @@ function ProductEditor() {
           </div>
         </div>
       ) : null}
+
+      {/* Delete Design Confirmation Modal */}
+      <DeleteConfirmationModal
+        open={showDeleteModal}
+        title={`Delete design "${draft.name || "this design"}"?`}
+        description="This will permanently delete the design, photos, and variant stock from the database and remove it from the customer storefront."
+        onConfirm={() => void handleConfirmDeleteProduct()}
+        onClose={() => setShowDeleteModal(false)}
+      />
     </AdminShell>
 
   );

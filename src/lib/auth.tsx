@@ -142,7 +142,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           return { error: error.message };
         }
 
-        if (data?.user?.id) {
+        if (data?.session && data?.user?.id) {
           try {
             await supabase.from("customers").upsert({
               id: data.user.id,

@@ -449,6 +449,8 @@ const seedOrders = (): AdminOrder[] => {
 
 type Value = {
   products: AdminProduct[];
+  productsLoading: boolean;
+  reloadProducts: () => void;
   requests: CustomRequest[];
   requestsLoading: boolean;
   requestsError: string | null;
@@ -471,7 +473,6 @@ type Value = {
   deleteReel: (id: string) => void;
   moveReel: (id: string, dir: -1 | 1) => void;
   setReels: (list: ReelItem[]) => void;
-  productsLoading: boolean;
   setFeaturedIds: (ids: string[]) => void;
 };
 
@@ -557,32 +558,34 @@ export function AdminStoreProvider({ children }: { children: ReactNode }) {
     return () => { isMounted = false; };
   }, []);
 
-  // Fetch live API data on mount when available
-  useEffect(() => {
+  const loadProducts = useCallback(() => {
     let isMounted = true;
+    setProductsLoading(true);
     import("./api/catalogue")
       .then(({ fetchProducts }) => {
         return fetchProducts().then((live) => {
           if (isMounted && Array.isArray(live)) setProducts(live);
         });
       })
-      .catch(() => {
-        /* Keep current store state on network failure */
-      })
+      .catch(() => {})
       .finally(() => {
         if (isMounted) setProductsLoading(false);
       });
+    return () => { isMounted = false; };
+  }, []);
 
+  // Fetch live API data on mount when available
+  useEffect(() => {
+    const cleanupProducts = loadProducts();
     const cleanupRequests = loadRequests();
 
+    let isMounted = true;
     import("./api/orders").then(({ fetchOrders }) => {
       fetchOrders()
         .then((live) => {
           if (isMounted && Array.isArray(live)) setOrders(live);
         })
-        .catch(() => {
-          /* Fallback to local store */
-        });
+        .catch(() => {});
     });
 
     import("./api/catalogue").then(({ fetchAdminReels, fetchAdminFeatured }) => {
@@ -600,9 +603,10 @@ export function AdminStoreProvider({ children }: { children: ReactNode }) {
 
     return () => {
       isMounted = false;
+      cleanupProducts();
       cleanupRequests();
     };
-  }, [setProducts, setOrders, loadRequests]);
+  }, [loadProducts, loadRequests]);
 
   const saveProduct = useCallback(
     (p: AdminProduct) => {
@@ -804,6 +808,7 @@ export function AdminStoreProvider({ children }: { children: ReactNode }) {
     () => ({
       products,
       productsLoading,
+      reloadProducts: loadProducts,
       requests,
       requestsLoading,
       requestsError,
@@ -831,6 +836,7 @@ export function AdminStoreProvider({ children }: { children: ReactNode }) {
     [
       products,
       productsLoading,
+      loadProducts,
       requests,
       requestsLoading,
       requestsError,
@@ -863,6 +869,7 @@ export function useAdmin(): Value {
     return {
       products: [],
       productsLoading: false,
+      reloadProducts: () => {},
       requests: [],
       requestsLoading: false,
       requestsError: null,
