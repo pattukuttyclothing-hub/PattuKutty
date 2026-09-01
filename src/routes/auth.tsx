@@ -69,7 +69,7 @@ function Field({
 function AuthPage() {
   const { next, reason } = Route.useSearch();
   const navigate = useNavigate();
-  const { user, ready, signIn, signUp, signInWithGoogle } = useAuth();
+  const { user, ready, signIn, signUp, signInWithGoogle, resendConfirmationEmail } = useAuth();
 
   const [mode, setMode] = useState<"signin" | "signup">("signin");
   const [email, setEmail] = useState("");
@@ -83,12 +83,33 @@ function AuthPage() {
   const [infoModalOpen, setInfoModalOpen] = useState(false);
   const [unconfirmedEmail, setUnconfirmedEmail] = useState("");
   const [registrationSuccessModalOpen, setRegistrationSuccessModalOpen] = useState(false);
+  const [linkExpiredModalOpen, setLinkExpiredModalOpen] = useState(false);
+  const [resendEmailInput, setResendEmailInput] = useState("");
+  const [resendBusy, setResendBusy] = useState(false);
+
+  // Detect URL hash or query errors (e.g. otp_expired or access_denied) on page load
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const hash = window.location.hash || "";
+    const search = window.location.search || "";
+    const isExpired =
+      hash.includes("otp_expired") ||
+      search.includes("otp_expired") ||
+      hash.includes("error_code=otp_expired") ||
+      search.includes("error_code=otp_expired") ||
+      hash.includes("Email+link+is+invalid+or+has+expired");
+
+    if (isExpired) {
+      setLinkExpiredModalOpen(true);
+    }
+  }, []);
 
   // Cross-tab authentication listener (detects when user confirms in another tab)
   useEffect(() => {
     const handleStorage = (e: StorageEvent) => {
       if (e.key === "pk_auth_broadcast" && e.newValue) {
         setInfoModalOpen(false);
+        setLinkExpiredModalOpen(false);
         setRegistrationSuccessModalOpen(true);
       }
     };
@@ -105,12 +126,13 @@ function AuthPage() {
 
     if (isConfirmationRedirect || infoModalOpen) {
       setInfoModalOpen(false);
+      setLinkExpiredModalOpen(false);
       setRegistrationSuccessModalOpen(true);
-    } else if (!registrationSuccessModalOpen) {
+    } else if (!registrationSuccessModalOpen && !linkExpiredModalOpen) {
       const stored = readStoredNext();
       void navigate({ to: (next ?? stored ?? "/") as string });
     }
-  }, [ready, user, next, navigate, registrationSuccessModalOpen, infoModalOpen]);
+  }, [ready, user, next, navigate, registrationSuccessModalOpen, infoModalOpen, linkExpiredModalOpen]);
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -376,6 +398,76 @@ function AuthPage() {
                   ? "Continue to Checkout"
                   : "Explore Collections"}
                 <ArrowRight className="h-4 w-4" />
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      {/* Verification Link Expired Modal */}
+      {linkExpiredModalOpen ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
+          <div className="w-full max-w-md rounded-3xl border border-destructive/30 bg-card p-6 shadow-2xl space-y-4 text-center">
+            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-destructive/10 text-destructive">
+              <Mail className="h-7 w-7" />
+            </div>
+            <h3 className="font-display text-xl font-semibold text-foreground">
+              Verification Link Expired
+            </h3>
+            <p className="text-sm leading-relaxed text-muted-foreground">
+              This email confirmation link has expired or has already been used by an anti-spam scanner.
+            </p>
+
+            <div className="space-y-3 pt-2 text-left">
+              <label className="block text-xs font-medium text-muted-foreground">
+                Enter your email address to request a fresh confirmation link:
+              </label>
+              <input
+                type="email"
+                placeholder="name@example.com"
+                value={resendEmailInput || email || unconfirmedEmail}
+                onChange={(e) => setResendEmailInput(e.target.value)}
+                className="w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm text-foreground outline-none focus:border-primary"
+              />
+            </div>
+
+            <div className="pt-2 space-y-2">
+              <button
+                type="button"
+                disabled={resendBusy}
+                onClick={async () => {
+                  const targetEmail = (resendEmailInput || email || unconfirmedEmail).trim();
+                  if (!targetEmail) {
+                    toast.error("Please enter your email address to resend the confirmation link.");
+                    return;
+                  }
+                  setResendBusy(true);
+                  const res = await resendConfirmationEmail(targetEmail);
+                  setResendBusy(false);
+                  if (res.error) {
+                    toast.error(res.error);
+                  } else {
+                    setLinkExpiredModalOpen(false);
+                    setUnconfirmedEmail(targetEmail);
+                    setInfoModalOpen(true);
+                    toast.success("A new confirmation link has been sent to your inbox!");
+                  }
+                }}
+                className="flex w-full items-center justify-center gap-2 rounded-full bg-primary py-3.5 text-sm font-semibold text-primary-foreground shadow-soft transition-transform hover:scale-[1.01] disabled:opacity-60"
+              >
+                {resendBusy ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
+                Resend Confirmation Email
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setLinkExpiredModalOpen(false);
+                  setMode("signin");
+                }}
+                className="w-full rounded-full border border-border py-2.5 text-xs font-medium text-muted-foreground hover:bg-secondary hover:text-foreground"
+              >
+                Account Already Active? Sign In
               </button>
             </div>
           </div>

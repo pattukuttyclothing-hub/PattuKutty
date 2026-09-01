@@ -29,6 +29,7 @@ type AuthValue = {
   signInWithGoogle: (nextPath?: string) => Promise<{ error?: string }>;
   signOut: () => Promise<void>;
   saveProfile: (patch: { full_name?: string; phone?: string }) => Promise<void>;
+  resendConfirmationEmail: (email: string) => Promise<{ error?: string }>;
 };
 
 const Ctx = createContext<AuthValue | null>(null);
@@ -135,21 +136,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     async (email: string, password: string, fullName: string, phone: string) => {
       try {
         const cleanPhone = phone.replace(/\D/g, "").trim();
-        if (cleanPhone && cleanPhone.length === 10) {
-          const { data: existingPhone } = await supabase
-            .from("customers")
-            .select("id")
-            .eq("phone", cleanPhone)
-            .maybeSingle();
-
-          if (existingPhone) {
-            return {
-              error:
-                "An account with this mobile number already exists. Please sign in instead.",
-            };
-          }
-        }
-
         const prodWorkerUrl = "https://pattukutty.pattukuttyclothing.workers.dev";
         const currentOrigin = typeof window !== "undefined" ? window.location.origin : "";
         const isLocal = !currentOrigin || currentOrigin.includes("localhost") || currentOrigin.includes("127.0.0.1");
@@ -195,6 +181,33 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     [],
   );
 
+  const resendConfirmationEmail = useCallback(async (email: string) => {
+    try {
+      const prodWorkerUrl = "https://pattukutty.pattukuttyclothing.workers.dev";
+      const currentOrigin = typeof window !== "undefined" ? window.location.origin : "";
+      const isLocal = !currentOrigin || currentOrigin.includes("localhost") || currentOrigin.includes("127.0.0.1");
+      const redirectOrigin = isLocal ? prodWorkerUrl : currentOrigin;
+
+      const { error } = await supabase.auth.resend({
+        type: "signup",
+        email: email.trim(),
+        options: {
+          emailRedirectTo: `${redirectOrigin}/auth`,
+        },
+      });
+
+      if (error) {
+        if ((error as any).status === 429 || error.message?.toLowerCase().includes("rate limit")) {
+          return { error: "Please wait a minute before requesting another confirmation link." };
+        }
+        return { error: error.message };
+      }
+      return {};
+    } catch (err: any) {
+      return { error: err?.message || "Failed to resend confirmation email." };
+    }
+  }, []);
+
   const signInWithGoogle = useCallback(async (nextPath?: string) => {
     try {
       if (nextPath) window.sessionStorage.setItem(NEXT_KEY, nextPath);
@@ -209,30 +222,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const signOut = useCallback(async () => {
+    await supabase.auth.signOut();
+    setSession(null);
+    setProfile(null);
     try {
-      await supabase.auth.signOut();
+      localStorage.removeItem("butterflies-phone");
+      localStorage.removeItem("butterflies-auth-next");
+      localStorage.removeItem("pk_customer_orders");
+      Object.keys(localStorage).forEach((key) => {
+        if (key.endsWith("-auth-token") || key.includes("butterflies")) {
+          localStorage.removeItem(key);
+        }
+      });
+      sessionStorage.clear();
     } catch {
       /* ignore */
-    }
-    setProfile(null);
-    setSession(null);
-    if (typeof window !== "undefined") {
-      try {
-        localStorage.removeItem("butterflies_customer_token");
-        localStorage.removeItem("butterflies-custom-requests");
-        localStorage.removeItem("butterflies-cart");
-        localStorage.removeItem("butterflies-phone");
-        localStorage.removeItem("butterflies-auth-next");
-        localStorage.removeItem("pk_customer_orders");
-        Object.keys(localStorage).forEach((key) => {
-          if (key.endsWith("-auth-token") || key.includes("butterflies")) {
-            localStorage.removeItem(key);
-          }
-        });
-        sessionStorage.clear();
-      } catch {
-        /* ignore */
-      }
     }
   }, []);
 
@@ -256,8 +260,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       signInWithGoogle,
       signOut,
       saveProfile,
+      resendConfirmationEmail,
     }),
-    [session, profile, ready, signIn, signUp, signInWithGoogle, signOut, saveProfile],
+    [session, profile, ready, signIn, signUp, signInWithGoogle, signOut, saveProfile, resendConfirmationEmail],
   );
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
