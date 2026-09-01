@@ -155,10 +155,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           if ((error as any).status === 429 || error.message?.toLowerCase().includes("rate limit")) {
             return {
               error:
-                "Too many signup requests sent in a short time. Please wait a minute and try again.",
+                "Email rate limit reached (Supabase limits default emails to 3 per hour). Please wait or try again shortly.",
             };
           }
           return { error: error.message };
+        }
+
+        // If user already exists in auth.users as unconfirmed, identities is empty array.
+        // We force-trigger resend so Supabase sends the confirmation email immediately!
+        const isUnconfirmedDuplicate = data?.user && (!data.user.identities || data.user.identities.length === 0);
+        if (!data?.session && (isUnconfirmedDuplicate || data?.user?.id)) {
+          try {
+            await supabase.auth.resend({
+              type: "signup",
+              email: email.trim(),
+              options: {
+                emailRedirectTo: `${redirectOrigin}/auth`,
+              },
+            });
+          } catch (resendErr) {
+            console.warn("[Supabase Auth Resend Warning]", resendErr);
+          }
         }
 
         if (data?.session && data?.user?.id) {
