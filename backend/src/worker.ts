@@ -164,8 +164,9 @@ export default {
                 }
               }
 
+              const isNullBodyStatus = this.statusCode === 204 || this.statusCode === 304;
               resolve(
-                new Response(fullBody, {
+                new Response(isNullBodyStatus ? null : fullBody, {
                   status: this.statusCode,
                   headers: responseHeaders,
                 }),
