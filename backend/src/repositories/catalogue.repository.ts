@@ -222,40 +222,24 @@ export class CatalogueRepository {
 
       if (error || !data) throw new Error("Failed to fetch categories");
 
-      // Fetch product counts grouped by sub_category_id — no join needed, most reliable approach.
-      // We select only the sub_category_id column of active products, then count client-side.
-      const { data: activeProducts, error: prodErr } = await db
-        .from("products")
-        .select("sub_category_id")
-        .eq("is_active", true);
-
-      // Build a count map: { [sub_category_uuid]: count }
-      const countMap: Record<string, number> = {};
-      if (!prodErr && activeProducts) {
-        for (const p of activeProducts) {
-          const subId = String(p.sub_category_id || "");
-          if (subId) countMap[subId] = (countMap[subId] ?? 0) + 1;
-        }
-      }
-
       return data.map((cat) => {
         const subCategories = cat.sub_categories || cat.subs || [];
         const enrichedSubs = subCategories.map((sub: Record<string, unknown>) => {
-          const subUuid = String(sub.id || "");
-          // Use the UUID-keyed count map — exact match, no slug mismatch possible
-          const count = !prodErr && activeProducts ? (countMap[subUuid] ?? 0) : 0;
-          return { ...sub, design_count: count, designCount: count };
+          const count = Number(sub.product_count ?? sub.design_count ?? sub.designCount ?? 0);
+          return { ...sub, design_count: count, designCount: count, product_count: count };
         });
 
-        const categoryTotal = enrichedSubs.reduce(
+        const computedSubTotal = enrichedSubs.reduce(
           (sum: number, s: Record<string, unknown>) => sum + ((s.designCount as number) ?? 0),
           0
         );
+        const categoryTotal = Number(cat.product_count ?? computedSubTotal);
 
         return {
           ...cat,
           design_count: categoryTotal,
           designCount: categoryTotal,
+          product_count: categoryTotal,
           subs: enrichedSubs,
           sub_categories: enrichedSubs,
         };

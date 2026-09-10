@@ -73,6 +73,8 @@ export const env: EnvType = new Proxy({} as EnvType, {
 });
 
 const DEFAULT_ALLOWED_ORIGINS = [
+  "https://pattukuttyclothing.com",
+  "https://www.pattukuttyclothing.com",
   "https://pattukutty.pattukuttyclothing.workers.dev",
   "https://pattukutty-admin.pattukuttyclothing.workers.dev",
   "http://localhost:3000",
@@ -103,6 +105,7 @@ export function isAllowedOrigin(origin?: string | null): boolean {
   if (allowedList.includes(origin)) return true;
   try {
     const url = new URL(origin);
+    if (url.hostname === "pattukuttyclothing.com" || url.hostname.endsWith(".pattukuttyclothing.com")) return true;
     if (url.hostname.endsWith(".pattukuttyclothing.workers.dev")) return true;
     if (url.hostname === "localhost" || url.hostname === "127.0.0.1") return true;
   } catch {

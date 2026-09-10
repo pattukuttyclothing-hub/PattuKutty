@@ -10,7 +10,7 @@
   "vars": {
     "NODE_ENV": "production",
     "SUPABASE_URL": "https://tfdpnrdnoxriwdbzuxrv.supabase.co",
-    "ALLOWED_ORIGINS": "https://pattukutty.pattukuttyclothing.workers.dev,https://pattukutty-admin.pattukuttyclothing.workers.dev"
+    "ALLOWED_ORIGINS": "https://pattukuttyclothing.com,https://www.pattukuttyclothing.com,https://pattukutty.pattukuttyclothing.workers.dev,https://pattukutty-admin.pattukuttyclothing.workers.dev"
     // "R2_PUBLIC_DOMAIN": "https://pub-xxxxxxxx.r2.dev"
   }
   /*
