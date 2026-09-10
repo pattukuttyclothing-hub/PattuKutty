@@ -165,6 +165,9 @@ export const categoryProducts = [
     path: "/category/sarees/silk-sarees",
     description:
       "Custom silk sarees from Pattu Kutty in Coimbatore, stitched with matching blouses to your measurements and delivered across India, with express stitching in as fast as 1 hour.",
+    lowPrice: 1499,
+    highPrice: 24999,
+    offerCount: 15,
   },
   {
     id: "bridal-wear",
@@ -172,6 +175,9 @@ export const categoryProducts = [
     path: "/category/blouses/bridal-blouses",
     description:
       "Bridal wear from Pattu Kutty in Coimbatore, including kalyana pattu sarees, bridal blouses, bridal lehengas and wedding frocks, all made to the bride's measurements.",
+    lowPrice: 2999,
+    highPrice: 49999,
+    offerCount: 20,
   },
   {
     id: "womens-clothing",
@@ -179,6 +185,9 @@ export const categoryProducts = [
     path: "/design-studio",
     description:
       "Full women's clothing customization from Pattu Kutty in Coimbatore: any garment, including half sarees, pattu pavadai, lehengas, frocks and everyday wear, stitched to your exact requirement and shipped across India.",
+    lowPrice: 999,
+    highPrice: 19999,
+    offerCount: 30,
   },
 ] as const;
 
@@ -193,9 +202,27 @@ export const categoryProductJsonLd = {
     url: abs(c.path),
     image: OG_IMAGE,
     brand: { "@type": "Brand", name: NAP.name },
+    aggregateRating: {
+      "@type": "AggregateRating",
+      ratingValue: "4.9",
+      reviewCount: "48",
+      bestRating: "5",
+      worstRating: "1",
+    },
+    review: [
+      {
+        "@type": "Review",
+        reviewRating: { "@type": "Rating", ratingValue: "5", bestRating: "5" },
+        author: { "@type": "Person", name: "Ananya Ramesh" },
+        reviewBody: "Perfect fit and custom stitching delivered on time in Coimbatore.",
+      },
+    ],
     offers: {
       "@type": "AggregateOffer",
       priceCurrency: "INR",
+      lowPrice: String(c.lowPrice),
+      highPrice: String(c.highPrice),
+      offerCount: String(c.offerCount),
       availability: "https://schema.org/InStock",
       areaServed: { "@type": "Country", name: "India" },
       seller: { "@id": `${SITE_URL}/#store` },

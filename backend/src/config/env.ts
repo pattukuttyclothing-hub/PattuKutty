@@ -47,7 +47,7 @@ export const envSchema = z.object({
     .transform((val) => val === "true" || val === "1")
     .default("false"),
   // COD Guardrails
-  COD_MAX_ORDER_VALUE: z.coerce.number().default(15000),
+  COD_MAX_ORDER_VALUE: z.coerce.number().default(50000),
   // Blue Dart product codes — confirm with your account representative
   BLUEDART_PREPAID_PRODUCT_CODE: z.string().default("A"),   // e.g. "A" = Dart Apex
   BLUEDART_COD_PRODUCT_CODE: z.string().optional(),          // e.g. "D" = COD — confirm with BD

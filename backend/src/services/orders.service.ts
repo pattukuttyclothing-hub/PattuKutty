@@ -524,10 +524,10 @@ export class OrdersService {
     const codPayload = { ...payload, paymentMethod: "cod", payment_method: "cod" };
     const calc = await this.calculateAuthoritativeOrder(customerId, codPayload, { requireAddress: true });
 
-    // COD Guardrail 1: Maximum order value threshold check
-    const maxCodValue = env.COD_MAX_ORDER_VALUE ?? 15000;
-    if (calc.totalPayable > maxCodValue) {
-      const err = new Error(`Cash-on-Delivery is not available for orders exceeding ₹${maxCodValue}. Please select online payment (Razorpay).`) as Error & { statusCode: number };
+    // COD Guardrail 1: Maximum order value threshold check (0 = unlimited)
+    const maxCodValue = env.COD_MAX_ORDER_VALUE ?? 50000;
+    if (maxCodValue > 0 && calc.totalPayable > maxCodValue) {
+      const err = new Error(`Cash-on-Delivery is not available for orders exceeding ₹${maxCodValue.toLocaleString("en-IN")}. Please select online payment (Razorpay).`) as Error & { statusCode: number };
       err.statusCode = 400;
       throw err;
     }
