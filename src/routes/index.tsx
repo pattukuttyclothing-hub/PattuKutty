@@ -17,7 +17,7 @@ import { abs, SITE_URL, seoDescription, socialMeta } from "@/lib/seo";
 
 const title = "Custom Women's Clothing in Coimbatore | Pattu Kutty";
 const description = seoDescription(
-  "Pattu Kutty is a Coimbatore women's clothing brand for custom silk sarees, bridal wear and any garment stitched in as fast as 1 hour, delivered across India.",
+  "Pattu Kutty is a custom women's clothing brand based in Coimbatore, Tamil Nadu, offering 1-hour customization on custom-made silk sarees, bridal wear, and women's clothing.",
 );
 
 const websiteJsonLd = {
@@ -44,7 +44,11 @@ export const Route = createFileRoute("/")({
       { name: "geo.region", content: "IN-TN" },
       { name: "geo.placename", content: "Coimbatore" },
     ],
-    links: [{ rel: "canonical", href: abs("/") }],
+    links: [
+      { rel: "canonical", href: abs("/") },
+      { rel: "icon", type: "image/png", href: "/logo.png", sizes: "any" },
+      { rel: "shortcut icon", href: "/logo.png" },
+    ],
     scripts: [
       { type: "application/ld+json", children: JSON.stringify(websiteJsonLd) },
       { type: "application/ld+json", children: JSON.stringify(faqJsonLd) },

@@ -28,7 +28,7 @@ export const BRAND = {
 
 /** Recommended limits so search results and share cards don't clip. */
 export const TITLE_MAX = 60;
-export const DESC_MAX = 155;
+export const DESC_MAX = 170;
 
 /** Trim on a word boundary, never mid-word, never with a dangling separator. */
 const clamp = (text: string, max: number) => {

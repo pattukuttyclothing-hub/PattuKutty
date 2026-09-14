@@ -192,7 +192,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { name: "viewport", content: "width=device-width, initial-scale=1" },
       { name: "theme-color", content: "#951A1F" },
       { title: "Pattu Kutty — Women's Boutique in Coimbatore" },
-      { name: "description", content: "Custom stitched women's clothing in Coimbatore — blouses, bridal lehengas, half sarees and silk sarees, express stitching, shipped across India." },
+      { name: "description", content: "Pattu Kutty is a custom women's clothing brand based in Coimbatore, Tamil Nadu, offering 1-hour customization on custom-made silk sarees, bridal wear, and women's clothing." },
       { name: "author", content: "Pattu Kutty" },
       { property: "og:site_name", content: "Pattu Kutty" },
       { property: "og:locale", content: "en_IN" },
@@ -213,8 +213,9 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         rel: "stylesheet",
         href: "https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,600&family=Jost:wght@300;400;500;600&family=Playfair+Display:wght@500;600;700&display=swap",
       },
-      { rel: "icon", href: "/favicon.png", type: "image/png" },
-      { rel: "apple-touch-icon", href: "/favicon.png" },
+      { rel: "icon", type: "image/png", href: "/logo.png", sizes: "any" },
+      { rel: "shortcut icon", href: "/logo.png" },
+      { rel: "apple-touch-icon", href: "/logo.png" },
     ],
 
   }),
@@ -234,7 +235,7 @@ function RootShell({ children }: { children: ReactNode }) {
         name: BRAND.name,
         legalName: BRAND.legalName,
         url: SITE_URL,
-        logo: `${SITE_URL}/favicon.png`,
+        logo: `${SITE_URL}/logo.png`,
         image: OG_IMAGE,
         description: ENTITY_DEFINITION,
         telephone: BRAND.phone,
@@ -310,6 +311,12 @@ function RootShell({ children }: { children: ReactNode }) {
   return (
     <html lang="en">
       <head>
+        <link rel="icon" type="image/png" href="/logo.png" sizes="any" />
+        <link rel="shortcut icon" href="/logo.png" />
+        <meta
+          name="description"
+          content="Pattu Kutty is a custom women's clothing brand based in Coimbatore, Tamil Nadu, offering 1-hour customization on custom-made silk sarees, bridal wear, and women's clothing."
+        />
         <HeadContent />
         <script
           type="application/ld+json"
