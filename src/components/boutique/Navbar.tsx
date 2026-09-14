@@ -10,6 +10,7 @@ import {
   Package,
   UserRound,
   LogOut,
+  Home,
 } from "lucide-react";
 import { storeInfo, waLink } from "@/data/boutique";
 import { useCart } from "@/lib/cart";
@@ -139,6 +140,15 @@ export function Navbar({ solid = false }: { solid?: boolean }) {
           <IconLink to="/cart" label="Your Bag" count={count}>
             <ShoppingBag className="h-5 w-5" />
           </IconLink>
+          {/* Mobile Instant Boutique Home Bridge */}
+          <Link
+            to="/"
+            aria-label="Pattu Kutty Boutique Home"
+            title="Boutique Home & Catalog"
+            className="grid h-11 w-11 place-items-center rounded-full border border-border/70 text-foreground/80 transition-all duration-300 hover:border-accent/50 hover:bg-secondary hover:text-primary active:scale-95 lg:hidden"
+          >
+            <Home className="h-5 w-5" />
+          </Link>
           <button
             type="button"
             aria-label={open ? "Close menu" : "Open menu"}
@@ -230,9 +240,19 @@ export function Navbar({ solid = false }: { solid?: boolean }) {
                   <a
                     href={l.href}
                     onClick={() => setOpen(false)}
-                    className="block py-3.5 text-sm font-medium text-foreground transition-colors hover:text-primary"
+                    className={`flex items-center justify-between py-3.5 text-sm font-medium transition-colors hover:text-primary ${
+                      l.label === "Home" ? "text-primary font-semibold" : "text-foreground"
+                    }`}
                   >
-                    {l.label}
+                    <span className="flex items-center gap-2">
+                      {l.label === "Home" && <Home className="h-4 w-4 text-accent" />}
+                      {l.label}
+                    </span>
+                    {l.label === "Home" && (
+                      <span className="rounded-full bg-accent/20 px-2.5 py-0.5 text-[0.62rem] font-bold tracking-wider text-accent uppercase">
+                        Full Catalog
+                      </span>
+                    )}
                   </a>
                 </li>
               ))}

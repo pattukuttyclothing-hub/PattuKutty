@@ -5,6 +5,11 @@ import { Footer } from "@/components/boutique/Footer";
 import { storeInfo, waLink } from "@/data/boutique";
 import { abs, SITE_URL, seoDescription, socialMeta } from "@/lib/seo";
 import { Hero3DStage } from "@/components/boutique/Hero3DStage";
+import {
+  HeroBreadcrumb,
+  MobileFloatingDock,
+  BoutiqueDiscoverySection,
+} from "@/components/boutique/LandingNavigationBridge";
 import hero3 from "@/assets/hero-3.jpg";
 
 const title = "1-Hour Express Stitching in Coimbatore | Fastest Ladies Boutique";
@@ -137,6 +142,8 @@ function ExpressStitching() {
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-center">
               {/* Left Column: Typography & CTAs */}
               <div className="lg:col-span-7 max-w-2xl">
+                <HeroBreadcrumb currentPage="1-Hour Express Atelier" />
+
                 <span className="inline-flex items-center gap-2 rounded-full border border-accent/45 bg-maroon-deep/45 px-4 py-1.5 text-[0.62rem] font-medium tracking-[0.24em] text-accent uppercase backdrop-blur-md sm:text-[0.68rem] animate-fade-in">
                   <Zap className="h-3.5 w-3.5 fill-accent" /> SIGNATURE RAPID ATELIER
                 </span>
@@ -340,6 +347,9 @@ function ExpressStitching() {
           </div>
         </section>
 
+        {/* --- FULL BOUTIQUE DISCOVERY CROSS-NAV --- */}
+        <BoutiqueDiscoverySection currentRoute="express" />
+
         {/* --- FINAL CTA --- */}
         <section className="py-24 px-4 text-center bg-background">
           <div className="max-w-4xl mx-auto rounded-[4rem] bg-maroon-deep p-16 text-primary-foreground shadow-lift relative overflow-hidden">
@@ -363,6 +373,13 @@ function ExpressStitching() {
         </section>
       </main>
       <Footer />
+
+      {/* --- MOBILE PERSISTENT EXPLORE & BOOK DOCK --- */}
+      <MobileFloatingDock
+        currentRoute="express"
+        whatsappMessage="Hi Pattu Kutty, I have an URGENT stitching requirement! I need an express 1-hour slot."
+        ctaText="Express Slot"
+      />
     </div>
   );
 }

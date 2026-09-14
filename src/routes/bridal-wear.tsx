@@ -5,6 +5,11 @@ import { Footer } from "@/components/boutique/Footer";
 import { storeInfo, waLink } from "@/data/boutique";
 import { abs, SITE_URL, seoDescription, socialMeta } from "@/lib/seo";
 import { Hero3DStage } from "@/components/boutique/Hero3DStage";
+import {
+  HeroBreadcrumb,
+  MobileFloatingDock,
+  BoutiqueDiscoverySection,
+} from "@/components/boutique/LandingNavigationBridge";
 import hero1 from "@/assets/hero-1.jpg";
 
 const title = "Best Bridal Lehenga & Saree Designer in Coimbatore | Pattu Kutty";
@@ -130,6 +135,8 @@ function BridalWear() {
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-center">
               {/* Left Column: Typography & CTAs */}
               <div className="lg:col-span-7 max-w-2xl">
+                <HeroBreadcrumb currentPage="Bridal Couture" />
+
                 <span className="inline-flex items-center gap-2 rounded-full border border-accent/45 bg-maroon-deep/45 px-4 py-1.5 text-[0.62rem] font-medium tracking-[0.24em] text-accent uppercase backdrop-blur-md sm:text-[0.68rem] animate-fade-in">
                   <Sparkles className="h-3.5 w-3.5" /> BRIDAL COUTURE 2026
                 </span>
@@ -338,6 +345,9 @@ function BridalWear() {
           </div>
         </section>
 
+        {/* --- FULL BOUTIQUE DISCOVERY CROSS-NAV --- */}
+        <BoutiqueDiscoverySection currentRoute="bridal" />
+
         {/* --- FINAL CTA --- */}
         <section className="py-24 px-4 text-center bg-background">
           <div className="max-w-4xl mx-auto rounded-[4rem] bg-maroon-deep p-16 text-primary-foreground shadow-lift relative overflow-hidden">
@@ -361,6 +371,13 @@ function BridalWear() {
         </section>
       </main>
       <Footer />
+
+      {/* --- MOBILE PERSISTENT EXPLORE & BOOK DOCK --- */}
+      <MobileFloatingDock
+        currentRoute="bridal"
+        whatsappMessage="Hi Pattu Kutty, I would like to book a Bridal Consultation for my wedding attire!"
+        ctaText="Consult Bridal"
+      />
     </div>
   );
 }
