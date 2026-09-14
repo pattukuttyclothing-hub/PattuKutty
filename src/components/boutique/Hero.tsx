@@ -44,7 +44,7 @@ const slideCopy = [
 
 /** Smooth count-up counter component triggered on scroll */
 function AnimatedStat({ value, label }: { value: string; label: string }) {
-  const [displayValue, setDisplayValue] = useState("0");
+  const [displayValue, setDisplayValue] = useState(value);
   const [isVisible, setIsVisible] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -55,7 +55,6 @@ function AnimatedStat({ value, label }: { value: string; label: string }) {
   useEffect(() => {
     const el = containerRef.current;
     if (!el) return;
-    // Re-runs every time the stat scrolls back into view.
     const observer = new IntersectionObserver(
       (entries) => setIsVisible(!!entries[0]?.isIntersecting),
       { threshold: 0.35 },
@@ -70,7 +69,7 @@ function AnimatedStat({ value, label }: { value: string; label: string }) {
       return;
     }
     if (!isVisible) {
-      setDisplayValue(`0${suffix}`);
+      // Keep the final value until it becomes visible to avoid "0" flash
       return;
     }
 
@@ -82,26 +81,26 @@ function AnimatedStat({ value, label }: { value: string; label: string }) {
       return;
     }
 
+    // Start the animation from 0 only when visible
+    setDisplayValue(`0${suffix}`);
+
     let startTimestamp: number | null = null;
-    let frame = 0;
     const duration = 1800;
 
     const step = (timestamp: number) => {
       if (startTimestamp === null) startTimestamp = timestamp;
       const progress = Math.min((timestamp - startTimestamp) / duration, 1);
-      // easeOutQuint — quick lift, long silky settle with no visible stalling
       const eased = 1 - Math.pow(1 - progress, 5);
       const current = Math.round(eased * targetNumber);
       setDisplayValue(`${current.toLocaleString("en-IN")}${suffix}`);
       if (progress < 1) {
-        frame = requestAnimationFrame(step);
+        requestAnimationFrame(step);
       } else {
         setDisplayValue(value);
       }
     };
 
-    frame = requestAnimationFrame(step);
-    return () => cancelAnimationFrame(frame);
+    requestAnimationFrame(step);
   }, [isVisible, value, targetNumber, suffix]);
 
   return (

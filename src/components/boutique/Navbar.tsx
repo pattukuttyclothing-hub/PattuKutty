@@ -21,12 +21,13 @@ import { BrandLockup } from "./Brand";
 
 const links = [
   { label: "Home", href: "/#home" },
+  { label: "Bridal", href: "/bridal-wear" },
+  { label: "Sarees", href: "/custom-sarees" },
+  { label: "Express", href: "/express-stitching" },
   { label: "Collections", href: "/#collections" },
   { label: "Customise", href: "/#customise" },
   { label: "Reels", href: "/#reels" },
   { label: "About", href: "/about" },
-  { label: "FAQ", href: "/#faq" },
-  { label: "Reviews", href: "/#reviews" },
 ];
 
 function IconLink({
