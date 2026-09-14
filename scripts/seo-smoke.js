@@ -27,7 +27,7 @@
 const BASE = (process.env.SEO_SMOKE_BASE || "http://localhost:8080").replace(/\/$/, "");
 const SITE_URL = (process.env.SITE_URL || "https://pattukuttyclothing.com").replace(/\/$/, "");
 const TITLE_MAX = 60;
-const DESC_MAX = 155;
+const DESC_MAX = 170;
 const LIMIT = Number(process.env.SEO_SMOKE_LIMIT || 0);
 const CONCURRENCY = Math.max(1, Number(process.env.SEO_SMOKE_CONCURRENCY || 8));
 
