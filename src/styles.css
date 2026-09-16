@@ -627,6 +627,40 @@
   animation: float-soft 7s ease-in-out infinite;
 }
 
+@keyframes gentle-float {
+  0%, 100% {
+    transform: translateY(0px) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-8px) rotate(0.8deg);
+  }
+}
+
+@utility animate-gentle-float {
+  animation: gentle-float 6s ease-in-out infinite;
+}
+
+@keyframes gold-pulse {
+  0%, 100% {
+    box-shadow: 0 0 15px -3px oklch(0.731 0.114 84.8 / 0.3);
+  }
+  50% {
+    box-shadow: 0 0 30px 4px oklch(0.731 0.114 84.8 / 0.6);
+  }
+}
+
+@utility animate-gold-pulse {
+  animation: gold-pulse 3.5s ease-in-out infinite;
+}
+
+@utility preserve-3d {
+  transform-style: preserve-3d;
+}
+
+@utility perspective-1200 {
+  perspective: 1200px;
+}
+
 @utility shimmer-gold {
   background-image: linear-gradient(
     100deg,

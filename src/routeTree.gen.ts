@@ -12,9 +12,12 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AboutRouteImport } from './routes/about'
 import { Route as AuthRouteImport } from './routes/auth'
+import { Route as BridalWearRouteImport } from './routes/bridal-wear'
 import { Route as CartRouteImport } from './routes/cart'
 import { Route as CheckoutRouteImport } from './routes/checkout'
+import { Route as CustomSareesRouteImport } from './routes/custom-sarees'
 import { Route as DesignStudioRouteImport } from './routes/design-studio'
+import { Route as ExpressStitchingRouteImport } from './routes/express-stitching'
 import { Route as WishlistRouteImport } from './routes/wishlist'
 import { Route as OrdersIndexRouteImport } from './routes/orders.index'
 import { Route as OrdersIdRouteImport } from './routes/orders.$id'
@@ -39,6 +42,11 @@ const AuthRoute = AuthRouteImport.update({
   path: '/auth',
   getParentRoute: () => rootRouteImport,
 } as any)
+const BridalWearRoute = BridalWearRouteImport.update({
+  id: '/bridal-wear',
+  path: '/bridal-wear',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const CartRoute = CartRouteImport.update({
   id: '/cart',
   path: '/cart',
@@ -49,9 +57,19 @@ const CheckoutRoute = CheckoutRouteImport.update({
   path: '/checkout',
   getParentRoute: () => rootRouteImport,
 } as any)
+const CustomSareesRoute = CustomSareesRouteImport.update({
+  id: '/custom-sarees',
+  path: '/custom-sarees',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const DesignStudioRoute = DesignStudioRouteImport.update({
   id: '/design-studio',
   path: '/design-studio',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ExpressStitchingRoute = ExpressStitchingRouteImport.update({
+  id: '/express-stitching',
+  path: '/express-stitching',
   getParentRoute: () => rootRouteImport,
 } as any)
 const WishlistRoute = WishlistRouteImport.update({
@@ -99,9 +117,12 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
   '/auth': typeof AuthRoute
+  '/bridal-wear': typeof BridalWearRoute
   '/cart': typeof CartRoute
   '/checkout': typeof CheckoutRoute
+  '/custom-sarees': typeof CustomSareesRoute
   '/design-studio': typeof DesignStudioRoute
+  '/express-stitching': typeof ExpressStitchingRoute
   '/wishlist': typeof WishlistRoute
   '/orders/$id': typeof OrdersIdRoute
   '/product/$id': typeof ProductIdRoute
@@ -115,9 +136,12 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
   '/auth': typeof AuthRoute
+  '/bridal-wear': typeof BridalWearRoute
   '/cart': typeof CartRoute
   '/checkout': typeof CheckoutRoute
+  '/custom-sarees': typeof CustomSareesRoute
   '/design-studio': typeof DesignStudioRoute
+  '/express-stitching': typeof ExpressStitchingRoute
   '/wishlist': typeof WishlistRoute
   '/orders/$id': typeof OrdersIdRoute
   '/product/$id': typeof ProductIdRoute
@@ -132,9 +156,12 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
   '/auth': typeof AuthRoute
+  '/bridal-wear': typeof BridalWearRoute
   '/cart': typeof CartRoute
   '/checkout': typeof CheckoutRoute
+  '/custom-sarees': typeof CustomSareesRoute
   '/design-studio': typeof DesignStudioRoute
+  '/express-stitching': typeof ExpressStitchingRoute
   '/wishlist': typeof WishlistRoute
   '/orders/$id': typeof OrdersIdRoute
   '/product/$id': typeof ProductIdRoute
@@ -150,9 +177,12 @@ export interface FileRouteTypes {
     | '/'
     | '/about'
     | '/auth'
+    | '/bridal-wear'
     | '/cart'
     | '/checkout'
+    | '/custom-sarees'
     | '/design-studio'
+    | '/express-stitching'
     | '/wishlist'
     | '/orders/$id'
     | '/product/$id'
@@ -166,9 +196,12 @@ export interface FileRouteTypes {
     | '/'
     | '/about'
     | '/auth'
+    | '/bridal-wear'
     | '/cart'
     | '/checkout'
+    | '/custom-sarees'
     | '/design-studio'
+    | '/express-stitching'
     | '/wishlist'
     | '/orders/$id'
     | '/product/$id'
@@ -182,9 +215,12 @@ export interface FileRouteTypes {
     | '/'
     | '/about'
     | '/auth'
+    | '/bridal-wear'
     | '/cart'
     | '/checkout'
+    | '/custom-sarees'
     | '/design-studio'
+    | '/express-stitching'
     | '/wishlist'
     | '/orders/$id'
     | '/product/$id'
@@ -199,9 +235,12 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AboutRoute: typeof AboutRoute
   AuthRoute: typeof AuthRoute
+  BridalWearRoute: typeof BridalWearRoute
   CartRoute: typeof CartRoute
   CheckoutRoute: typeof CheckoutRoute
+  CustomSareesRoute: typeof CustomSareesRoute
   DesignStudioRoute: typeof DesignStudioRoute
+  ExpressStitchingRoute: typeof ExpressStitchingRoute
   WishlistRoute: typeof WishlistRoute
   OrdersIdRoute: typeof OrdersIdRoute
   ProductIdRoute: typeof ProductIdRoute
@@ -235,6 +274,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/bridal-wear': {
+      id: '/bridal-wear'
+      path: '/bridal-wear'
+      fullPath: '/bridal-wear'
+      preLoaderRoute: typeof BridalWearRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/cart': {
       id: '/cart'
       path: '/cart'
@@ -249,11 +295,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CheckoutRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/custom-sarees': {
+      id: '/custom-sarees'
+      path: '/custom-sarees'
+      fullPath: '/custom-sarees'
+      preLoaderRoute: typeof CustomSareesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/design-studio': {
       id: '/design-studio'
       path: '/design-studio'
       fullPath: '/design-studio'
       preLoaderRoute: typeof DesignStudioRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/express-stitching': {
+      id: '/express-stitching'
+      path: '/express-stitching'
+      fullPath: '/express-stitching'
+      preLoaderRoute: typeof ExpressStitchingRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/wishlist': {
@@ -319,9 +379,12 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AboutRoute: AboutRoute,
   AuthRoute: AuthRoute,
+  BridalWearRoute: BridalWearRoute,
   CartRoute: CartRoute,
   CheckoutRoute: CheckoutRoute,
+  CustomSareesRoute: CustomSareesRoute,
   DesignStudioRoute: DesignStudioRoute,
+  ExpressStitchingRoute: ExpressStitchingRoute,
   WishlistRoute: WishlistRoute,
   OrdersIdRoute: OrdersIdRoute,
   ProductIdRoute: ProductIdRoute,
