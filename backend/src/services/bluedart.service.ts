@@ -66,6 +66,18 @@ export interface WaybillCreateParams {
   /** Optional custom dispatch pickup time HHMM */
   pickupTime?: string;
   expectedDeliveryDate?: string;
+  /** Optional E-Way Bill Number (mandatory under GST for orders > ₹50,000) */
+  ewayBillNo?: string;
+  /** Optional E-Way Bill Generation Date (YYYYMMDD) */
+  ewayBillDate?: string;
+  /** Optional Consignee B2B GSTIN Number */
+  consigneeGstin?: string;
+  /** Optional parcel box dimensions (L x B x H in cm) for volumetric calculation */
+  dimensions?: Array<{ length: number; breadth: number; height: number; count: number }>;
+  /** Optional single-step auto-pickup registration flag */
+  autoRegisterPickup?: boolean;
+  /** Optional flag to skip returning Base64 PDF label content to save bandwidth */
+  pdfOutputNotRequired?: boolean;
 }
 
 export interface BlueDartShipmentResult {
@@ -73,6 +85,8 @@ export interface BlueDartShipmentResult {
   blueDartReference?: string;
   trackingUrl: string;
   expectedDelivery?: string;
+  /** Printable AWB Shipping Label PDF content encoded in Base64 (from AWBPrintContent) */
+  awbPrintContent?: string | null;
 }
 
 export interface PickupRegistrationParams {
@@ -129,13 +143,60 @@ export interface BlueDartHealthStatus {
 
 // ─── Internal State ─────────────────────────────────────────────────────────
 
+export type ApiProduct = "suite" | "altinstruction";
+
+interface TokenCache {
+  token: string;
+  expiresAt: number;
+}
+
 let _cachedJwt: string | null = null;
 let _jwtExpiresAt: number = 0;
 
-/** Invalidate cached JWT token */
-export function invalidateJwt(): void {
-  _cachedJwt = null;
-  _jwtExpiresAt = 0;
+const _tokenCaches: Record<ApiProduct, TokenCache | null> = {
+  suite: null,
+  altinstruction: null,
+};
+
+const _authPromises: Record<ApiProduct, Promise<string> | null> = {
+  suite: null,
+  altinstruction: null,
+};
+
+/** Invalidate cached JWT token(s) */
+export function invalidateJwt(product?: ApiProduct): void {
+  if (product) {
+    _tokenCaches[product] = null;
+    _authPromises[product] = null;
+    if (product === "suite") {
+      _cachedJwt = null;
+      _jwtExpiresAt = 0;
+    }
+  } else {
+    _tokenCaches.suite = null;
+    _tokenCaches.altinstruction = null;
+    _authPromises.suite = null;
+    _authPromises.altinstruction = null;
+    _cachedJwt = null;
+    _jwtExpiresAt = 0;
+  }
+}
+
+/**
+ * Status mapper converting raw BlueDart status strings into order_stages vocabulary
+ */
+const STATUS_TO_STAGE: Array<{ match: RegExp; stage: "in_transit" | "out_for_delivery" | "delivered" }> = [
+  { match: /out for delivery/i, stage: "out_for_delivery" },
+  { match: /delivered/i, stage: "delivered" },
+  { match: /in.?transit|picked up|manifested|shipment.*booked/i, stage: "in_transit" },
+];
+
+export function mapStatusToStage(status: string): "in_transit" | "out_for_delivery" | "delivered" | null {
+  if (!status || typeof status !== "string") return null;
+  for (const rule of STATUS_TO_STAGE) {
+    if (rule.match.test(status)) return rule.stage;
+  }
+  return null;
 }
 
 /** Validates pincode string against 6-digit Indian postal code format */
@@ -236,8 +297,15 @@ export function parseBlueDartScanTimestamp(scanDate?: string | null, scanTime?: 
  * Controlled strictly by BLUEDART_ENV (sandbox vs production) with optional URL overrides.
  */
 export function assertCredentials(): {
+  clientId: string;
+  clientSecret: string;
+  suiteClientId: string;
+  suiteClientSecret: string;
+  altClientId: string;
+  altClientSecret: string;
   loginId: string;
   licenseKey: string;
+  trackingLicenseKey: string;
   apiKey?: string;
   apiSecret?: string;
   apiType: string;
@@ -251,24 +319,34 @@ export function assertCredentials(): {
   productUrl: string;
   envMode: "sandbox" | "production";
 } {
-  const loginId = env.BLUEDART_CLIENT_ID || env.BLUEDART_LOGIN_ID || env.BLUEDART_API_KEY;
-  const licenseKey = env.BLUEDART_CLIENT_SECRET || env.BLUEDART_LICENSE_KEY || env.BLUEDART_LICENCE_KEY || env.BLUEDART_API_SECRET;
-  const apiKey = loginId;
-  const apiSecret = licenseKey;
-  const apiType = env.BLUEDART_API_TYPE || "S";
-  const apiUrl = env.BLUEDART_API_URL;
-  const envMode = env.BLUEDART_ENV || "sandbox";
+  const suiteClientId = env.BLUEDART_SUITE_API_KEY || env.BLUEDART_CLIENT_ID || env.BLUEDART_LOGIN_ID || env.BLUEDART_API_KEY;
+  const suiteClientSecret = env.BLUEDART_SUITE_API_SECRET || env.BLUEDART_CLIENT_SECRET || env.BLUEDART_LICENSE_KEY_SHIPPING || env.BLUEDART_LICENSE_KEY || env.BLUEDART_LICENCE_KEY || env.BLUEDART_API_SECRET;
 
-  if (!loginId || !licenseKey) {
+  const clientId = suiteClientId;
+  const clientSecret = suiteClientSecret;
+
+  if (!clientId || !clientSecret) {
     const err = new Error(
       "Blue Dart credentials not configured. " +
-      "Set BLUEDART_CLIENT_ID and BLUEDART_CLIENT_SECRET in backend environment. " +
+      "Set BLUEDART_SUITE_API_KEY / BLUEDART_CLIENT_ID and BLUEDART_SUITE_API_SECRET / BLUEDART_CLIENT_SECRET in backend environment. " +
       "Integration is CODE COMPLETE — CONFIGURATION PENDING."
     ) as Error & { statusCode: number; code: string };
     err.statusCode = 503;
     err.code = "BLUEDART_CONFIG_MISSING";
     throw err;
   }
+
+  const altClientId = env.BLUEDART_ALTINSTRUCTION_API_KEY || clientId;
+  const altClientSecret = env.BLUEDART_ALTINSTRUCTION_API_SECRET || clientSecret;
+
+  const loginId = env.BLUEDART_LOGIN_ID || clientId;
+  const licenseKey = env.BLUEDART_LICENSE_KEY_SHIPPING || env.BLUEDART_LICENCE_KEY || env.BLUEDART_LICENSE_KEY || clientSecret;
+  const trackingLicenseKey = env.BLUEDART_LICENSE_KEY_TRACKING || licenseKey;
+  const apiKey = clientId;
+  const apiSecret = clientSecret;
+  const apiType = env.BLUEDART_API_TYPE || "S";
+  const apiUrl = env.BLUEDART_API_URL;
+  const envMode = env.BLUEDART_ENV || "sandbox";
 
   // Official Gateway endpoints per environment
   const defaultAuthBase = envMode === "production"
@@ -308,8 +386,15 @@ export function assertCredentials(): {
   const productUrl = env.BLUEDART_PRODUCT_BASE_URL || defaultProductBase;
 
   return {
+    clientId,
+    clientSecret,
+    suiteClientId,
+    suiteClientSecret,
+    altClientId,
+    altClientSecret,
     loginId,
     licenseKey,
+    trackingLicenseKey,
     apiKey,
     apiSecret,
     apiType,
@@ -369,8 +454,8 @@ export function getShipperInfo(): BlueDartShipperInfo {
 }
 
 /** Check health and configuration status without exposing credentials */
-export function getBlueDartHealth(): BlueDartHealthStatus {
-  return {
+export async function getBlueDartHealth(liveProbe = false): Promise<BlueDartHealthStatus & { liveAuthStatus?: string }> {
+  const basic = {
     configured: isBlueDartConfigured(),
     environment: env.BLUEDART_ENV || "sandbox",
     loginIdConfigured: Boolean(env.BLUEDART_CLIENT_ID || env.BLUEDART_LOGIN_ID || env.BLUEDART_API_KEY),
@@ -379,6 +464,17 @@ export function getBlueDartHealth(): BlueDartHealthStatus {
     customerCodeConfigured: Boolean(env.BLUEDART_CUSTOMER_CODE && env.BLUEDART_CUSTOMER_CODE.trim().length <= 6),
     allowProductionTests: Boolean(env.BLUEDART_ALLOW_PRODUCTION_TESTS),
   };
+
+  if (!liveProbe || !basic.configured) {
+    return basic;
+  }
+
+  try {
+    const token = await authenticate();
+    return { ...basic, liveAuthStatus: token ? "active" : "error" };
+  } catch (err) {
+    return { ...basic, liveAuthStatus: `error: ${String(err)}` };
+  }
 }
 
 // ─── Authentication ──────────────────────────────────────────────────────────
@@ -391,7 +487,11 @@ function decodeJwtExpiry(token: string): number | null {
   try {
     const parts = token.split(".");
     if (parts.length < 2) return null;
-    const payloadJson = Buffer.from(parts[1], "base64url").toString("utf8");
+    let base64 = parts[1].replace(/-/g, "+").replace(/_/g, "/");
+    while (base64.length % 4 !== 0) {
+      base64 += "=";
+    }
+    const payloadJson = Buffer.from(base64, "base64").toString("utf8");
     const payload = JSON.parse(payloadJson) as { exp?: number };
     if (typeof payload.exp === "number" && payload.exp > 0) {
       return payload.exp * 1000;
@@ -404,99 +504,144 @@ function decodeJwtExpiry(token: string): number | null {
 
 /**
  * Obtains Blue Dart JWT according to official API Gateway contract.
- * Caches token in-memory and refreshes 5 minutes before expiry.
- * Token is backend-only and NEVER returned to frontend.
+ * Caches token in-memory per subscribed API product ('suite' or 'altinstruction')
+ * and refreshes 5 minutes before expiry.
  */
-export async function authenticate(): Promise<string> {
+export async function authenticate(product: ApiProduct = "suite"): Promise<string> {
   const now = Date.now();
+  const cached = _tokenCaches[product];
 
-  if (_cachedJwt && _jwtExpiresAt > now + 5 * 60 * 1000) {
-    return _cachedJwt;
-  }
-
-  const { loginId, licenseKey, authUrl } = assertCredentials();
-  const timeoutMs = env.BLUEDART_TIMEOUT_MS || 10000;
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), timeoutMs);
-
-  let res: Response;
-  try {
-    res = await fetch(authUrl, {
-      method: "GET",
-      headers: {
-        "Accept": "application/json",
-        "ClientID": loginId,
-        "clientSecret": licenseKey,
-      },
-      signal: controller.signal,
-    });
-  } catch (networkErr) {
-    const isTimeout = (networkErr as { name?: string }).name === "AbortError";
-    const msg = isTimeout
-      ? `Blue Dart authentication timed out after ${timeoutMs}ms`
-      : `Blue Dart authentication network error: ${String(networkErr)}`;
-    const err = new Error(msg) as Error & { statusCode: number };
-    err.statusCode = 502;
-    throw err;
-  } finally {
-    clearTimeout(timer);
-  }
-
-  if (!res.ok) {
-    const rawText = await res.text().catch(() => "(unreadable body)");
-    console.error("[BlueDart] Auth HTTP error:", res.status, rawText);
-    let detail = rawText;
-    try {
-      const parsed = JSON.parse(rawText) as {
-        status?: number;
-        title?: string;
-        "error-response"?: string;
-        errorResponse?: string;
-        detail?: string;
-      };
-      detail = parsed["error-response"] || parsed.errorResponse || parsed.detail || parsed.title || rawText;
-    } catch {
-      // Keep rawText if non-JSON
+  if (cached && cached.expiresAt > now + 5 * 60 * 1000) {
+    if (product === "suite") {
+      _cachedJwt = cached.token;
+      _jwtExpiresAt = cached.expiresAt;
     }
-    const err = new Error(
-      `Blue Dart authentication failed (HTTP ${res.status}): ${detail}`
-    ) as Error & { statusCode: number };
-    err.statusCode = 502;
-    throw err;
+    return cached.token;
   }
 
-  const data = (await res.json()) as {
-    JWTToken?: string;
-    TokenExpiry?: string;
-    IsError?: boolean;
-    Status?: { StatusMessage?: string }[];
-  };
-
-  const token = data.JWTToken || res.headers.get("jwttoken");
-
-  if (data.IsError || !token) {
-    const msg = data.Status?.[0]?.StatusMessage ?? "Unknown auth error";
-    console.error("[BlueDart] Auth error response message:", msg);
-    const err = new Error(`Blue Dart authentication error: ${msg}`) as Error & { statusCode: number };
-    err.statusCode = 502;
-    throw err;
+  if (_authPromises[product]) {
+    return _authPromises[product]!;
   }
 
-  _cachedJwt = token;
-  const decodedExp = decodeJwtExpiry(token);
-  // Spec generateJWT_api_spec.yaml defines no TokenExpiry field in response schema ({ "JWTToken": "..." }).
-  // We attempt to decode the JWT's own `exp` claim (in ms), falling back to a conservative 1 hour (3600s) TTL instead of 23 hours.
-  _jwtExpiresAt = decodedExp ?? (now + 60 * 60 * 1000);
+  _authPromises[product] = (async () => {
+    try {
+      const creds = assertCredentials();
+      const clientId = product === "altinstruction" ? creds.altClientId : creds.suiteClientId;
+      const clientSecret = product === "altinstruction" ? creds.altClientSecret : creds.suiteClientSecret;
+      const authUrl = creds.authUrl;
 
-  return _cachedJwt;
+      const timeoutMs = env.BLUEDART_TIMEOUT_MS || 10000;
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), timeoutMs);
+
+      let res: Response;
+      try {
+        res = await fetch(authUrl, {
+          method: "GET",
+          headers: {
+            "Accept": "application/json",
+            "ClientID": clientId || creds.loginId,
+            "clientSecret": clientSecret || creds.licenseKey,
+          },
+          signal: controller.signal,
+        });
+      } catch (networkErr) {
+        const isTimeout = (networkErr as { name?: string }).name === "AbortError";
+        const msg = isTimeout
+          ? `Blue Dart authentication (${product}) timed out after ${timeoutMs}ms`
+          : `Blue Dart authentication (${product}) network error: ${String(networkErr)}`;
+        const err = new Error(msg) as Error & { statusCode: number };
+        err.statusCode = 502;
+        throw err;
+      } finally {
+        clearTimeout(timer);
+      }
+
+      if (!res.ok) {
+        const rawText = await res.text().catch(() => "(unreadable body)");
+        console.error(`[BlueDart] Auth (${product}) HTTP error:`, res.status, rawText);
+        let detail = rawText;
+        try {
+          const parsed = JSON.parse(rawText) as {
+            status?: number;
+            title?: string;
+            "error-response"?: string;
+            errorResponse?: string;
+            detail?: string;
+          };
+          detail = parsed["error-response"] || parsed.errorResponse || parsed.detail || parsed.title || rawText;
+        } catch {
+          // Keep rawText if non-JSON
+        }
+        const err = new Error(
+          `Blue Dart authentication (${product}) failed (HTTP ${res.status}): ${detail}`
+        ) as Error & { statusCode: number };
+        err.statusCode = 502;
+        throw err;
+      }
+
+      const rawText = await res.text();
+      let data: {
+        JWTToken?: string;
+        TokenExpiry?: string;
+        IsError?: boolean;
+        Status?: { StatusMessage?: string }[];
+      };
+      try {
+        data = JSON.parse(rawText);
+      } catch {
+        const err = new Error(
+          `Blue Dart authentication (${product}) returned non-JSON response body (HTTP ${res.status})`
+        ) as Error & { statusCode: number };
+        err.statusCode = 502;
+        throw err;
+      }
+
+      let token: string | undefined = data.JWTToken;
+      if (!token && data && typeof data === "object") {
+        const keys = Object.keys(data);
+        const matchKey = keys.find((k) => k.toLowerCase() === "jwttoken" || k.toLowerCase() === "token");
+        if (matchKey) {
+          token = (data as Record<string, string>)[matchKey];
+        }
+      }
+      if (!token) {
+        token = res.headers.get("jwttoken") || res.headers.get("JWTToken") || undefined;
+      }
+
+      if (data.IsError || !token) {
+        const msg = data.Status?.[0]?.StatusMessage ?? "Unknown auth error";
+        console.error(`[BlueDart] Auth (${product}) error response message:`, msg);
+        const err = new Error(`Blue Dart authentication (${product}) error: ${msg}`) as Error & { statusCode: number };
+        err.statusCode = 502;
+        throw err;
+      }
+
+      const decodedExp = decodeJwtExpiry(token);
+      const expiresAt = decodedExp ?? (now + 8 * 60 * 60 * 1000);
+
+      _tokenCaches[product] = { token, expiresAt };
+      if (product === "suite") {
+        _cachedJwt = token;
+        _jwtExpiresAt = expiresAt;
+      }
+
+      return token;
+    } finally {
+      _authPromises[product] = null;
+    }
+  })();
+
+  return _authPromises[product]!;
 }
 
 /** Internal fetch helper with JWT retry on HTTP 401/403 or auth-related failures */
 async function fetchWithJwtRetry(
   url: string,
-  options: { method?: string; headers?: Record<string, string>; body?: string }
+  options: { method?: string; headers?: Record<string, string>; body?: string },
+  product: ApiProduct = "suite"
 ): Promise<Response> {
-  let jwt = await authenticate();
+  let jwt = await authenticate(product);
 
   const requestHeaders: Record<string, string> = {
     "Accept": "application/json",
@@ -521,28 +666,49 @@ async function fetchWithJwtRetry(
   }
 
   let isAuthError = res.status === 401 || res.status === 403;
-  if (!isAuthError && !res.ok) {
+  if (!isAuthError) {
     try {
       const cloneText = await res.clone().text();
-      const lower = cloneText.toLowerCase();
-      if (
-        lower.includes("jwt") ||
-        lower.includes("unauthorized") ||
-        lower.includes("invalid token") ||
-        lower.includes("token expired") ||
-        lower.includes("access to the resource is not allowed")
-      ) {
-        isAuthError = true;
+      const parsed = JSON.parse(cloneText) as Record<string, any>;
+
+      const resultObj =
+        parsed.GenerateWayBillResult ||
+        parsed.RegisterPickupResult ||
+        parsed.CancelPickupResult ||
+        parsed.CancelWaybillResult ||
+        parsed.GetServicesLocationDetailsResult ||
+        parsed;
+
+      if (resultObj && typeof resultObj === "object") {
+        if (resultObj.StatusInformation || resultObj.Status) {
+          const statusList = Array.isArray(resultObj.Status) ? resultObj.Status : [resultObj];
+          for (const item of statusList) {
+            const code = String(item.StatusCode || "").toLowerCase();
+            const info = String(item.StatusInformation || item.StatusMessage || "").toLowerCase();
+
+            if (
+              code.includes("invalid token") ||
+              code.includes("jwt") ||
+              code === "401" ||
+              info.includes("invalid jwt") ||
+              info.includes("token expired") ||
+              info.includes("access to the resource is not allowed")
+            ) {
+              isAuthError = true;
+              break;
+            }
+          }
+        }
       }
     } catch {
-      // Ignore clone error
+      // Keep isAuthError as res.status === 401 || res.status === 403
     }
   }
 
   if (isAuthError) {
-    console.warn(`[BlueDart] JWT auth rejection (HTTP ${res.status}). Invalidating cached token and retrying with fresh JWT...`);
-    invalidateJwt();
-    jwt = await authenticate();
+    console.warn(`[BlueDart] JWT auth rejection (${product}) (HTTP ${res.status}). Invalidating cached token and retrying with fresh JWT...`);
+    invalidateJwt(product);
+    jwt = await authenticate(product);
     requestHeaders["JWTToken"] = jwt;
 
     controller = new AbortController();
@@ -550,11 +716,11 @@ async function fetchWithJwtRetry(
     try {
       res = await fetch(url, { ...options, headers: requestHeaders, signal: controller.signal });
       if (res.status === 401 || res.status === 403) {
-        invalidateJwt();
+        invalidateJwt(product);
       }
     } catch (err) {
       clearTimeout(timer);
-      invalidateJwt();
+      invalidateJwt(product);
       const isTimeout = (err as { name?: string }).name === "AbortError";
       throw new Error(isTimeout ? `Blue Dart API retry timed out after ${timeoutMs}ms` : String(err));
     } finally {
@@ -685,6 +851,36 @@ export async function generateWaybill(params: WaybillCreateParams): Promise<Blue
   const pieces = params.pieces ?? 1;
   const creditRefNo = formatBlueDartAlphaNumeric(params.orderNo, 20);
 
+  // Map and format dimensions array to match OpenAPI schema casing (Length, Breadth, Height, Count)
+  const formattedDimensions = Array.isArray(params.dimensions)
+    ? params.dimensions.map((d) => ({
+        Length: Number(d.length || 0),
+        Breadth: Number(d.breadth || 0),
+        Height: Number(d.height || 0),
+        Count: Number(d.count || 1),
+      }))
+    : [];
+
+  // Construct itemdtl array for E-Way Bill compliance when order > ₹50,000 or ewayBillNo provided (spec §4)
+  let itemdtl: any[] | undefined = undefined;
+  if (params.declaredValue > 50000 || params.ewayBillNo) {
+    const rawEwayNo = (params.ewayBillNo || "").replace(/[^0-9]/g, "");
+    const cleanEwayDate = (params.ewayBillDate || "").replace(/[^0-9]/g, "").slice(0, 8);
+    const eWaybillNumber = rawEwayNo.length > 0 && !isNaN(Number(rawEwayNo)) ? Number(rawEwayNo) : undefined;
+
+    itemdtl = [
+      {
+        ItemID: `ITEM-${formatBlueDartAlphaNumeric(params.orderNo, 10)}`,
+        ItemName: `Order ${params.orderNo}`,
+        ItemValue: params.declaredValue,
+        Itemquantity: pieces,
+        ...(eWaybillNumber !== undefined ? { eWaybillNumber } : {}),
+        ...(cleanEwayDate.length > 0 ? { eWaybillDate: cleanEwayDate } : {}),
+        docType: 0,
+      },
+    ];
+  }
+
   const waybillPayload = {
     Request: {
       Consignee: {
@@ -693,9 +889,10 @@ export async function generateWaybill(params: WaybillCreateParams): Promise<Blue
         ConsigneeAddress2: params.consignee.line2?.trim() ?? "",
         ConsigneeAddress3: "",
         ConsigneePincode: params.consignee.pincode.trim(),
-        ConsigneePhone: (params.consignee?.phone || "").trim(),
+        ConsigneeTelephone: (params.consignee?.phone || "").trim(),
         ConsigneeMobile: (params.consignee?.phone || "").trim(),
         ConsigneeEmailID: params.consignee.email?.trim() ?? "",
+        ConsigneeGSTNumber: params.consigneeGstin?.trim() ?? "",
       },
       Shipper: {
         OriginArea: shipper.originArea,
@@ -705,6 +902,7 @@ export async function generateWaybill(params: WaybillCreateParams): Promise<Blue
         CustomerPincode: shipper.pincode,
         Sender: shipper.name,
         IsToPayCustomer: false,
+        CustomerGSTNumber: env.BLUEDART_SELLER_GSTIN ?? "",
       },
       Services: {
         AWBNo: "",
@@ -719,7 +917,7 @@ export async function generateWaybill(params: WaybillCreateParams): Promise<Blue
         },
         CreditReferenceNo: creditRefNo,
         DeclaredValue: params.declaredValue,
-        Dimensions: [],
+        Dimensions: formattedDimensions,
         PieceCount: pieces.toString(),
         InvoiceNo: formatBlueDartInvoiceNo(params.orderNo),
         PackType: "",
@@ -728,6 +926,11 @@ export async function generateWaybill(params: WaybillCreateParams): Promise<Blue
         ProductType: 1,
         PayableAt: "",
         SpecialInstruction: "",
+        RegisterPickup: params.autoRegisterPickup ?? false,
+        IsForcePickup: params.autoRegisterPickup ?? false,
+        PDFOutputNotRequired: params.pdfOutputNotRequired ?? false,
+        PrinterLableSize: env.BLUEDART_PRINTER_LABEL_SIZE ?? "",
+        ...(itemdtl ? { itemdtl } : {}),
       },
       Returnadds: {
         ManifestNumber: "",
@@ -791,6 +994,7 @@ export async function generateWaybill(params: WaybillCreateParams): Promise<Blue
   const rawBody = (await waybillRes.json()) as {
     GenerateWayBillResult?: {
       AWBNo?: string;
+      AWBPrintContent?: string;
       IsError?: boolean;
       Status?: { StatusInformation?: string; StatusMessage?: string; StatusCode?: string }[];
       ErrorMessage?: { ErrorCode?: string; ErrorDescription?: string }[];
@@ -813,10 +1017,12 @@ export async function generateWaybill(params: WaybillCreateParams): Promise<Blue
   }
 
   const awb = waybillResult.AWBNo!.trim();
+  const awbPrintContent = waybillResult.AWBPrintContent?.trim() || null;
   return {
     awb,
     blueDartReference: awb,
     trackingUrl: buildTrackingUrl(awb),
+    awbPrintContent,
   };
 }
 
@@ -1288,4 +1494,109 @@ export async function validateConfiguredBlueDartProducts(): Promise<{
     codValid,
     warnings,
   };
+}
+
+// ─── Status → Order Stage Mapping (used by sync job & tracking poller) ──────
+
+
+// ─── API Method 7: Alt-Instruction / NDR Handling ────────────────────────────
+
+/**
+ * Instruction types accepted by the Bluedart AltInstruction API.
+ * Used by admin to handle Non-Delivery Reports (NDR):
+ *   - REATTEMPT: retry delivery on a new date
+ *   - RTO: return to origin (triggers RTO shipment back to store)
+ *   - ESCALATION: escalate to Bluedart hub manager
+ *   - LANDMARK_CHANGE: update delivery landmark
+ *   - ALT_MOBILE: provide an alternate mobile number for the consignee
+ */
+export type AltInstructionType =
+  | "RTO"
+  | "REATTEMPT"
+  | "ESCALATION"
+  | "LANDMARK_CHANGE"
+  | "ALT_MOBILE";
+
+export interface AltInstructionInput {
+  /** AWB number of the shipment with an NDR */
+  awb: string;
+  /** Action to take on the NDR */
+  instruction: AltInstructionType;
+  /** Optional free-text remarks for the Bluedart hub */
+  remarks?: string;
+  /** Required when instruction = ALT_MOBILE */
+  alternateMobile?: string;
+  /** Required when instruction = LANDMARK_CHANGE */
+  landmark?: string;
+}
+
+/**
+ * Sends an alternate delivery instruction to Bluedart for NDR handling.
+ * Call this from the admin panel when a shipment shows NDR / Undelivered status
+ * in shipments.tracking_status.
+ *
+ * Note: NDR/RTO statuses are intentionally NOT written to orders.stage
+ * (the trigger-enforced stage machine would need new enum values).
+ * Surface them via `shipments.tracking_status ILIKE '%NDR%'` in admin queries.
+ */
+export async function sendAltInstruction(
+  input: AltInstructionInput
+): Promise<{ sent: boolean; reason?: string; raw?: unknown }> {
+  if (!isValidAwb(input.awb)) {
+    return { sent: false, reason: "Invalid AWB number provided for alt-instruction." };
+  }
+
+  if (!input.instruction) {
+    return { sent: false, reason: "Instruction type is required." };
+  }
+
+  try {
+    const { loginId, licenseKey, apiType } = assertCredentials();
+    const envMode = (env.BLUEDART_ENV as "sandbox" | "production") ?? "sandbox";
+
+    const altInstructionUrl =
+      envMode === "production"
+        ? "https://apigateway.bluedart.com/in/transportation/altinstruction/v1/AltInstruction"
+        : "https://apigateway-sandbox.bluedart.com/in/transportation/altinstruction/v1/AltInstruction";
+
+    const payload = {
+      Request: {
+        AWBNo: input.awb.trim(),
+        InstructionType: input.instruction,
+        Remarks: input.remarks ?? "",
+        ...(input.alternateMobile ? { AlternateMobile: input.alternateMobile } : {}),
+        ...(input.landmark ? { Landmark: input.landmark } : {}),
+      },
+      Profile: {
+        LoginID: loginId,
+        LicenceKey: licenseKey,
+        Api_type: apiType,
+      },
+    };
+
+    const res = await fetchWithJwtRetry(
+      altInstructionUrl,
+      {
+        method: "POST",
+        body: JSON.stringify(payload),
+      },
+      "altinstruction"
+    );
+
+    const raw = await res.json().catch(() => null);
+
+    if (!res.ok) {
+      console.error("[BlueDart] AltInstruction HTTP error:", res.status, raw);
+      return {
+        sent: false,
+        reason: `HTTP ${res.status} from Blue Dart AltInstruction API`,
+        raw,
+      };
+    }
+
+    return { sent: true, raw };
+  } catch (err) {
+    console.error("[BlueDart] sendAltInstruction exception:", err);
+    return { sent: false, reason: String(err) };
+  }
 }

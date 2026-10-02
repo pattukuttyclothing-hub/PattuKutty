@@ -1,0 +1,4 @@
+# Cloudflare / Hosting 301 HTTPS & canonical domain redirects for Pattu Kutty
+http://pattukuttyclothing.com/* https://pattukuttyclothing.com/:splat 301!
+http://www.pattukuttyclothing.com/* https://pattukuttyclothing.com/:splat 301!
+https://www.pattukuttyclothing.com/* https://pattukuttyclothing.com/:splat 301!

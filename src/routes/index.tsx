@@ -15,7 +15,7 @@ import { storeInfo, waLink } from "@/data/boutique";
 import { categoryProductJsonLd, faqJsonLd, serviceJsonLd } from "@/data/aeo";
 import { abs, SITE_URL, seoDescription, socialMeta } from "@/lib/seo";
 
-const title = "Custom Women's Clothing in Coimbatore | Pattu Kutty";
+const title = "Pattu Kutty | Exclusive Silk Sarees, Bridal Wear & Custom Clothing Coimbatore";
 const description = seoDescription(
   "Pattu Kutty is a custom women's clothing brand based in Coimbatore, Tamil Nadu, offering 1-hour customization on custom-made silk sarees, bridal wear, and women's clothing.",
 );
@@ -39,7 +39,7 @@ export const Route = createFileRoute("/")({
       {
         name: "keywords",
         content:
-          "custom silk saree Coimbatore, women's clothing customization Coimbatore, 1 hour stitching Coimbatore, bridal wear Coimbatore, kalyana pattu saree, custom blouse stitching, ladies dress designer Coimbatore, custom women's clothing delivered across India",
+          "Pattu Kutty, Pattu Kutty Clothing, Coimbatore silk saree, customize cloth Coimbatore, fast customization Coimbatore, bridal dress Coimbatore, bridal blouse Coimbatore, designer frocks Coimbatore, custom lehenga Coimbatore, handmade silk sarees Coimbatore, 1 hour stitching Coimbatore, kalyana pattu saree, custom blouse stitching, ladies dress designer Coimbatore, women's clothing customization Coimbatore",
       },
       { name: "geo.region", content: "IN-TN" },
       { name: "geo.placename", content: "Coimbatore" },

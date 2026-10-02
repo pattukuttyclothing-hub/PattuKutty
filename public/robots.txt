@@ -21,9 +21,19 @@ Allow: /
 
 User-agent: Googlebot
 Allow: /
+Disallow: /checkout
+Disallow: /cart
+Disallow: /orders
+Disallow: /auth
+Disallow: /requests
+Disallow: /design-studio
 
 User-agent: Bingbot
 Allow: /
+Disallow: /checkout
+Disallow: /cart
+Disallow: /orders
+Disallow: /auth
 
 User-agent: Twitterbot
 Allow: /
@@ -33,6 +43,10 @@ Allow: /
 
 User-agent: *
 Allow: /
+Disallow: /checkout
+Disallow: /cart
+Disallow: /orders
+Disallow: /auth
 
 Sitemap: https://pattukuttyclothing.com/sitemap.xml
 LLMs: https://pattukuttyclothing.com/llms.txt

@@ -16,10 +16,10 @@ export const Route = createFileRoute("/product/$id")({
   head: ({ params, loaderData }) => {
     const p = (loaderData as { product?: Product | null } | undefined)?.product ?? findProduct(params.id);
     const path = `/product/${params.id}`;
-    const title = seoTitle(p?.name ?? "Design", "Custom Stitched");
+    const title = seoTitle(p?.name ?? "Design", "Buy Custom Silk & Bridal Wear | Pattu Kutty");
     const description =
       (p?.description ? seoDescription(p.description) : null) ??
-      "Custom stitched designer wear from our Coimbatore studio — your measurements, your fabric, 1-hour express option, delivered across India.";
+      "Buy custom silk sarees, bridal wear, and designer clothing from Pattu Kutty Coimbatore — your measurements, your fabric, fast customization, express 1-hour stitching, delivered across India.";
 
     const productJsonLd = p
       ? {

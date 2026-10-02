@@ -587,13 +587,19 @@ function BlueDartCard({
             ) : null}
 
             <div className="pt-1.5 flex justify-end border-t border-emerald-500/20">
-              <button
-                type="button"
-                onClick={() => setCancelModalOpen(true)}
-                className="inline-flex items-center gap-1.5 rounded-lg border border-red-200 bg-white/90 px-2.5 py-1 text-[0.7rem] font-semibold text-red-600 hover:bg-red-50 transition shadow-2xs"
-              >
-                <XCircle className="h-3.5 w-3.5" /> Cancel Scheduled Pickup
-              </button>
+              {shipment.pickup_token ? (
+                <button
+                  type="button"
+                  onClick={() => setCancelModalOpen(true)}
+                  className="inline-flex items-center gap-1.5 rounded-lg border border-red-200 bg-white/90 px-2.5 py-1 text-[0.7rem] font-semibold text-red-600 hover:bg-red-50 transition shadow-2xs"
+                >
+                  <XCircle className="h-3.5 w-3.5" /> Cancel Scheduled Pickup
+                </button>
+              ) : (
+                <span className="text-[0.68rem] text-red-600 font-medium italic">
+                  No active pickup token registered
+                </span>
+              )}
             </div>
           </div>
         ) : (

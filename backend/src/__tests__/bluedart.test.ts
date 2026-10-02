@@ -274,12 +274,13 @@ async function runTestMatrix() {
 
   // ── TEST 20: Production credentials cannot be used accidentally by sandbox tests ──
   await test("TEST 20: Production credentials cannot be used accidentally by sandbox tests", async () => {
-    const origEnv = env.BLUEDART_ENV;
+    const origEnv = process.env.BLUEDART_ENV;
     const origNodeEnv = process.env.NODE_ENV;
+    const origAllowProd = process.env.BLUEDART_ALLOW_PRODUCTION_TESTS;
     try {
-      (env as any).BLUEDART_ENV = "production";
+      process.env.BLUEDART_ENV = "production";
       process.env.NODE_ENV = "test";
-      (env as any).BLUEDART_ALLOW_PRODUCTION_TESTS = false;
+      process.env.BLUEDART_ALLOW_PRODUCTION_TESTS = "false";
 
       let caught = false;
       try {
@@ -305,14 +306,15 @@ async function runTestMatrix() {
       }
       if (!caught) throw new Error("Expected production test execution guard to block test");
     } finally {
-      (env as any).BLUEDART_ENV = origEnv;
+      process.env.BLUEDART_ENV = origEnv;
       process.env.NODE_ENV = origNodeEnv;
+      process.env.BLUEDART_ALLOW_PRODUCTION_TESTS = origAllowProd;
     }
   });
 
   // ── TEST 21: Sandbox configuration does not call production endpoint ───────
   await test("TEST 21: Sandbox configuration does not call production endpoint", async () => {
-    const health = getBlueDartHealth();
+    const health = await getBlueDartHealth();
     if (health.environment !== "sandbox") {
       throw new Error("Default test environment must be sandbox");
     }
@@ -325,7 +327,7 @@ async function runTestMatrix() {
 
   // ── TEST 23: No secrets appear in application logs ────────────────────────
   await test("TEST 23: No secrets appear in application logs", async () => {
-    const health = getBlueDartHealth();
+    const health = await getBlueDartHealth();
     const str = JSON.stringify(health);
     if (str.includes("secret") || str.includes("token") || str.includes("key") && str.includes("eyJ")) {
       throw new Error("Health output contained secret strings");

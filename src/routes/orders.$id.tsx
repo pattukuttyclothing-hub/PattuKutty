@@ -54,6 +54,30 @@ function CancelSection({ order, onCancelled }: { order: Order; onCancelled: () =
   const [result, setResult] = useState<CancellationResult | null>(null);
   const [apiError, setApiError] = useState<string | null>(null);
 
+  if (result) {
+    return (
+      <div className="rounded-3xl border border-red-200 bg-red-50/40 p-5 shadow-soft space-y-3">
+        <div className="flex items-start gap-3">
+          <XCircle className="mt-0.5 h-5 w-5 shrink-0 text-red-500" />
+          <div className="space-y-1">
+            <p className="text-sm font-semibold text-foreground">Cancellation Confirmed</p>
+            <p className="text-xs text-muted-foreground">{result.message}</p>
+            {result.requiresAdminAction ? (
+              <p className="text-[0.68rem] text-amber-700 font-medium">Our boutique team will contact you about your refund processing.</p>
+            ) : null}
+          </div>
+        </div>
+        <button
+          type="button"
+          onClick={() => onCancelled()}
+          className="w-full rounded-full border border-border bg-card py-2 text-xs font-semibold text-foreground hover:bg-secondary transition-colors"
+        >
+          Done
+        </button>
+      </div>
+    );
+  }
+
   if (order.status === "delivered" || order.status === "picked_up" || (order.status as string) === "cancelled") {
     return null;
   }
@@ -79,23 +103,6 @@ function CancelSection({ order, onCancelled }: { order: Order; onCancelled: () =
   }
 
   if (!isCancellable) return null;
-
-  if (result) {
-    return (
-      <div className="rounded-3xl border border-border bg-card p-5 shadow-soft">
-        <div className="flex items-start gap-3">
-          <XCircle className="mt-0.5 h-5 w-5 shrink-0 text-red-500" />
-          <div>
-            <p className="text-sm font-semibold text-foreground">Cancellation Requested</p>
-            <p className="mt-1 text-xs text-muted-foreground">{result.message}</p>
-            {result.requiresAdminAction ? (
-              <p className="mt-2 text-[0.68rem] text-amber-700">Our team will contact you about your refund.</p>
-            ) : null}
-          </div>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="rounded-3xl border border-red-200 bg-red-50/40 p-5 shadow-soft">
@@ -140,7 +147,6 @@ function CancelSection({ order, onCancelled }: { order: Order; onCancelled: () =
                 try {
                   const res = await cancelOrderApi(order.id, "Cancelled by customer");
                   setResult(res);
-                  onCancelled();
                   toast.success(res.message || "Order cancellation request submitted successfully.");
                 } catch (err) {
                   const msg = err instanceof Error ? err.message : "Cancellation failed. Please try again.";

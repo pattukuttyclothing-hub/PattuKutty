@@ -201,7 +201,8 @@ ordersRouter.get("/admin/orders/:id/shipments", requireAuth, requireAdmin, async
 ordersRouter.get("/admin/bluedart/health", requireAuth, requireAdmin, async (_req, res, next) => {
   try {
     const { getBlueDartHealth } = await import("../services/bluedart.service.js");
-    res.json({ success: true, data: getBlueDartHealth() });
+    const data = await getBlueDartHealth();
+    res.json({ success: true, data });
   } catch (err) { next(err); }
 });
 
@@ -210,6 +211,40 @@ ordersRouter.get("/admin/bluedart/products", requireAuth, requireAdmin, async (_
   try {
     const { getProductsAndSubProducts } = await import("../services/bluedart.service.js");
     const data = await getProductsAndSubProducts();
+    res.json({ success: true, data });
+  } catch (err) { next(err); }
+});
+
+// Admin: Send alternate delivery instruction to Bluedart for NDR handling
+// Use when shipments.tracking_status ILIKE '%NDR%' — allows Reattempt, RTO, Escalation, etc.
+// Body: { awb: string, instruction: 'REATTEMPT'|'RTO'|'ESCALATION'|'LANDMARK_CHANGE'|'ALT_MOBILE', remarks?: string, alternateMobile?: string, landmark?: string }
+ordersRouter.post("/admin/bluedart/alt-instruction", requireAuth, requireAdmin, async (req, res, next) => {
+  try {
+    const { sendAltInstruction, isValidAwb } = await import("../services/bluedart.service.js");
+    const { awb, instruction, remarks, alternateMobile, landmark } = req.body as {
+      awb?: string;
+      instruction?: string;
+      remarks?: string;
+      alternateMobile?: string;
+      landmark?: string;
+    };
+
+    if (!awb || !isValidAwb(awb)) {
+      res.status(400).json({ success: false, message: "Valid AWB number is required." });
+      return;
+    }
+    if (!instruction) {
+      res.status(400).json({ success: false, message: "Instruction type is required (REATTEMPT, RTO, ESCALATION, LANDMARK_CHANGE, ALT_MOBILE)." });
+      return;
+    }
+
+    const data = await sendAltInstruction({
+      awb,
+      instruction: instruction as import("../services/bluedart.service.js").AltInstructionType,
+      remarks,
+      alternateMobile,
+      landmark,
+    });
     res.json({ success: true, data });
   } catch (err) { next(err); }
 });

@@ -12,10 +12,11 @@ export const Route = createFileRoute("/category/$category/")({
   head: ({ params }) => {
     const cat = findCategory(params.category);
     const path = `/category/${params.category}/`;
-    const title = seoTitle(cat?.name ?? "Collection", "Custom Stitched in Coimbatore");
+    const catName = cat?.name ?? "Collection";
+    const title = seoTitle(catName, "Custom & Bridal Clothing | Pattu Kutty");
     const description =
       categoryCopy[cat?.id ?? ""]?.meta ??
-      `Custom ${cat?.name ?? "boutique"} stitched to your measurements in Coimbatore — 1-hour express option, delivery across India.`;
+      `Shop ${catName} at Pattu Kutty Coimbatore — custom-stitched to your measurements with fast customization. Bridal, designer, and handmade options. Express 1-hour stitching available, delivery across India.`;
     return {
       meta: socialMeta({ title, description, path, image: cat?.image ?? null }),
       links: [{ rel: "canonical", href: abs(path) }],

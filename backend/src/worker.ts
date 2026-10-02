@@ -4,6 +4,7 @@ import { EventEmitter } from "node:events";
 import { Readable } from "node:stream";
 import { isAllowedOrigin } from "./config/env.js";
 import app from "./server.js";
+import { blueDartScheduled } from "./services/bluedart-sync.job.js";
 
 // Propagate Cloudflare Worker environment variables to process.env
 function applyWorkerEnv(env: Record<string, unknown>) {
@@ -210,4 +211,8 @@ export default {
       })();
     });
   },
+
+  // Cloudflare Cron Trigger handler — fires every 5 min (see wrangler.jsonc "triggers").
+  // Calls BlueDart tracking sync for all active shipments automatically.
+  scheduled: blueDartScheduled,
 };

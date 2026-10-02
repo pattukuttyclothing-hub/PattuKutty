@@ -53,6 +53,24 @@ export const envSchema = z.object({
   BLUEDART_COD_PRODUCT_CODE: z.string().optional(),          // e.g. "D" = COD — confirm with BD
   BLUEDART_ORIGIN_AREA: z.string().optional(),               // e.g. "CJB" for Coimbatore
   BLUEDART_CUSTOMER_CODE: z.string().optional(),             // assigned by Blue Dart
+  BLUEDART_PRINTER_LABEL_SIZE: z.string().optional(),        // e.g. LabelSize55X30, LabelSize89X60, LabelSizeA4S, LabelSizeA4T
+  BLUEDART_SELLER_GSTIN: z.string().optional(),              // Seller GSTIN number
+  BLUEDART_SUITE_API_KEY: z.string().optional(),
+  BLUEDART_SUITE_API_SECRET: z.string().optional(),
+  BLUEDART_ALTINSTRUCTION_API_KEY: z.string().optional(),
+  BLUEDART_ALTINSTRUCTION_API_SECRET: z.string().optional(),
+  BLUEDART_SUB_PRODUCT: z.string().default("E-Tailing"),
+  BLUEDART_ORIGIN_AREA_CODE: z.string().optional(),
+  // Separate license keys for shipping vs tracking endpoints (some accounts use different keys)
+  // Falls back to BLUEDART_LICENSE_KEY / BLUEDART_LICENCE_KEY if not set
+  BLUEDART_LICENSE_KEY_SHIPPING: z.string().optional(),      // Shipping/Waybill license key
+  BLUEDART_LICENSE_KEY_TRACKING: z.string().optional(),      // Tracking license key (may differ from shipping key)
+  // COD-specific customer code (some contracts use a separate code for COD shipments)
+  BLUEDART_COD_CUSTOMER_CODE: z.string().optional(),         // COD customer code — falls back to BLUEDART_CUSTOMER_CODE
+  // Store origin pincode — used in Returnadds and pickup registration payloads
+  BLUEDART_ORIGIN_PINCODE: z.string().optional(),            // e.g. "641012" for Coimbatore
+  // Fallback parcel weight when no per-order weight is stored
+  BLUEDART_DEFAULT_WEIGHT_KG: z.coerce.number().default(0.5), // kg
 });
 
 export type EnvType = z.infer<typeof envSchema>;

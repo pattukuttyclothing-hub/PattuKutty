@@ -14,10 +14,11 @@ export const Route = createFileRoute("/category/$category/$sub")({
     const cat = findCategory(params.category);
     const sub = findSub(params.category, params.sub);
     const path = `/category/${params.category}/${params.sub}`;
-    const title = seoTitle(sub?.name ?? "Designs", "Coimbatore Boutique");
+    const subName = sub?.name ?? "Designs";
+    const title = seoTitle(subName, "Buy Custom Silk & Bridal Wear | Pattu Kutty");
     const description = seoDescription(
       subCopy[sub?.id ?? ""]?.meta ??
-        `${sub?.blurb ?? "Custom designs"} — stitched to your measurements in Coimbatore, 1-hour express option, delivered across India.`,
+        `${sub?.blurb ?? "Custom designs"} at Pattu Kutty — handmade, stitched to your measurements in Coimbatore. Fast customization, bridal options, designer styles. Express 1-hour stitching, delivered across India.`,
     );
     return {
       meta: socialMeta({ title, description, path, image: sub?.images?.[0] ?? null }),

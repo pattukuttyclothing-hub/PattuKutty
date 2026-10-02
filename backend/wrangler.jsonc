@@ -12,6 +12,12 @@
     "SUPABASE_URL": "https://tfdpnrdnoxriwdbzuxrv.supabase.co",
     "ALLOWED_ORIGINS": "https://pattukuttyclothing.com,https://www.pattukuttyclothing.com,https://pattukutty.pattukuttyclothing.workers.dev,https://pattukutty-admin.pattukuttyclothing.workers.dev"
     // "R2_PUBLIC_DOMAIN": "https://pub-xxxxxxxx.r2.dev"
+  },
+  // Bluedart tracking auto-sync: fires every 5 minutes.
+  // Wired to the `scheduled` export in src/worker.ts -> bluedart-sync.job.ts.
+  // To test locally: wrangler dev --test-scheduled, then curl http://localhost:8787/__scheduled
+  "triggers": {
+    "crons": ["*/5 * * * *"]
   }
   /*
   ,"r2_buckets": [

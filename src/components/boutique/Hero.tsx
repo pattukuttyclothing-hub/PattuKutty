@@ -15,28 +15,28 @@ const slideCopy = [
   {
     eyebrow: "READYMADE & CUSTOM",
     title: "Bridal Lehenga",
-    subtitle: "Hand-worked zari, sculpted fits and finishing you can feel.",
+    subtitle: "At Pattu Kutty, shop custom silk sarees, bridal wear, and traditional clothing in Coimbatore. Stitched in as fast as 1 hour.",
     cta: "Book a fitting",
     ctaLink: "#customise",
   },
   {
     eyebrow: "CEREMONY EDIT",
     title: "Half Saree",
-    subtitle: "Soft silks, gold zari borders and drape work styled for your ceremony.",
+    subtitle: "Pattu Kutty offers soft silks, gold zari borders, and drape work styled for your ceremony.",
     cta: "Shop Now",
     ctaLink: "#collections",
   },
   {
     eyebrow: "SIGNATURE AARI WORK",
     title: "Designer Blouse",
-    subtitle: "Maggam, aari and stone work stitched to your exact measurements.",
+    subtitle: "Pattu Kutty stitches maggam, aari, and stone work to your exact measurements.",
     cta: "Stitch Now",
     ctaLink: "#customise",
   },
   {
     eyebrow: "LITTLE ONES",
     title: "Pattu Pavadai",
-    subtitle: "Traditional silks for the smallest guest of honour.",
+    subtitle: "Traditional Pattu Kutty silk outfits for the smallest guest of honour.",
     cta: "Shop Now",
     ctaLink: "#collections",
   },
@@ -176,7 +176,7 @@ export function Hero() {
               />
               <img
                 src={slide.mobile_image_url || slide.image_url || slide.image || ""}
-                alt="Pattu Kutty designer boutique — bridal and ceremony wear"
+                alt="Pattu Kutty Coimbatore — custom silk sarees, bridal wear, designer blouses and fast cloth customization"
                 width={1920}
                 height={1080}
                 loading={i === 0 ? "eager" : "lazy"}
@@ -197,13 +197,16 @@ export function Hero() {
         <div className="relative z-20 mx-auto flex min-h-[86svh] max-w-7xl flex-col justify-end px-4 pt-28 pb-6 sm:px-6 lg:min-h-[92svh] lg:pb-10">
           <div key={index} className="max-w-2xl">
             <span className="animate-fade-in inline-flex items-center gap-2 rounded-full border border-accent/45 bg-maroon-deep/45 px-4 py-1.5 text-[0.6rem] font-medium tracking-[0.24em] text-accent uppercase backdrop-blur-md sm:text-[0.68rem]">
-              <Sparkles className="h-3.5 w-3.5" /> {copy.eyebrow}
+              <Sparkles className="h-3.5 w-3.5" /> Pattu Kutty • {copy.eyebrow}
             </span>
 
             <h1
               className="font-display mt-5 text-[2.75rem] leading-[0.92] font-semibold tracking-tight text-primary-foreground uppercase sm:text-6xl lg:text-[5.25rem]"
               style={{ animation: "hero-rise 0.9s cubic-bezier(0.22,1,0.36,1) both", animationDelay: "80ms" }}
             >
+              <span className="block text-accent text-lg sm:text-2xl font-sans tracking-wider font-semibold normal-case mb-1.5">
+                Pattu Kutty Clothing &amp; Custom Boutique
+              </span>
               {copy.title}
             </h1>
 
