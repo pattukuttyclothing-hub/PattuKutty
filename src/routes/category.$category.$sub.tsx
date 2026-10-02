@@ -38,13 +38,19 @@ function SubCategoryPage() {
   const { categoryId, subId } = Route.useLoaderData() as { categoryId: string; subId: string };
   const cat = findCategory(categoryId)!;
   const sub = findSub(categoryId, subId)!;
-  const { data: items, loading, error, refetch } = useProductsBySubCategory(categoryId, subId);
+  const hasSubStyles = Boolean(sub.subs && sub.subs.length > 0);
+  const { data: items, loading, error, refetch } = useProductsBySubCategory(
+    hasSubStyles ? "" : categoryId,
+    hasSubStyles ? "" : subId
+  );
 
-  const subtitleText = loading
-    ? `${sub.blurb} — Loading designs...`
-    : error
-      ? `${sub.blurb}`
-      : `${sub.blurb} — ${items.length} design${items.length === 1 ? "" : "s"}, each stitched to your measurements.`;
+  const subtitleText = hasSubStyles
+    ? `${sub.blurb} — choose a style below to browse designs.`
+    : loading
+      ? `${sub.blurb} — Loading designs...`
+      : error
+        ? `${sub.blurb}`
+        : `${sub.blurb} — ${items.length} design${items.length === 1 ? "" : "s"}, each stitched to your measurements.`;
 
   const crumbsJsonLd = breadcrumbJsonLd([
     { name: "Home", path: "/" },
@@ -131,7 +137,7 @@ function SubCategoryPage() {
             </div>
           ) : null}
 
-          {sub.subs && sub.subs.length > 0 ? (
+          {hasSubStyles ? (
             <div className="mt-8 mb-6">
               <div className="mb-4">
                 <h3 className="font-display text-lg font-semibold text-foreground">
@@ -142,7 +148,7 @@ function SubCategoryPage() {
                 </p>
               </div>
               <div className="flex flex-wrap justify-center gap-4 sm:gap-6 lg:gap-8">
-                {sub.subs.map((nestedSub, i) => (
+                {sub.subs!.map((nestedSub, i) => (
                   <Reveal
                     key={nestedSub.id}
                     delay={stagger(i, 80)}
@@ -178,9 +184,7 @@ function SubCategoryPage() {
                 ))}
               </div>
             </div>
-          ) : null}
-
-          {loading ? (
+          ) : loading ? (
             <div className="mt-8 grid grid-cols-2 gap-4 sm:gap-6 lg:grid-cols-4">
               {Array.from({ length: 4 }).map((_, i) => (
                 <div key={i} className="animate-pulse rounded-2xl border border-border/70 bg-card p-4">

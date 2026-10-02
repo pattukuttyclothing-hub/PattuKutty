@@ -382,7 +382,7 @@ function RequestDetail() {
                         [
                           "Colour",
                           <div key="col" className="flex items-center gap-3">
-                            <span>{req.colour}</span>
+                            <span>{req.colour || "Standard / As Per Reference"}</span>
                             {req.colourImage ? (
                               <a
                                 href={req.colourImage}

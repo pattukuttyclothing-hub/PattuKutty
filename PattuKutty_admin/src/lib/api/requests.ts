@@ -38,7 +38,9 @@ export function mapRawRequestToCustomRequest(raw: any): CustomRequest {
   const colourMatch = raw.fabric_notes ? raw.fabric_notes.match(/\[Colour\]:\s*([^\n]+)/) : null;
   const colour =
     (typeof raw.colour === "string" ? raw.colour : raw.colour?.name || raw.colour_detail?.name) ||
-    (colourMatch ? colourMatch[1].trim() : "");
+    (colourMatch ? colourMatch[1].trim() : "") ||
+    (raw.custom_colour_image_url || raw.customColourImage ? "Custom shade (uploaded)" : "") ||
+    "Standard / As Per Reference";
 
   // Category & Subcategory resolution (prioritize slug, then object name, then string/id)
   const categorySlug =
@@ -87,13 +89,25 @@ export function mapRawRequestToCustomRequest(raw: any): CustomRequest {
     ...(subCategoryName ? { subCategoryName } : {}),
     ...(raw.custom_colour_image_url || raw.customColourImage ? { customColourImage: raw.custom_colour_image_url || raw.customColourImage } : {}),
     ...(raw.voice_note_url || raw.voiceNote ? { voiceNote: raw.voice_note_url || raw.voiceNote } : {}),
-    ...(raw.cancel_reason || raw.cancelReason ? { cancelReason: raw.cancel_reason || raw.cancelReason } : {}),
+    cancelReason: (() => {
+      const rawReason = raw.cancel_reason || raw.cancelReason || "";
+      return rawReason.replace(/^\[Cancelled by (?:Admin|Customer)\]:\s*/i, "").trim();
+    })(),
     ...(raw.cancelled_at || raw.cancelledAt ? { cancelledAt: raw.cancelled_at || raw.cancelledAt } : {}),
+    cancelledBy: (() => {
+      if (raw.cancelled_by || raw.cancelledBy) return raw.cancelled_by || raw.cancelledBy;
+      const rawReason = raw.cancel_reason || raw.cancelReason || "";
+      if (/^\[Cancelled by Admin\]/i.test(rawReason)) return "admin";
+      if (/^\[Cancelled by Customer\]/i.test(rawReason)) return "customer";
+      return undefined;
+    })(),
     ...(raw.update_requested_at || raw.updateRequestedAt ? { updateRequestedAt: raw.update_requested_at || raw.updateRequestedAt } : {}),
     ...(raw.update_request_note || raw.updateRequestNote ? { updateRequestNote: raw.update_request_note || raw.updateRequestNote } : {}),
     ...(() => {
-      const um = raw.fabric_notes ? raw.fabric_notes.match(/\[Admin Update Reason\]:\s*([^\n]+)/) : null;
-      const ur = raw.update_reason || raw.updateReason || (um ? um[1].trim() : undefined);
+      const note = raw.update_request_note || raw.updateRequestNote || "";
+      const noteMatch = note.match(/\[Admin Update Reason\]:\s*([^\n]+)/);
+      const fabricMatch = (raw.fabric_notes || raw.fabricNotes || "").match(/\[Admin Update Reason\]:\s*([^\n]+)/);
+      const ur = raw.update_reason || raw.updateReason || (noteMatch ? noteMatch[1].trim() : undefined) || (fabricMatch ? fabricMatch[1].trim() : undefined);
       return ur ? { updateReason: ur } : {};
     })(),
     ...(() => {

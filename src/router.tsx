@@ -6,15 +6,15 @@ export const getRouter = () => {
   const queryClient = new QueryClient({
     defaultOptions: {
       queries: {
-        // Storefront data stays fresh for 5 minutes across navigations —
-        // navigating back to homepage within this window hits cache, not Supabase.
-        staleTime: 5 * 60 * 1000,
-        // Cache garbage-collected 10 minutes after the last subscriber unmounts.
-        gcTime: 10 * 60 * 1000,
+        // Storefront data stays fresh for 10 seconds across navigations —
+        // rapid clicks hit cache, but stock and sold out updates reflect quickly.
+        staleTime: 10 * 1000,
+        // Cache garbage-collected 5 minutes after the last subscriber unmounts.
+        gcTime: 5 * 60 * 1000,
         // One automatic retry on transient network errors.
         retry: 1,
-        // Don't re-fetch when user tabs back into the window — staleTime handles freshness.
-        refetchOnWindowFocus: false,
+        // Re-fetch when user tabs back into the window so stock and sold out changes reflect.
+        refetchOnWindowFocus: true,
       },
     },
   });

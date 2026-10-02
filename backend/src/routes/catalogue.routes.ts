@@ -45,7 +45,7 @@ catalogueRouter.get("/storefront/products", async (req, res, next) => {
   try {
     const { category, sub } = req.query as { category?: string; sub?: string };
     const data = await CatalogueService.getProductsBySub(category ?? "", sub ?? "");
-    res.set("Cache-Control", "public, max-age=120, stale-while-revalidate=600");
+    res.set("Cache-Control", "public, max-age=5, stale-while-revalidate=15");
     res.json({ success: true, data });
   } catch (err) { next(err); }
 });
@@ -53,7 +53,7 @@ catalogueRouter.get("/storefront/products", async (req, res, next) => {
 catalogueRouter.get("/storefront/products/:id", async (req, res, next) => {
   try {
     const product = await CatalogueService.getProductById(p(req.params.id));
-    res.set("Cache-Control", "public, max-age=60, stale-while-revalidate=300");
+    res.set("Cache-Control", "public, max-age=5, stale-while-revalidate=15");
     res.json({ success: true, data: product });
   } catch (err) { next(err); }
 });
@@ -62,7 +62,7 @@ catalogueRouter.get("/storefront/products/:id/related", async (req, res, next) =
   try {
     const { category } = req.query as { category?: string };
     const data = await CatalogueService.getRelatedProducts(category ?? "", p(req.params.id));
-    res.set("Cache-Control", "public, max-age=60, stale-while-revalidate=300");
+    res.set("Cache-Control", "public, max-age=5, stale-while-revalidate=15");
     res.json({ success: true, data });
   } catch (err) { next(err); }
 });

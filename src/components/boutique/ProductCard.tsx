@@ -53,13 +53,18 @@ export function ProductCard({ product: p, index = 0 }: { product: Product; index
 
         {/* Sold Out Seal or Ribbon Badge */}
         {isSoldOut ? (
-          <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-black/40 backdrop-blur-[3px] p-2">
-            <div className="rotate-[-10deg] rounded-2xl border-2 border-dashed border-rose-300/90 bg-rose-600/95 px-4 py-2 text-center shadow-2xl backdrop-blur-md">
-              <span className="block text-xs font-black tracking-[0.2em] text-white uppercase drop-shadow-md">
-                PRODUCT SOLD OUT
-              </span>
+          <>
+            <span className="absolute top-3 left-3 z-20 inline-flex items-center gap-1 rounded-full bg-rose-600 px-3 py-1 text-[0.65rem] font-bold tracking-wider text-white shadow-soft uppercase backdrop-blur-sm border border-rose-400/40">
+              Sold Out
+            </span>
+            <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-black/40 backdrop-blur-[3px] p-2">
+              <div className="rotate-[-10deg] rounded-2xl border-2 border-dashed border-rose-300/90 bg-rose-600/95 px-4 py-2 text-center shadow-2xl backdrop-blur-md">
+                <span className="block text-xs font-black tracking-[0.2em] text-white uppercase drop-shadow-md">
+                  PRODUCT SOLD OUT
+                </span>
+              </div>
             </div>
-          </div>
+          </>
         ) : badgeText ? (
           <span className="absolute top-3 left-3 z-10 inline-flex items-center gap-1 rounded-full bg-primary/90 px-3 py-1 text-[0.65rem] font-bold tracking-wider text-primary-foreground shadow-soft uppercase backdrop-blur-sm">
             <Sparkles className="h-3 w-3 text-accent" /> {badgeText}

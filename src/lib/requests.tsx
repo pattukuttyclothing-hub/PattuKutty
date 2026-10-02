@@ -141,7 +141,15 @@ export function mapBackendToCustomRequest(raw: any): CustomRequest {
       : Array.isArray(raw.images)
       ? raw.images
       : [],
-    colour: raw.colour || "",
+    colour: (() => {
+      const cm = (raw.fabric_notes || raw.description || "").match(/\[Colour\]:\s*([^\n]+)/);
+      return (
+        raw.colour ||
+        raw.colour_detail?.name ||
+        (cm ? cm[1].trim() : "") ||
+        (raw.custom_colour_image_url || raw.colourImage ? "Custom shade (uploaded)" : "")
+      );
+    })(),
     colourImage: raw.custom_colour_image_url || raw.colourImage,
     description: raw.fabric_notes || raw.description || "",
     voiceNote: raw.voice_note_url || raw.voiceNote,
@@ -157,16 +165,28 @@ export function mapBackendToCustomRequest(raw: any): CustomRequest {
     updateRequestedAt: raw.update_requested_at || raw.updateRequestedAt,
     updateNote: raw.update_request_note || raw.updateNote,
     updateReason: (() => {
-      const um = (raw.fabric_notes || raw.description || "").match(/\[Admin Update Reason\]:\s*([^\n]+)/);
-      return raw.update_reason || raw.updateReason || (um ? um[1].trim() : undefined);
+      const note = raw.update_request_note || raw.updateRequestNote || "";
+      const noteMatch = note.match(/\[Admin Update Reason\]:\s*([^\n]+)/);
+      const fabricMatch = (raw.fabric_notes || raw.description || "").match(/\[Admin Update Reason\]:\s*([^\n]+)/);
+      return raw.update_reason || raw.updateReason || (noteMatch ? noteMatch[1].trim() : undefined) || (fabricMatch ? fabricMatch[1].trim() : undefined);
     })(),
     sourceProductId: (() => {
       const sm = (raw.fabric_notes || raw.description || "").match(/\[Source Product ID\]:\s*([^\n]+)/);
       return raw.source_product_id || raw.sourceProductId || (sm ? sm[1].trim() : undefined);
     })(),
     orderId: raw.order_id || raw.orderId || raw.order?.id || undefined,
-    cancelReason: raw.cancel_reason || raw.cancelReason,
+    cancelReason: (() => {
+      const rawReason = raw.cancel_reason || raw.cancelReason || "";
+      return rawReason.replace(/^\[Cancelled by (?:Admin|Customer)\]:\s*/i, "").trim();
+    })(),
     cancelledAt: raw.cancelled_at || raw.cancelledAt,
+    cancelledBy: (() => {
+      if (raw.cancelled_by || raw.cancelledBy) return raw.cancelled_by || raw.cancelledBy;
+      const rawReason = raw.cancel_reason || raw.cancelReason || "";
+      if (/^\[Cancelled by Admin\]/i.test(rawReason)) return "admin";
+      if (/^\[Cancelled by Customer\]/i.test(rawReason)) return "customer";
+      return undefined;
+    })(),
     quote: raw.quote
       ? {
           name: raw.quote.name || "Custom Design Quotation",

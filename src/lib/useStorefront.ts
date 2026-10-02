@@ -206,7 +206,8 @@ export function useProductsBySubCategory(
   } = useQuery({
     queryKey: ["productsBySub", categoryId, subCategoryId],
     queryFn: () => fetchProductsBySubCategory(categoryId, subCategoryId),
-    staleTime: 1 * 60 * 1000,
+    staleTime: 10 * 1000,
+    refetchOnWindowFocus: true,
     enabled: Boolean(categoryId && subCategoryId),
   });
 
@@ -237,7 +238,8 @@ export function useProduct(id: string): UseProductResult {
     queryKey: ["product", id],
     queryFn: () => fetchProductById(id),
     placeholderData: seed,
-    staleTime: 1 * 60 * 1000,
+    staleTime: 10 * 1000,
+    refetchOnWindowFocus: true,
     enabled: Boolean(id),
   });
 
@@ -289,7 +291,8 @@ export function useWishlistProducts(ids: string[]): UseWishlistProductsResult {
         .filter((p): p is Product => !!p);
     },
     enabled: ids.length > 0,
-    staleTime: 1 * 60 * 1000,
+    staleTime: 10 * 1000,
+    refetchOnWindowFocus: true,
   });
 
   return {

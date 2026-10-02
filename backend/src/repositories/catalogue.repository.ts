@@ -355,23 +355,21 @@ export class CatalogueRepository {
       }
 
       if (subCategoryId) {
-        let matchingSubUuids: string[] = [];
-        if (this.isUUID(subCategoryId)) {
-          matchingSubUuids = [subCategoryId];
+        if (subUuid) {
+          query = query.eq("sub_category_id", subUuid);
+        } else if (this.isUUID(subCategoryId)) {
+          query = query.eq("sub_category_id", subCategoryId);
         } else {
-          const { data: matchedSubs } = await db
+          const { data: matchedSub } = await db
             .from("sub_categories")
             .select("id")
-            .or(`slug.eq.${subCategoryId},slug.like.${subCategoryId}-%`);
-          matchingSubUuids = matchedSubs ? matchedSubs.map((s: { id: string }) => s.id) : [];
-        }
-
-        if (matchingSubUuids.length > 0) {
-          query = query.in("sub_category_id", matchingSubUuids);
-        } else if (subUuid) {
-          query = query.eq("sub_category_id", subUuid);
-        } else {
-          return [];
+            .eq("slug", subCategoryId)
+            .maybeSingle();
+          if (matchedSub?.id) {
+            query = query.eq("sub_category_id", matchedSub.id);
+          } else {
+            return [];
+          }
         }
       }
 
@@ -472,6 +470,11 @@ export class CatalogueRepository {
           })
         : [];
 
+      const isSoldOut = Boolean(
+        p.sold_out ||
+        (varArr.length > 0 && !varArr.some((v: { available: boolean; stockQty: number }) => v.available && (v.stockQty ?? 0) > 0))
+      );
+
       return {
         id: p.id,
         slug: p.slug,
@@ -490,8 +493,8 @@ export class CatalogueRepository {
         delivery_charge: p.delivery_charge ?? 0,
         isActive: p.is_active ?? true,
         is_active: p.is_active ?? true,
-        soldOut: p.sold_out ?? false,
-        sold_out: p.sold_out ?? false,
+        soldOut: isSoldOut,
+        sold_out: isSoldOut,
         avgRating: Number(p.avg_rating ?? 0),
         avg_rating: Number(p.avg_rating ?? 0),
         reviewCount: Number(p.review_count ?? 0),

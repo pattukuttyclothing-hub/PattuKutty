@@ -185,6 +185,21 @@ export class RequestsRepository {
       }
     }
 
+    // Batch-fetch categories, subcategories, and colours
+    const categoryIds = [...new Set(data.map((r: Record<string, unknown>) => r.category_id as string).filter(Boolean))];
+    const subCategoryIds = [...new Set(data.map((r: Record<string, unknown>) => r.sub_category_id as string).filter(Boolean))];
+    const colourIds = [...new Set(data.map((r: Record<string, unknown>) => r.colour_id as number).filter(Boolean))];
+
+    const [catsRes, subsRes, coloursRes] = await Promise.all([
+      categoryIds.length > 0 ? db.from("categories").select("id, slug, name").in("id", categoryIds) : Promise.resolve({ data: [] }),
+      subCategoryIds.length > 0 ? db.from("sub_categories").select("id, slug, name").in("id", subCategoryIds) : Promise.resolve({ data: [] }),
+      colourIds.length > 0 ? db.from("colours").select("id, name, hex").in("id", colourIds) : Promise.resolve({ data: [] }),
+    ]);
+
+    const catMap = new Map((catsRes.data || []).map((c: Record<string, unknown>) => [c.id as string, c]));
+    const subMap = new Map((subsRes.data || []).map((s: Record<string, unknown>) => [s.id as string, s]));
+    const colourMap = new Map((coloursRes.data || []).map((cl: Record<string, unknown>) => [cl.id as number, cl]));
+
     return (data as any[]).map((r: any) => {
       const q = quotesMap.get(String(r.id));
       let quote: Record<string, unknown> | null = null;
@@ -204,10 +219,47 @@ export class RequestsRepository {
           quotedAt: q.quoted_at,
         };
       }
-      return { ...r, quote };
+
+      const colourMatch = typeof r.fabric_notes === "string" ? r.fabric_notes.match(/\[Colour\]:\s*([^\n]+)/) : null;
+      const matchedColourFromNotes = colourMatch ? colourMatch[1].trim() : null;
+      const colourObj = r.colour_id ? colourMap.get(r.colour_id as number) : null;
+      const colourName = (r.colour as string) || (colourObj as any)?.name || matchedColourFromNotes || (r.custom_colour_image_url ? "Custom shade (uploaded)" : "") || "";
+
+      // Extract updateReason from update_request_note or fabric_notes
+      const rawUpdateNote = (r.update_request_note as string) || "";
+      const updateReasonMatch = rawUpdateNote.match(/\[Admin Update Reason\]:\s*([^\n]+)/) || (typeof r.fabric_notes === "string" ? r.fabric_notes.match(/\[Admin Update Reason\]:\s*([^\n]+)/) : null);
+      const updateReason = (r.update_reason as string) || (updateReasonMatch ? updateReasonMatch[1].trim() : undefined);
+
+      // Extract cancellation actor
+      const rawCancelReason = (r.cancel_reason as string) || "";
+      const adminCancelMatch = rawCancelReason.match(/^\[Cancelled by Admin\]:\s*([\s\S]*)/i);
+      const custCancelMatch = rawCancelReason.match(/^\[Cancelled by Customer\]:\s*([\s\S]*)/i);
+      let cancelledBy: "admin" | "customer" | undefined = undefined;
+      let cleanCancelReason = rawCancelReason;
+      if (adminCancelMatch) {
+        cancelledBy = "admin";
+        cleanCancelReason = adminCancelMatch[1].trim();
+      } else if (custCancelMatch) {
+        cancelledBy = "customer";
+        cleanCancelReason = custCancelMatch[1].trim();
+      }
+
+      return {
+        ...r,
+        category: catMap.get(r.category_id as string) ?? null,
+        sub_category: subMap.get(r.sub_category_id as string) ?? null,
+        colour: colourName,
+        colour_detail: colourObj ?? null,
+        update_reason: updateReason,
+        updateReason,
+        cancelled_by: cancelledBy,
+        cancelledBy,
+        cancel_reason: cleanCancelReason,
+        cancelReason: cleanCancelReason,
+        quote,
+      };
     });
   }
-
 
   static async getAllRequests() {
     const { data, error } = await db
@@ -238,7 +290,26 @@ export class RequestsRepository {
       const colourMatch = typeof r.fabric_notes === "string" ? r.fabric_notes.match(/\[Colour\]:\s*([^\n]+)/) : null;
       const matchedColourFromNotes = colourMatch ? colourMatch[1].trim() : null;
       const colourObj = r.colour_id ? colourMap.get(r.colour_id as number) : null;
-      const colourName = (r.colour as string) || (colourObj as any)?.name || matchedColourFromNotes || "Custom Colour";
+      const colourName = (r.colour as string) || (colourObj as any)?.name || matchedColourFromNotes || (r.custom_colour_image_url ? "Custom shade (uploaded)" : "") || "Custom Colour";
+
+      // Extract updateReason from update_request_note or fabric_notes
+      const rawUpdateNote = (r.update_request_note as string) || "";
+      const updateReasonMatch = rawUpdateNote.match(/\[Admin Update Reason\]:\s*([^\n]+)/) || (typeof r.fabric_notes === "string" ? r.fabric_notes.match(/\[Admin Update Reason\]:\s*([^\n]+)/) : null);
+      const updateReason = (r.update_reason as string) || (updateReasonMatch ? updateReasonMatch[1].trim() : undefined);
+
+      // Extract cancellation actor
+      const rawCancelReason = (r.cancel_reason as string) || "";
+      const adminCancelMatch = rawCancelReason.match(/^\[Cancelled by Admin\]:\s*([\s\S]*)/i);
+      const custCancelMatch = rawCancelReason.match(/^\[Cancelled by Customer\]:\s*([\s\S]*)/i);
+      let cancelledBy: "admin" | "customer" | undefined = undefined;
+      let cleanCancelReason = rawCancelReason;
+      if (adminCancelMatch) {
+        cancelledBy = "admin";
+        cleanCancelReason = adminCancelMatch[1].trim();
+      } else if (custCancelMatch) {
+        cancelledBy = "customer";
+        cleanCancelReason = custCancelMatch[1].trim();
+      }
 
       return {
         ...r,
@@ -247,6 +318,12 @@ export class RequestsRepository {
         sub_category: subMap.get(r.sub_category_id as string) ?? null,
         colour: colourName,
         colour_detail: colourObj ?? null,
+        update_reason: updateReason,
+        updateReason,
+        cancelled_by: cancelledBy,
+        cancelledBy,
+        cancel_reason: cleanCancelReason,
+        cancelReason: cleanCancelReason,
       };
     });
   }
@@ -349,7 +426,41 @@ export class RequestsRepository {
       customer.phone = finalPhone;
     }
 
-    return { ...data, colour: colour || "", phone: finalPhone, customer, category, sub_category, colour_detail: colourObj, quote };
+    // Extract updateReason from update_request_note or fabric_notes
+    const rawUpdateNote = (data.update_request_note as string) || "";
+    const updateReasonMatch = rawUpdateNote.match(/\[Admin Update Reason\]:\s*([^\n]+)/) || (data.fabric_notes ? data.fabric_notes.match(/\[Admin Update Reason\]:\s*([^\n]+)/) : null);
+    const updateReason = (data.update_reason as string) || (updateReasonMatch ? updateReasonMatch[1].trim() : undefined);
+
+    // Extract cancellation actor
+    const rawCancelReason = (data.cancel_reason as string) || "";
+    const adminCancelMatch = rawCancelReason.match(/^\[Cancelled by Admin\]:\s*([\s\S]*)/i);
+    const custCancelMatch = rawCancelReason.match(/^\[Cancelled by Customer\]:\s*([\s\S]*)/i);
+    let cancelledBy: "admin" | "customer" | undefined = undefined;
+    let cleanCancelReason = rawCancelReason;
+    if (adminCancelMatch) {
+      cancelledBy = "admin";
+      cleanCancelReason = adminCancelMatch[1].trim();
+    } else if (custCancelMatch) {
+      cancelledBy = "customer";
+      cleanCancelReason = custCancelMatch[1].trim();
+    }
+
+    return {
+      ...data,
+      colour: colour || (data.custom_colour_image_url ? "Custom shade (uploaded)" : "") || "",
+      phone: finalPhone,
+      customer,
+      category,
+      sub_category,
+      colour_detail: colourObj,
+      update_reason: updateReason,
+      updateReason,
+      cancelled_by: cancelledBy,
+      cancelledBy,
+      cancel_reason: cleanCancelReason,
+      cancelReason: cleanCancelReason,
+      quote,
+    };
   }
 
   static async submitQuoteAdmin(
@@ -517,9 +628,10 @@ export class RequestsRepository {
   }
 
   static async cancelCustomRequest(id: string, customerId: string, reason: string) {
+    const cleanReason = reason.trim();
     const payload = {
       status: "cancelled",
-      cancel_reason: reason,
+      cancel_reason: `[Cancelled by Customer]: ${cleanReason}`,
       cancelled_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
     };
@@ -533,13 +645,20 @@ export class RequestsRepository {
     if (error || !data) {
       throw error || new Error("Failed to cancel design request in database.");
     }
-    return data;
+    return {
+      ...data,
+      cancelled_by: "customer",
+      cancelledBy: "customer",
+      cancel_reason: cleanReason,
+      cancelReason: cleanReason,
+    };
   }
 
   static async cancelCustomRequestAdmin(id: string, reason: string) {
+    const cleanReason = reason.trim();
     const payload = {
       status: "cancelled",
-      cancel_reason: reason,
+      cancel_reason: `[Cancelled by Admin]: ${cleanReason}`,
       cancelled_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
     };
@@ -552,7 +671,13 @@ export class RequestsRepository {
     if (error || !data) {
       throw error || new Error("Admin failed to cancel design request in database.");
     }
-    return data;
+    return {
+      ...data,
+      cancelled_by: "admin",
+      cancelledBy: "admin",
+      cancel_reason: cleanReason,
+      cancelReason: cleanReason,
+    };
   }
 
   static async convertRequestToOrderRpc(requestId: string, adminUserId: string) {
