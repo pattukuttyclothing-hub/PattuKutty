@@ -12,108 +12,110 @@ import {
 } from "@/components/boutique/LandingNavigationBridge";
 import hero3 from "@/assets/hero-3.jpg";
 
-const title = "1-Hour Express Stitching in Coimbatore | Fastest Ladies Boutique";
-const description = seoDescription(
-  "Urgent custom clothing & blouse stitching in Coimbatore completed in as fast as 1 hour. Same-day emergency fitting, master tailoring, and express delivery across India."
-);
-
-const expressJsonLd = {
-  "@context": "https://schema.org",
-  "@graph": [
-    {
-      "@type": "BreadcrumbList",
-      "itemListElement": [
-        {
-          "@type": "ListItem",
-          "position": 1,
-          "name": "Home",
-          "item": SITE_URL,
-        },
-        {
-          "@type": "ListItem",
-          "position": 2,
-          "name": "Express Stitching",
-          "item": `${SITE_URL}/express-stitching`,
-        },
-      ],
-    },
-    {
-      "@type": "Service",
-      "@id": `${SITE_URL}/express-stitching#service`,
-      "name": "1-Hour Express Custom Tailoring & Blouse Stitching",
-      "serviceType": "Emergency & Rapid Custom Garment Stitching",
-      "provider": {
-        "@type": ["LocalBusiness", "ClothingStore"],
-        "@id": `${SITE_URL}/#store`,
-        "name": "Pattu Kutty",
-        "image": `${SITE_URL}/logo.png`,
-        "telephone": "+91 97917 12622",
-        "priceRange": "₹₹",
-        "address": {
-          "@type": "PostalAddress",
-          "streetAddress": "463, Bharathiyar Road, Pappanaicken Palayam",
-          "addressLocality": "Coimbatore",
-          "addressRegion": "Tamil Nadu",
-          "postalCode": "641037",
-          "addressCountry": "IN",
-        },
-        "geo": {
-          "@type": "GeoCoordinates",
-          "latitude": 11.0168,
-          "longitude": 76.9558,
-        },
-        "openingHoursSpecification": [
-          {
-            "@type": "OpeningHoursSpecification",
-            "dayOfWeek": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"],
-            "opens": "09:30",
-            "closes": "20:30",
-          },
-          {
-            "@type": "OpeningHoursSpecification",
-            "dayOfWeek": "Sunday",
-            "opens": "10:00",
-            "closes": "14:00",
-          },
-        ],
-      },
-      "areaServed": [
-        { "@type": "City", "name": "Coimbatore" },
-        { "@type": "State", "name": "Tamil Nadu" },
-        { "@type": "Country", "name": "India" },
-      ],
-      "description": "Ultra-fast custom clothing, urgent saree blouse stitching, and dress alteration completed in as fast as 60 minutes at Coimbatore studio.",
-      "offers": {
-        "@type": "Offer",
-        "description": "Express 1-hour luxury tailoring",
-        "priceCurrency": "INR",
-      },
-    },
-  ],
-};
-
 export const Route = createFileRoute("/express-stitching")({
-  head: () => ({
-    meta: [
-      ...socialMeta({ title, description, path: "/express-stitching", image: `${SITE_URL}/og-cover.jpg` }),
-      {
-        name: "keywords",
-        content: "1 hour stitching Coimbatore, urgent blouse tailoring Coimbatore, fastest dress designer Coimbatore, express custom clothing Tamil Nadu, same day tailoring Coimbatore, emergency wedding dress alteration Coimbatore, Gandhipuram urgent stitching",
-      },
-      { name: "geo.region", content: "IN-TN" },
-      { name: "geo.placename", content: "Coimbatore" },
-      { name: "geo.position", content: "11.0168;76.9558" },
-      { name: "ICBM", content: "11.0168, 76.9558" },
-    ],
-    links: [
-      { rel: "canonical", href: abs("/express-stitching") },
-      { rel: "icon", type: "image/png", href: "/logo.png", sizes: "any" },
-      { rel: "shortcut icon", href: "/logo.png" },
-    ],
-    scripts: [
-      { type: "application/ld+json", children: JSON.stringify(expressJsonLd) },
-    ],
-  }),
+  head: () => {
+    const title = "1-Hour Express Stitching in Coimbatore | Fastest Ladies Boutique";
+    const description = seoDescription(
+      "Urgent custom clothing & blouse stitching in Coimbatore completed in as fast as 1 hour. Same-day emergency fitting, master tailoring, and express delivery across India."
+    );
+
+    const expressJsonLd = {
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@type": "BreadcrumbList",
+          "itemListElement": [
+            {
+              "@type": "ListItem",
+              "position": 1,
+              "name": "Home",
+              "item": SITE_URL,
+            },
+            {
+              "@type": "ListItem",
+              "position": 2,
+              "name": "Express Stitching",
+              "item": `${SITE_URL}/express-stitching`,
+            },
+          ],
+        },
+        {
+          "@type": "Service",
+          "@id": `${SITE_URL}/express-stitching#service`,
+          "name": "1-Hour Express Custom Tailoring & Blouse Stitching",
+          "serviceType": "Emergency & Rapid Custom Garment Stitching",
+          "provider": {
+            "@type": ["LocalBusiness", "ClothingStore"],
+            "@id": `${SITE_URL}/#store`,
+            "name": "Pattu Kutty",
+            "image": `${SITE_URL}/logo.png`,
+            "telephone": "+91 97917 12622",
+            "priceRange": "₹₹",
+            "address": {
+              "@type": "PostalAddress",
+              "streetAddress": "463, Bharathiyar Road, Pappanaicken Palayam",
+              "addressLocality": "Coimbatore",
+              "addressRegion": "Tamil Nadu",
+              "postalCode": "641037",
+              "addressCountry": "IN",
+            },
+            "geo": {
+              "@type": "GeoCoordinates",
+              "latitude": 11.0168,
+              "longitude": 76.9558,
+            },
+            "openingHoursSpecification": [
+              {
+                "@type": "OpeningHoursSpecification",
+                "dayOfWeek": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"],
+                "opens": "09:30",
+                "closes": "20:30",
+              },
+              {
+                "@type": "OpeningHoursSpecification",
+                "dayOfWeek": "Sunday",
+                "opens": "10:00",
+                "closes": "14:00",
+              },
+            ],
+          },
+          "areaServed": [
+            { "@type": "City", "name": "Coimbatore" },
+            { "@type": "State", "name": "Tamil Nadu" },
+            { "@type": "Country", "name": "India" },
+          ],
+          "description": "Ultra-fast custom clothing, urgent saree blouse stitching, and dress alteration completed in as fast as 60 minutes at Coimbatore studio.",
+          "offers": {
+            "@type": "Offer",
+            "description": "Express 1-hour luxury tailoring",
+            "priceCurrency": "INR",
+          },
+        },
+      ],
+    };
+
+    return {
+      meta: [
+        ...socialMeta({ title, description, path: "/express-stitching", image: `${SITE_URL}/og-cover.jpg` }),
+        {
+          name: "keywords",
+          content: "1 hour stitching Coimbatore, urgent blouse tailoring Coimbatore, fastest dress designer Coimbatore, express custom clothing Tamil Nadu, same day tailoring Coimbatore, emergency wedding dress alteration Coimbatore, Gandhipuram urgent stitching",
+        },
+        { name: "geo.region", content: "IN-TN" },
+        { name: "geo.placename", content: "Coimbatore" },
+        { name: "geo.position", content: "11.0168;76.9558" },
+        { name: "ICBM", content: "11.0168, 76.9558" },
+      ],
+      links: [
+        { rel: "canonical", href: abs("/express-stitching") },
+        { rel: "icon", type: "image/png", href: "/logo.png", sizes: "any" },
+        { rel: "shortcut icon", href: "/logo.png" },
+      ],
+      scripts: [
+        { type: "application/ld+json", children: JSON.stringify(expressJsonLd) },
+      ],
+    };
+  },
   component: ExpressStitching,
 });
 

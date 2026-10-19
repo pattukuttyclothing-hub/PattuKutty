@@ -12,94 +12,96 @@ import {
 } from "@/components/boutique/LandingNavigationBridge";
 import hero2 from "@/assets/hero-2.jpg";
 
-const title = "Custom Silk Saree & Blouse Stitching in Coimbatore | Pattu Kutty";
-const description = seoDescription(
-  "Custom pure silk sarees, ready-to-wear pre-pleating, and designer blouse tailoring in Coimbatore. Handcrafted zari borders, 1-hour express stitching, and nationwide delivery."
-);
-
-const sareeJsonLd = {
-  "@context": "https://schema.org",
-  "@graph": [
-    {
-      "@type": "BreadcrumbList",
-      "itemListElement": [
-        {
-          "@type": "ListItem",
-          "position": 1,
-          "name": "Home",
-          "item": SITE_URL,
-        },
-        {
-          "@type": "ListItem",
-          "position": 2,
-          "name": "Custom Silk Sarees",
-          "item": `${SITE_URL}/custom-sarees`,
-        },
-      ],
-    },
-    {
-      "@type": "Service",
-      "@id": `${SITE_URL}/custom-sarees#service`,
-      "name": "Custom Silk Saree Draping & Designer Blouse Tailoring",
-      "serviceType": "Traditional Silk Saree Customization & Stitching",
-      "provider": {
-        "@type": ["LocalBusiness", "ClothingStore"],
-        "@id": `${SITE_URL}/#store`,
-        "name": "Pattu Kutty",
-        "image": `${SITE_URL}/logo.png`,
-        "telephone": "+91 97917 12622",
-        "priceRange": "₹₹",
-        "address": {
-          "@type": "PostalAddress",
-          "streetAddress": "463, Bharathiyar Road, Pappanaicken Palayam",
-          "addressLocality": "Coimbatore",
-          "addressRegion": "Tamil Nadu",
-          "postalCode": "641037",
-          "addressCountry": "IN",
-        },
-        "geo": {
-          "@type": "GeoCoordinates",
-          "latitude": 11.0168,
-          "longitude": 76.9558,
-        },
-      },
-      "areaServed": [
-        { "@type": "City", "name": "Coimbatore" },
-        { "@type": "State", "name": "Tamil Nadu" },
-        { "@type": "Country", "name": "India" },
-      ],
-      "description": "Bespoke silk saree draping, kanchipuram silk customization, contrast blouse aari tailoring, and 1-hour express saree stitching in Coimbatore.",
-      "offers": {
-        "@type": "Offer",
-        "description": "Silk saree customization & blouse stitching",
-        "priceCurrency": "INR",
-      },
-    },
-  ],
-};
-
 export const Route = createFileRoute("/custom-sarees")({
-  head: () => ({
-    meta: [
-      ...socialMeta({ title, description, path: "/custom-sarees", image: `${SITE_URL}/og-cover.jpg` }),
-      {
-        name: "keywords",
-        content: "custom silk saree Coimbatore, designer saree stitching Coimbatore, silk saree blouse tailoring Coimbatore, best saree designer Coimbatore, custom pattu saree stitching, pre pleating saree Coimbatore, wedding saree Pappanaicken Palayam",
-      },
-      { name: "geo.region", content: "IN-TN" },
-      { name: "geo.placename", content: "Coimbatore" },
-      { name: "geo.position", content: "11.0168;76.9558" },
-      { name: "ICBM", content: "11.0168, 76.9558" },
-    ],
-    links: [
-      { rel: "canonical", href: abs("/custom-sarees") },
-      { rel: "icon", type: "image/png", href: "/logo.png", sizes: "any" },
-      { rel: "shortcut icon", href: "/logo.png" },
-    ],
-    scripts: [
-      { type: "application/ld+json", children: JSON.stringify(sareeJsonLd) },
-    ],
-  }),
+  head: () => {
+    const title = "Custom Silk Saree & Blouse Stitching in Coimbatore | Pattu Kutty";
+    const description = seoDescription(
+      "Custom pure silk sarees, ready-to-wear pre-pleating, and designer blouse tailoring in Coimbatore. Handcrafted zari borders, 1-hour express stitching, and nationwide delivery."
+    );
+
+    const sareeJsonLd = {
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@type": "BreadcrumbList",
+          "itemListElement": [
+            {
+              "@type": "ListItem",
+              "position": 1,
+              "name": "Home",
+              "item": SITE_URL,
+            },
+            {
+              "@type": "ListItem",
+              "position": 2,
+              "name": "Custom Silk Sarees",
+              "item": `${SITE_URL}/custom-sarees`,
+            },
+          ],
+        },
+        {
+          "@type": "Service",
+          "@id": `${SITE_URL}/custom-sarees#service`,
+          "name": "Custom Silk Saree Draping & Designer Blouse Tailoring",
+          "serviceType": "Traditional Silk Saree Customization & Stitching",
+          "provider": {
+            "@type": ["LocalBusiness", "ClothingStore"],
+            "@id": `${SITE_URL}/#store`,
+            "name": "Pattu Kutty",
+            "image": `${SITE_URL}/logo.png`,
+            "telephone": "+91 97917 12622",
+            "priceRange": "₹₹",
+            "address": {
+              "@type": "PostalAddress",
+              "streetAddress": "463, Bharathiyar Road, Pappanaicken Palayam",
+              "addressLocality": "Coimbatore",
+              "addressRegion": "Tamil Nadu",
+              "postalCode": "641037",
+              "addressCountry": "IN",
+            },
+            "geo": {
+              "@type": "GeoCoordinates",
+              "latitude": 11.0168,
+              "longitude": 76.9558,
+            },
+          },
+          "areaServed": [
+            { "@type": "City", "name": "Coimbatore" },
+            { "@type": "State", "name": "Tamil Nadu" },
+            { "@type": "Country", "name": "India" },
+          ],
+          "description": "Bespoke silk saree draping, kanchipuram silk customization, contrast blouse aari tailoring, and 1-hour express saree stitching in Coimbatore.",
+          "offers": {
+            "@type": "Offer",
+            "description": "Silk saree customization & blouse stitching",
+            "priceCurrency": "INR",
+          },
+        },
+      ],
+    };
+
+    return {
+      meta: [
+        ...socialMeta({ title, description, path: "/custom-sarees", image: `${SITE_URL}/og-cover.jpg` }),
+        {
+          name: "keywords",
+          content: "custom silk saree Coimbatore, designer saree stitching Coimbatore, silk saree blouse tailoring Coimbatore, best saree designer Coimbatore, custom pattu saree stitching, pre pleating saree Coimbatore, wedding saree Pappanaicken Palayam",
+        },
+        { name: "geo.region", content: "IN-TN" },
+        { name: "geo.placename", content: "Coimbatore" },
+        { name: "geo.position", content: "11.0168;76.9558" },
+        { name: "ICBM", content: "11.0168, 76.9558" },
+      ],
+      links: [
+        { rel: "canonical", href: abs("/custom-sarees") },
+        { rel: "icon", type: "image/png", href: "/logo.png", sizes: "any" },
+        { rel: "shortcut icon", href: "/logo.png" },
+      ],
+      scripts: [
+        { type: "application/ld+json", children: JSON.stringify(sareeJsonLd) },
+      ],
+    };
+  },
   component: CustomSarees,
 });
 

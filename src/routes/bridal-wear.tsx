@@ -12,101 +12,103 @@ import {
 } from "@/components/boutique/LandingNavigationBridge";
 import hero1 from "@/assets/hero-1.jpg";
 
-const title = "Best Bridal Lehenga & Saree Designer in Coimbatore | Pattu Kutty";
-const description = seoDescription(
-  "Custom bridal lehengas, kalyana pattu sarees, and handcrafted aari blouses in Coimbatore. Luxury bespoke fit, artisan zari embroidery, and express delivery across India."
-);
-
-const bridalJsonLd = {
-  "@context": "https://schema.org",
-  "@graph": [
-    {
-      "@type": "BreadcrumbList",
-      "itemListElement": [
-        {
-          "@type": "ListItem",
-          "position": 1,
-          "name": "Home",
-          "item": SITE_URL,
-        },
-        {
-          "@type": "ListItem",
-          "position": 2,
-          "name": "Bridal Wear",
-          "item": `${SITE_URL}/bridal-wear`,
-        },
-      ],
-    },
-    {
-      "@type": "Service",
-      "@id": `${SITE_URL}/bridal-wear#service`,
-      "name": "Custom Bridal Wear & Kalyana Pattu Design",
-      "serviceType": "Bridal Couture & Wedding Tailoring",
-      "provider": {
-        "@type": ["LocalBusiness", "ClothingStore"],
-        "@id": `${SITE_URL}/#store`,
-        "name": "Pattu Kutty",
-        "image": `${SITE_URL}/logo.png`,
-        "telephone": "+91 97917 12622",
-        "priceRange": "₹₹",
-        "address": {
-          "@type": "PostalAddress",
-          "streetAddress": "463, Bharathiyar Road, Pappanaicken Palayam",
-          "addressLocality": "Coimbatore",
-          "addressRegion": "Tamil Nadu",
-          "postalCode": "641037",
-          "addressCountry": "IN",
-        },
-        "geo": {
-          "@type": "GeoCoordinates",
-          "latitude": 11.0168,
-          "longitude": 76.9558,
-        },
-      },
-      "areaServed": [
-        { "@type": "City", "name": "Coimbatore" },
-        { "@type": "State", "name": "Tamil Nadu" },
-        { "@type": "Country", "name": "India" },
-      ],
-      "description": "Bespoke bridal lehenga customization, wedding kalyana pattu saree designing, and handcrafted aari maggam blouse tailoring in Coimbatore with express fitting slots.",
-      "aggregateRating": {
-        "@type": "AggregateRating",
-        "ratingValue": "4.9",
-        "reviewCount": "540",
-        "bestRating": "5",
-        "worstRating": "1",
-      },
-      "offers": {
-        "@type": "Offer",
-        "description": "Custom bridal tailoring and consultation",
-        "priceCurrency": "INR",
-      },
-    },
-  ],
-};
-
 export const Route = createFileRoute("/bridal-wear")({
-  head: () => ({
-    meta: [
-      ...socialMeta({ title, description, path: "/bridal-wear", image: `${SITE_URL}/og-cover.jpg` }),
-      {
-        name: "keywords",
-        content: "bridal lehenga Coimbatore, best bridal wear designer Coimbatore, kalyana pattu saree Coimbatore, custom wedding dress Coimbatore, bridal blouse stitching Coimbatore, aari work blouse Coimbatore, wedding couture Pappanaicken Palayam",
-      },
-      { name: "geo.region", content: "IN-TN" },
-      { name: "geo.placename", content: "Coimbatore" },
-      { name: "geo.position", content: "11.0168;76.9558" },
-      { name: "ICBM", content: "11.0168, 76.9558" },
-    ],
-    links: [
-      { rel: "canonical", href: abs("/bridal-wear") },
-      { rel: "icon", type: "image/png", href: "/logo.png", sizes: "any" },
-      { rel: "shortcut icon", href: "/logo.png" },
-    ],
-    scripts: [
-      { type: "application/ld+json", children: JSON.stringify(bridalJsonLd) },
-    ],
-  }),
+  head: () => {
+    const title = "Best Bridal Lehenga & Saree Designer in Coimbatore | Pattu Kutty";
+    const description = seoDescription(
+      "Custom bridal lehengas, kalyana pattu sarees, and handcrafted aari blouses in Coimbatore. Luxury bespoke fit, artisan zari embroidery, and express delivery across India."
+    );
+
+    const bridalJsonLd = {
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@type": "BreadcrumbList",
+          "itemListElement": [
+            {
+              "@type": "ListItem",
+              "position": 1,
+              "name": "Home",
+              "item": SITE_URL,
+            },
+            {
+              "@type": "ListItem",
+              "position": 2,
+              "name": "Bridal Wear",
+              "item": `${SITE_URL}/bridal-wear`,
+            },
+          ],
+        },
+        {
+          "@type": "Service",
+          "@id": `${SITE_URL}/bridal-wear#service`,
+          "name": "Custom Bridal Wear & Kalyana Pattu Design",
+          "serviceType": "Bridal Couture & Wedding Tailoring",
+          "provider": {
+            "@type": ["LocalBusiness", "ClothingStore"],
+            "@id": `${SITE_URL}/#store`,
+            "name": "Pattu Kutty",
+            "image": `${SITE_URL}/logo.png`,
+            "telephone": "+91 97917 12622",
+            "priceRange": "₹₹",
+            "address": {
+              "@type": "PostalAddress",
+              "streetAddress": "463, Bharathiyar Road, Pappanaicken Palayam",
+              "addressLocality": "Coimbatore",
+              "addressRegion": "Tamil Nadu",
+              "postalCode": "641037",
+              "addressCountry": "IN",
+            },
+            "geo": {
+              "@type": "GeoCoordinates",
+              "latitude": 11.0168,
+              "longitude": 76.9558,
+            },
+          },
+          "areaServed": [
+            { "@type": "City", "name": "Coimbatore" },
+            { "@type": "State", "name": "Tamil Nadu" },
+            { "@type": "Country", "name": "India" },
+          ],
+          "description": "Bespoke bridal lehenga customization, wedding kalyana pattu saree designing, and handcrafted aari maggam blouse tailoring in Coimbatore with express fitting slots.",
+          "aggregateRating": {
+            "@type": "AggregateRating",
+            "ratingValue": "4.9",
+            "reviewCount": "540",
+            "bestRating": "5",
+            "worstRating": "1",
+          },
+          "offers": {
+            "@type": "Offer",
+            "description": "Custom bridal tailoring and consultation",
+            "priceCurrency": "INR",
+          },
+        },
+      ],
+    };
+
+    return {
+      meta: [
+        ...socialMeta({ title, description, path: "/bridal-wear", image: `${SITE_URL}/og-cover.jpg` }),
+        {
+          name: "keywords",
+          content: "bridal lehenga Coimbatore, best bridal wear designer Coimbatore, kalyana pattu saree Coimbatore, custom wedding dress Coimbatore, bridal blouse stitching Coimbatore, aari work blouse Coimbatore, wedding couture Pappanaicken Palayam",
+        },
+        { name: "geo.region", content: "IN-TN" },
+        { name: "geo.placename", content: "Coimbatore" },
+        { name: "geo.position", content: "11.0168;76.9558" },
+        { name: "ICBM", content: "11.0168, 76.9558" },
+      ],
+      links: [
+        { rel: "canonical", href: abs("/bridal-wear") },
+        { rel: "icon", type: "image/png", href: "/logo.png", sizes: "any" },
+        { rel: "shortcut icon", href: "/logo.png" },
+      ],
+      scripts: [
+        { type: "application/ld+json", children: JSON.stringify(bridalJsonLd) },
+      ],
+    };
+  },
   component: BridalWear,
 });
 

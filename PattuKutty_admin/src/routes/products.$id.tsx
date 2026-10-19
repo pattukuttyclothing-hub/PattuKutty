@@ -801,14 +801,14 @@ function ProductEditor() {
                 ? "Select saree specifications for this product and set stock quantity."
                 : "Select sizes for this design and specify the stock quantity available for each size independently."}
             </p>
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-wrap gap-2 sm:gap-2.5">
               {getPermittedSizesForCategory(draft?.category, draft?.sub).map((s) => (
                 <button
                   key={s}
                   type="button"
                   onClick={() => toggleSize(s)}
-                  className={`rounded-full border px-3.5 py-1.5 text-xs font-medium ${
-                    sizes.includes(s) ? "border-primary bg-secondary text-primary" : "border-border"
+                  className={`rounded-xl sm:rounded-full border px-4 py-2 sm:px-4.5 sm:py-2.5 text-xs sm:text-sm font-medium transition-all leading-normal ${
+                    sizes.includes(s) ? "border-primary bg-secondary text-primary font-semibold shadow-sm" : "border-border hover:bg-secondary/40"
                   }`}
                 >
                   {s}
@@ -821,14 +821,14 @@ function ProductEditor() {
                 {currentVariants.map((v) => (
                   <div
                     key={v.size}
-                    className={`flex flex-wrap items-center justify-between rounded-2xl border p-3 gap-3 ${
+                    className={`flex flex-col sm:flex-row sm:items-center justify-between rounded-2xl border p-3.5 sm:p-4 gap-3 ${
                       v.available
                         ? "border-emerald-500/20 bg-emerald-500/5"
                         : "border-destructive/20 bg-destructive/5"
                     }`}
                   >
                     <div className="flex items-center gap-3">
-                      <span className="text-sm font-semibold">{v.size}</span>
+                      <span className="text-sm sm:text-base font-semibold">{v.size}</span>
                       <span className={`text-xs font-medium ${v.available ? "text-emerald-600" : "text-destructive"}`}>
                         {v.available ? `${v.stockQty ?? 1} in stock` : "Sold Out"}
                       </span>
@@ -836,7 +836,7 @@ function ProductEditor() {
 
                     <div className="flex items-center gap-3">
                       <div className="flex items-center gap-1.5">
-                        <span className="text-[0.7rem] font-medium text-muted-foreground">Qty:</span>
+                        <span className="text-[0.7rem] sm:text-xs font-medium text-muted-foreground">Qty:</span>
                         <input
                           id={`variant_stock_${v.size}`}
                           name={`variant_stock_${v.size}`}

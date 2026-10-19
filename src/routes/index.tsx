@@ -15,47 +15,49 @@ import { storeInfo, waLink } from "@/data/boutique";
 import { categoryProductJsonLd, faqJsonLd, serviceJsonLd } from "@/data/aeo";
 import { abs, SITE_URL, seoDescription, socialMeta } from "@/lib/seo";
 
-const title = "Pattu Kutty | Exclusive Silk Sarees, Bridal Wear & Custom Clothing Coimbatore";
-const description = seoDescription(
-  "Pattu Kutty is a custom women's clothing brand based in Coimbatore, Tamil Nadu, offering 1-hour customization on custom-made silk sarees, bridal wear, and women's clothing.",
-);
-
-const websiteJsonLd = {
-  "@context": "https://schema.org",
-  "@type": "WebSite",
-  name: "Pattu Kutty",
-  url: SITE_URL,
-  potentialAction: {
-    "@type": "SearchAction",
-    target: `${SITE_URL}/category/{search_term_string}`,
-    "query-input": "required name=search_term_string",
-  },
-};
-
 export const Route = createFileRoute("/")({
-  head: () => ({
-    meta: [
-      ...socialMeta({ title, description, path: "/" }),
-      {
-        name: "keywords",
-        content:
-          "Pattu Kutty, Pattu Kutty Clothing, Coimbatore silk saree, customize cloth Coimbatore, fast customization Coimbatore, bridal dress Coimbatore, bridal blouse Coimbatore, designer frocks Coimbatore, custom lehenga Coimbatore, handmade silk sarees Coimbatore, 1 hour stitching Coimbatore, kalyana pattu saree, custom blouse stitching, ladies dress designer Coimbatore, women's clothing customization Coimbatore",
+  head: () => {
+    const title = "Pattu Kutty | Exclusive Silk Sarees, Bridal Wear & Custom Clothing Coimbatore";
+    const description = seoDescription(
+      "Pattu Kutty is a custom women's clothing brand based in Coimbatore, Tamil Nadu, offering 1-hour customization on custom-made silk sarees, bridal wear, and women's clothing.",
+    );
+
+    const websiteJsonLd = {
+      "@context": "https://schema.org",
+      "@type": "WebSite",
+      name: "Pattu Kutty",
+      url: SITE_URL,
+      potentialAction: {
+        "@type": "SearchAction",
+        target: `${SITE_URL}/category/{search_term_string}`,
+        "query-input": "required name=search_term_string",
       },
-      { name: "geo.region", content: "IN-TN" },
-      { name: "geo.placename", content: "Coimbatore" },
-    ],
-    links: [
-      { rel: "canonical", href: abs("/") },
-      { rel: "icon", type: "image/png", href: "/logo.png", sizes: "any" },
-      { rel: "shortcut icon", href: "/logo.png" },
-    ],
-    scripts: [
-      { type: "application/ld+json", children: JSON.stringify(websiteJsonLd) },
-      { type: "application/ld+json", children: JSON.stringify(faqJsonLd) },
-      { type: "application/ld+json", children: JSON.stringify(serviceJsonLd) },
-      { type: "application/ld+json", children: JSON.stringify(categoryProductJsonLd) },
-    ],
-  }),
+    };
+
+    return {
+      meta: [
+        ...socialMeta({ title, description, path: "/" }),
+        {
+          name: "keywords",
+          content:
+            "Pattu Kutty, Pattu Kutty Clothing, Coimbatore silk saree, customize cloth Coimbatore, fast customization Coimbatore, bridal dress Coimbatore, bridal blouse Coimbatore, designer frocks Coimbatore, custom lehenga Coimbatore, handmade silk sarees Coimbatore, 1 hour stitching Coimbatore, kalyana pattu saree, custom blouse stitching, ladies dress designer Coimbatore, women's clothing customization Coimbatore",
+        },
+        { name: "geo.region", content: "IN-TN" },
+        { name: "geo.placename", content: "Coimbatore" },
+      ],
+      links: [
+        { rel: "canonical", href: abs("/") },
+        { rel: "icon", type: "image/png", href: "/logo.png", sizes: "any" },
+        { rel: "shortcut icon", href: "/logo.png" },
+      ],
+      scripts: [
+        { type: "application/ld+json", children: JSON.stringify(websiteJsonLd) },
+        { type: "application/ld+json", children: JSON.stringify(faqJsonLd) },
+        { type: "application/ld+json", children: JSON.stringify(serviceJsonLd) },
+        { type: "application/ld+json", children: JSON.stringify(categoryProductJsonLd) },
+      ],
+    };
+  },
   component: Index,
 });
 

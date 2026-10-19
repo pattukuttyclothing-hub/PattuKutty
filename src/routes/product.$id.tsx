@@ -353,18 +353,23 @@ function ProductPage() {
                   </button>
                 </div>
 
-                <div className="mt-3 flex flex-wrap gap-2">
+                <div className="mt-3 flex flex-wrap gap-2 sm:gap-2.5">
                   {uniqueAvailableSizes.map((sz) => {
                     const isSelected = size === sz;
+                    const isLongText = sz.length > 4;
 
                     return (
                       <button
                         key={sz}
                         type="button"
                         onClick={() => setSize(sz)}
-                        className={`relative min-w-[3.25rem] rounded-xl border px-4 py-2.5 text-xs font-semibold transition-all ${
+                        className={`relative rounded-xl border font-semibold transition-all leading-snug flex items-center justify-center text-center ${
+                          isLongText
+                            ? "min-h-[2.75rem] px-4 py-2.5 sm:px-5 sm:py-3 text-xs sm:text-sm"
+                            : "min-w-[3.5rem] min-h-[2.75rem] px-3.5 py-2 text-xs sm:text-sm"
+                        } ${
                           isSelected
-                            ? "border-primary bg-primary text-primary-foreground shadow-soft"
+                            ? "border-primary bg-primary text-primary-foreground shadow-soft ring-2 ring-primary/20"
                             : "border-border bg-card text-foreground hover:bg-secondary"
                         }`}
                       >

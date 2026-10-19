@@ -11,20 +11,22 @@
  * ---------------------------------------------------------------------------
  */
 
-import { BRAND, SITE_URL, abs, OG_IMAGE } from "@/lib/seo";
+const SITE_URL = "https://pattukuttyclothing.com";
+const OG_IMAGE = `${SITE_URL}/og-cover.jpg`;
+const abs = (path = "/") => `${SITE_URL}${path.startsWith("/") ? path : `/${path}`}`;
 
 /** NAP — Name, Address, Phone. Mirrored everywhere. */
 export const NAP = {
-  name: BRAND.name,
-  legalName: BRAND.legalName,
-  street: BRAND.street,
-  locality: BRAND.city,
+  name: "Pattu Kutty",
+  legalName: "Pattu Kutty Clothing",
+  street: "463, Bharathiyar Road, Pappanaicken Palayam",
+  locality: "Coimbatore",
   region: "Tamil Nadu",
-  postalCode: BRAND.postalCode,
+  postalCode: "641037",
   country: "India",
-  phone: BRAND.phone,
+  phone: "+91 97917 12622",
   /** One-line address string used in visible copy. */
-  addressLine: `${BRAND.street}, ${BRAND.city} – ${BRAND.postalCode}, Tamil Nadu, India`,
+  addressLine: "463, Bharathiyar Road, Pappanaicken Palayam, Coimbatore – 641037, Tamil Nadu, India",
 } as const;
 
 /**

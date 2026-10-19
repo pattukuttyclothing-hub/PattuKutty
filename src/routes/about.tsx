@@ -16,28 +16,30 @@ import {
 } from "@/data/aeo";
 import { abs, breadcrumbJsonLd, seoDescription, socialMeta } from "@/lib/seo";
 
-const title = "About Pattu Kutty — Custom Clothing in Coimbatore";
-const description = seoDescription(ENTITY_SUMMARY);
-
 export const Route = createFileRoute("/about")({
-  head: () => ({
-    meta: socialMeta({ title, description, path: "/about" }),
-    links: [{ rel: "canonical", href: abs("/about") }],
-    scripts: [
-      { type: "application/ld+json", children: JSON.stringify(faqJsonLd) },
-      { type: "application/ld+json", children: JSON.stringify(serviceJsonLd) },
-      { type: "application/ld+json", children: JSON.stringify(categoryProductJsonLd) },
-      {
-        type: "application/ld+json",
-        children: JSON.stringify(
-          breadcrumbJsonLd([
-            { name: "Home", path: "/" },
-            { name: "About Pattu Kutty", path: "/about" },
-          ]),
-        ),
-      },
-    ],
-  }),
+  head: () => {
+    const title = "About Pattu Kutty — Custom Clothing in Coimbatore";
+    const description = seoDescription(ENTITY_SUMMARY);
+
+    return {
+      meta: socialMeta({ title, description, path: "/about" }),
+      links: [{ rel: "canonical", href: abs("/about") }],
+      scripts: [
+        { type: "application/ld+json", children: JSON.stringify(faqJsonLd) },
+        { type: "application/ld+json", children: JSON.stringify(serviceJsonLd) },
+        { type: "application/ld+json", children: JSON.stringify(categoryProductJsonLd) },
+        {
+          type: "application/ld+json",
+          children: JSON.stringify(
+            breadcrumbJsonLd([
+              { name: "Home", path: "/" },
+              { name: "About Pattu Kutty", path: "/about" },
+            ]),
+          ),
+        },
+      ],
+    };
+  },
   component: AboutPage,
 });
 

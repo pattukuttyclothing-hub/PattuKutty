@@ -42,7 +42,7 @@ const clamp = (text: string, max: number) => {
  * Build a title that fits TITLE_MAX: drops the optional middle qualifier and
  * then the brand suffix before ever truncating the page name.
  */
-export const seoTitle = (name: string, qualifier?: string, brand = BRAND.name) => {
+export const seoTitle = (name: string, qualifier?: string, brand = BRAND?.name ?? "Pattu Kutty") => {
   const candidates = [
     qualifier ? `${name} — ${qualifier} | ${brand}` : `${name} | ${brand}`,
     `${name} | ${brand}`,
