@@ -4,7 +4,6 @@ import {
   Clapperboard,
   LayoutDashboard,
   LogOut,
-  MessageCircle,
   Package,
   Scissors,
   Truck,
@@ -56,7 +55,6 @@ const nav = [
   { to: "/requests", label: "Customer Requests", icon: Scissors },
   { to: "/orders", label: "Orders", icon: Truck },
   { to: "/reels", label: "Reels & Featured", icon: Clapperboard },
-  { to: "/whatsapp", label: "WhatsApp Studio", icon: MessageCircle },
 ];
 
 export function AdminShell({ children }: { children: ReactNode }) {

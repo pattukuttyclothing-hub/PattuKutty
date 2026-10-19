@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, redirect } from "@tanstack/react-router";
 import { Eye, MousePointerClick, Search, Send, Sparkles, Users } from "lucide-react";
 import { AdminShell, PageHead } from "@/components/admin/AdminShell";
 import { Pill, StatCard } from "@/components/whatsapp/WhatsAppKit";
@@ -20,6 +20,9 @@ const description =
   "Promote designs and offers on WhatsApp, preview the exact message customers receive, and track reach, clicks and orders district by district.";
 
 export const Route = createFileRoute("/whatsapp/")({
+  beforeLoad: () => {
+    throw redirect({ to: "/" });
+  },
   head: () => ({
     meta: [
       { title },
