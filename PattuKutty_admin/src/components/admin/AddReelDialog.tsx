@@ -124,22 +124,26 @@ export function AddReelDialog({ open, onClose, editing }: Props) {
       toast.error("Upload a 9:16 reel video first.");
       return;
     }
-    if (!productId) {
-      toast.error("Tag a product to the reel.");
-      return;
-    }
     const finalTitle = title.trim() || "Studio reel";
     if (editing) {
-      saveReel(editing.id, { videoUrl, title: finalTitle, productId });
-      toast.success(`Reel "${finalTitle}" updated in database.`);
+      saveReel(editing.id, { videoUrl, title: finalTitle, productId: productId || "" });
+      toast.success(
+        productId
+          ? `Reel "${finalTitle}" updated in database.`
+          : `Reel "${finalTitle}" updated (no product tagged).`
+      );
     } else {
       addReel({
         id: uid("rl"),
         videoUrl,
         title: finalTitle,
-        productId,
+        productId: productId || "",
       });
-      toast.success(`Reel "${finalTitle}" saved to database & storefront.`);
+      toast.success(
+        productId
+          ? `Reel "${finalTitle}" saved to database & storefront.`
+          : `Reel "${finalTitle}" saved (no product tagged).`
+      );
     }
     onClose();
   };
@@ -225,9 +229,16 @@ export function AddReelDialog({ open, onClose, editing }: Props) {
             </label>
 
             <div>
-              <span className="text-xs font-semibold tracking-[0.12em] text-muted-foreground uppercase">
-                Tag a product
-              </span>
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-semibold tracking-[0.12em] text-muted-foreground uppercase">
+                  Tag a product
+                </span>
+                {tagged && (
+                  <span className="text-[0.68rem] font-medium text-emerald-600 bg-emerald-500/10 px-2 py-0.5 rounded-full">
+                    Product tagged
+                  </span>
+                )}
+              </div>
               <div className="mt-2 flex items-center gap-3 rounded-2xl border border-border bg-background p-2.5">
                 {tagged ? (
                   <>
@@ -240,19 +251,43 @@ export function AddReelDialog({ open, onClose, editing }: Props) {
                       <span className="block truncate text-sm font-semibold">{tagged.name}</span>
                       <span className="text-xs text-primary">{inr(tagged.basePrice)}</span>
                     </span>
+                    <div className="flex items-center gap-1.5 shrink-0">
+                      <button
+                        type="button"
+                        onClick={() => setPicking((v) => !v)}
+                        className="rounded-full bg-primary px-3.5 py-2 text-[0.68rem] font-semibold tracking-[0.1em] text-primary-foreground uppercase hover:opacity-95"
+                      >
+                        {picking ? "Close" : "Change"}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setProductId("");
+                          setPicking(false);
+                          toast.success("Product untagged from reel.");
+                        }}
+                        className="inline-flex items-center gap-1 rounded-full border border-destructive/40 bg-destructive/10 px-3 py-2 text-[0.68rem] font-semibold tracking-[0.1em] text-destructive hover:bg-destructive hover:text-destructive-foreground uppercase transition-colors"
+                        title="Remove tagged product"
+                      >
+                        <X className="h-3.5 w-3.5" />
+                        Untag
+                      </button>
+                    </div>
                   </>
                 ) : (
-                  <span className="flex-1 px-1 text-sm text-muted-foreground">
-                    Choose a product
-                  </span>
+                  <>
+                    <span className="flex-1 px-1 text-sm text-muted-foreground">
+                      No product tagged (optional)
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => setPicking((v) => !v)}
+                      className="rounded-full bg-primary px-4 py-2 text-[0.68rem] font-semibold tracking-[0.1em] text-primary-foreground uppercase"
+                    >
+                      {picking ? "Close" : "Choose product"}
+                    </button>
+                  </>
                 )}
-                <button
-                  type="button"
-                  onClick={() => setPicking((v) => !v)}
-                  className="rounded-full bg-primary px-4 py-2 text-[0.68rem] font-semibold tracking-[0.1em] text-primary-foreground uppercase"
-                >
-                  {picking ? "Close" : tagged ? "Change" : "Choose product"}
-                </button>
               </div>
             </div>
 
@@ -277,7 +312,25 @@ export function AddReelDialog({ open, onClose, editing }: Props) {
 
                 {mode === "choose" ? (
                   <>
-                    <div className="mt-4 flex items-center gap-2 rounded-full border border-border bg-card px-4 py-2">
+                    {tagged && (
+                      <div className="mt-3 flex items-center justify-between rounded-2xl border border-destructive/30 bg-destructive/10 px-3.5 py-2 text-xs">
+                        <span className="text-muted-foreground">
+                          Tagged: <strong className="text-foreground">{tagged.name}</strong>
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setProductId("");
+                            setPicking(false);
+                            toast.success("Product untagged from reel.");
+                          }}
+                          className="inline-flex items-center gap-1 font-semibold text-destructive hover:underline text-xs"
+                        >
+                          <X className="h-3.5 w-3.5" /> Untag product
+                        </button>
+                      </div>
+                    )}
+                    <div className="mt-3 flex items-center gap-2 rounded-full border border-border bg-card px-4 py-2">
                       <Search className="h-4 w-4 text-muted-foreground" />
                       <input
                         id="reelDesignSearch"
@@ -289,37 +342,51 @@ export function AddReelDialog({ open, onClose, editing }: Props) {
                       />
                     </div>
                     <div className="mt-3 grid max-h-72 grid-cols-2 gap-3 overflow-y-auto pr-1 sm:grid-cols-3">
-                      {list.map((p) => (
-                        <button
-                          key={p.id}
-                          type="button"
-                          onClick={() => {
-                            setProductId(p.id);
-                            setPicking(false);
-                          }}
-                          className={`overflow-hidden rounded-2xl border bg-card text-left transition-colors ${
-                            productId === p.id ? "border-primary" : "border-border hover:bg-secondary"
-                          }`}
-                        >
-                          <span className="relative block aspect-[4/5]">
-                            <img
-                              src={p.images[0]}
-                              alt=""
-                              loading="lazy"
-                              className="h-full w-full object-cover"
-                            />
-                            {productId === p.id ? (
-                              <span className="absolute top-2 right-2 grid h-6 w-6 place-items-center rounded-full bg-primary text-primary-foreground">
-                                <Check className="h-3.5 w-3.5" />
-                              </span>
-                            ) : null}
-                          </span>
-                          <span className="block p-2.5">
-                            <span className="block truncate text-xs font-semibold">{p.name}</span>
-                            <span className="text-[0.7rem] text-primary">{inr(p.basePrice)}</span>
-                          </span>
-                        </button>
-                      ))}
+                      {list.map((p) => {
+                        const isSelected = productId === p.id;
+                        return (
+                          <button
+                            key={p.id}
+                            type="button"
+                            onClick={() => {
+                              if (isSelected) {
+                                setProductId("");
+                                setPicking(false);
+                                toast.success("Product untagged from reel.");
+                              } else {
+                                setProductId(p.id);
+                                setPicking(false);
+                              }
+                            }}
+                            className={`group relative overflow-hidden rounded-2xl border bg-card text-left transition-all ${
+                              isSelected ? "border-primary ring-2 ring-primary/20" : "border-border hover:bg-secondary"
+                            }`}
+                          >
+                            <span className="relative block aspect-[4/5]">
+                              <img
+                                src={p.images[0]}
+                                alt=""
+                                loading="lazy"
+                                className="h-full w-full object-cover"
+                              />
+                              {isSelected ? (
+                                <span className="absolute top-2 right-2 grid h-6 w-6 place-items-center rounded-full bg-primary text-primary-foreground shadow-sm">
+                                  <Check className="h-3.5 w-3.5" />
+                                </span>
+                              ) : null}
+                            </span>
+                            <span className="block p-2.5">
+                              <span className="block truncate text-xs font-semibold">{p.name}</span>
+                              <span className="text-[0.7rem] text-primary">{inr(p.basePrice)}</span>
+                              {isSelected && (
+                                <span className="mt-1 block text-[0.65rem] text-destructive font-medium group-hover:underline">
+                                  Click to untag
+                                </span>
+                              )}
+                            </span>
+                          </button>
+                        );
+                      })}
                     </div>
                   </>
                 ) : (

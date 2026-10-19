@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ArrowLeft, ChevronDown, ChevronUp, GripVertical, Pencil, Plus, Trash2 } from "lucide-react";
+import { ArrowLeft, ChevronDown, ChevronUp, GripVertical, Pencil, Plus, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
 import { AdminShell, PageHead } from "@/components/admin/AdminShell";
 import { AddReelDialog } from "@/components/admin/AddReelDialog";
@@ -28,7 +28,7 @@ export const Route = createFileRoute("/reels/edit")({
 });
 
 function EditReelsPage() {
-  const { reels, products, deleteReel, setReels } = useAdmin();
+  const { reels, products, deleteReel, setReels, saveReel } = useAdmin();
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<ReelItem | null>(null);
   const [dragId, setDragId] = useState<string | null>(null);
@@ -168,7 +168,7 @@ function EditReelsPage() {
                           </span>
                         </p>
                       ) : (
-                        <p className="mt-1 text-[0.7rem] text-destructive">No product tagged</p>
+                        <p className="mt-1 text-[0.7rem] text-muted-foreground italic">No product tagged</p>
                       )}
 
                       <div className="mt-2.5 flex flex-wrap items-center gap-1.5">
@@ -201,6 +201,19 @@ function EditReelsPage() {
                         >
                           <Pencil className="h-3 w-3" /> Edit
                         </button>
+                        {p ? (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              saveReel(r.id, { productId: "" });
+                              toast.success(`Untagged product from “${r.title}”.`);
+                            }}
+                            className="inline-flex items-center gap-1 rounded-full border border-destructive/35 bg-destructive/10 px-2.5 py-1 text-[0.64rem] font-semibold text-destructive uppercase hover:bg-destructive hover:text-destructive-foreground transition-colors"
+                            title="Untag product from this reel"
+                          >
+                            <X className="h-3 w-3" /> Untag
+                          </button>
+                        ) : null}
                         <button
                           type="button"
                           onClick={() => {

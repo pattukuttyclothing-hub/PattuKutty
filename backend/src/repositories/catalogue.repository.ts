@@ -1473,10 +1473,19 @@ const isSaree = catSlug === "sarees";
         await db.from("reels").update(updateData).eq("id", id);
       }
 
-      const productId = payload.productId || payload.product_id;
-      if (productId && typeof productId === "string") {
-        await this.tagProductsToReel(id, [productId]);
+      if ("productId" in payload || "product_id" in payload) {
+        const rawPid = payload.productId !== undefined ? payload.productId : payload.product_id;
+        const productId = typeof rawPid === "string" ? rawPid.trim() : null;
+        if (productId) {
+          await this.tagProductsToReel(id, [productId]);
+        } else {
+          // Untag product completely from reel
+          await this.tagProductsToReel(id, []);
+        }
       }
+
+
+
 
       return { id, ...updateData };
     } catch (err) {

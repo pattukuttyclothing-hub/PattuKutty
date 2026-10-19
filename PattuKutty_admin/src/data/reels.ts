@@ -8,7 +8,7 @@ export type ReelItem = {
   id: string;
   videoUrl: string;
   title: string;
-  productId: string;
+  productId?: string;
 };
 
 const VCDN = "https://res.cloudinary.com/vy7aodsr/video/upload";
