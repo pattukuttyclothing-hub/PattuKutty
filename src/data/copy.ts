@@ -147,6 +147,14 @@ export const subCopy: Record<string, SubCopy> = {
     product: (name) =>
       `${name} is an unstitched salwar dress material set complete with top fabric, bottom material and dupatta. Available as unstitched fabric or stitched to your measurements. ${shipLine}`,
   },
+  sarees: {
+    blurb: "Curated silk, fancy and designer sarees with unstitched blouse piece",
+    meta: "Handpicked sarees from Coimbatore — authentic borders, continuous 5.5m drapes, unstitched blouse piece, India-wide delivery.",
+    intro:
+      "Curated sarees in traditional weaves and contemporary drapes, accompanied by matching unstitched blouse pieces.",
+    product: (name) =>
+      `${name} is an authentic saree with continuous 5.5m drape and 0.8m unstitched blouse piece. ${shipLine}`,
+  },
 };
 
 export const categoryCopy: Record<string, { blurb: string; meta: string; intro: string }> = {
@@ -163,10 +171,10 @@ export const categoryCopy: Record<string, { blurb: string; meta: string; intro: 
       "From next-day cotton frocks to layered reception gowns — tell us the fit you like and we'll draft it for your body rather than a standard size chart.",
   },
   sarees: {
-    blurb: "Silk, fancy and designer sarees with matched blouses",
-    meta: "Silk, fancy and designer sarees from our Coimbatore boutique, each with a blouse stitched to your measurements. Kanchi zari, light drapes, India-wide delivery.",
+    blurb: "Authentic silk, festive and designer sarees",
+    meta: "Sarees from our Coimbatore boutique. Authentic handlooms, rich zari, light festive drapes, continuous 5.5m + 0.8m unstitched blouse piece with India-wide delivery.",
     intro:
-      "Kanchi silks, light fancy drapes and hand-worked designer sarees — every one available with a blouse stitched to your measurements so it's wearable the day it lands.",
+      "Curated silk, festive and designer drapes with matching unstitched blouse pieces — continuous length drapes crafted for timeless elegance.",
   },
   blouses: {
     blurb: "Bridal, pattern and aari work blouses",

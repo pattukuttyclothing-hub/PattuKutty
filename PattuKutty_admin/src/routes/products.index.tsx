@@ -93,17 +93,27 @@ function ProductsPage() {
                     <span className="text-sm font-semibold">{c.name}</span>
                   </div>
                   <div className="mt-3 space-y-1.5">
-                    {getAllSubCategories(c).map((s) => (
+                    {getAllSubCategories(c).length > 0 ? (
+                      getAllSubCategories(c).map((s) => (
+                        <button
+                          key={s.id}
+                          type="button"
+                          onClick={() => create(c.id, s.id)}
+                          className="flex w-full items-center gap-2 rounded-xl px-2 py-1.5 text-left text-xs transition-colors hover:bg-secondary"
+                        >
+                          <img src={s.images[0]} alt="" className="h-7 w-7 rounded-lg object-cover object-top shrink-0 border border-border/50" />
+                          {s.name}
+                        </button>
+                      ))
+                    ) : (
                       <button
-                        key={s.id}
                         type="button"
-                        onClick={() => create(c.id, s.id)}
-                        className="flex w-full items-center gap-2 rounded-xl px-2 py-1.5 text-left text-xs transition-colors hover:bg-secondary"
+                        onClick={() => create(c.id, "")}
+                        className="flex w-full items-center justify-center gap-2 rounded-xl bg-primary/10 border border-primary/30 px-3 py-2 text-center text-xs font-semibold text-primary transition-colors hover:bg-primary hover:text-primary-foreground"
                       >
-                        <img src={s.images[0]} alt="" className="h-7 w-7 rounded-lg object-cover object-top shrink-0 border border-border/50" />
-                        {s.name}
+                        + Add {c.name} Design
                       </button>
-                    ))}
+                    )}
                   </div>
                 </div>
               ))}

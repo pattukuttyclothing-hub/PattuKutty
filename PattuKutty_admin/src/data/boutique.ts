@@ -134,52 +134,14 @@ export const categories: Category[] = [
     name: "Sarees",
     blurb: "Silk, fancy & designer drapes",
     image: "https://res.cloudinary.com/vy7aodsr/image/upload/v1786514181/Saree_Carousel_Banner.jpg",
-    subs: [
-      {
-        id: "silk-sarees",
-        name: "Silk Sarees",
-        blurb: "Kanchi silk with gold zari",
-        images: rotate(pools.saree, 0),
-      },
-      {
-        id: "fancy-sarees",
-        name: "Fancy Sarees",
-        blurb: "Light drapes for functions",
-        images: rotate(pools.saree, 2),
-      },
-      {
-        id: "designer-sarees",
-        name: "Designer Sarees",
-        blurb: "Custom pallu & blouse pairing",
-        images: rotate(pools.saree, 4),
-      },
-    ],
+    subs: [],
   },
   {
     id: "blouses",
     name: "Blouses",
     blurb: "Aari, maggam & designer work",
     image: "https://res.cloudinary.com/vy7aodsr/image/upload/v1786515414/ClipDown.com_636776992_1234791172100082_8411992496655131403_n.jpg",
-    subs: [
-      {
-        id: "bridal-blouses",
-        name: "Bridal Blouses",
-        blurb: "Heavy zari & sleeve work",
-        images: rotate(pools.blouse, 0),
-      },
-      {
-        id: "pattern-blouses",
-        name: "Pattern Blouses",
-        blurb: "Princess cut, boat & sweetheart",
-        images: rotate(pools.blouse, 1),
-      },
-      {
-        id: "designer-blouses",
-        name: "Designer Blouses",
-        blurb: "Aari and maggam couture",
-        images: rotate(pools.blouse, 2),
-      },
-    ],
+    subs: [],
   },
   {
     id: "salwar",
@@ -251,13 +213,8 @@ export const subName = (subId: string) => {
 };
 
 /** product_variants.size options */
-export const sareeSizeOptions = [
-  "Free Size (5.5m + Blouse)",
-  "With Running Blouse",
-  "Without Blouse",
-  "6.3m Grand Pallu",
-] as const;
-
+export const sareeSizeOptions = ["Standard"] as const;
+export const blouseSizeOptions = ["32", "34", "36", "38", "40", "42"] as const;
 export const stitchedSizeOptions = ["XS", "S", "M", "L", "XL", "XXL"] as const;
 export const halfSareeSizes = ["S", "M", "L", "XL", "XXL"] as const;
 export const lehengaSizes = ["S", "M", "L", "XL", "XXL"] as const;
@@ -267,17 +224,27 @@ export const pattuPaavadaiAgeSizes = [
 ] as const;
 
 export const sizeOptions = [
+  "32",
+  "34",
+  "36",
+  "38",
+  "40",
+  "42",
   "XS",
   "S",
   "M",
   "L",
   "XL",
   "XXL",
+<<<<<<< HEAD
   "Free Size (5.5m + Blouse)",
   "With Running Blouse",
   "Without Blouse",
   "6.3m Grand Pallu",
   ...pattuPaavadaiAgeSizes,
+=======
+  "Standard",
+>>>>>>> 56bc624 (SIZE CHART)
 ] as const;
 export type SizeOption = string;
 
@@ -286,23 +253,33 @@ export function isSareeCategory(categoryId?: string, subId?: string): boolean {
   return false;
 }
 
+<<<<<<< HEAD
 export function isPattuPaavadaiCategory(categoryId?: string, subId?: string): boolean {
   return subId === "pattu-pudavai" || subId === "pattu-paavadai";
 }
 
 export function isHalfSareeCategory(categoryId?: string, subId?: string): boolean {
   return categoryId === "half-saree" && !isPattuPaavadaiCategory(categoryId, subId);
+=======
+export function isBlouseCategory(categoryId?: string): boolean {
+  return categoryId === "blouses" || categoryId === "blouse";
+>>>>>>> 56bc624 (SIZE CHART)
 }
 
 export function getPermittedSizesForCategory(categoryId?: string, subId?: string): readonly string[] {
   if (isSareeCategory(categoryId, subId)) {
     return sareeSizeOptions;
   }
+<<<<<<< HEAD
   if (isPattuPaavadaiCategory(categoryId, subId)) {
     return pattuPaavadaiAgeSizes;
   }
   if (isHalfSareeCategory(categoryId, subId)) {
     return halfSareeSizes;
+=======
+  if (isBlouseCategory(categoryId)) {
+    return blouseSizeOptions;
+>>>>>>> 56bc624 (SIZE CHART)
   }
   return stitchedSizeOptions;
 }
@@ -367,9 +344,30 @@ export type SeedProduct = {
   description: string;
 };
 
-/** The same 48 catalogue products the storefront renders. */
-export const seedProducts: SeedProduct[] = categories.flatMap((cat) =>
-  cat.subs.flatMap((sub, sIdx) =>
+/** The same catalogue products the storefront renders. */
+export const seedProducts: SeedProduct[] = categories.flatMap((cat) => {
+  const subs = getAllSubCategories(cat);
+  if (subs.length === 0) {
+    const isBlouse = cat.id === "blouses";
+    return Array.from({ length: 6 }, (_, i) => {
+      const imgs = rotate(isBlouse ? pools.blouse : pools.saree, i);
+      const price = isBlouse ? 1899 + i * 800 : 2499 + i * 1200;
+      return {
+        id: `${cat.id}-${i + 1}`,
+        name: `${nameBits[i % nameBits.length]} ${cat.name}`,
+        price,
+        mrp: Math.round((price * 1.38) / 10) * 10,
+        images: imgs.slice(0, 4),
+        category: cat.id,
+        sub: "",
+        sizes: isBlouse ? [...blouseSizeOptions] : ["Standard"],
+        description: isBlouse
+          ? `Handcrafted ${cat.name.toLowerCase()} design from our Coimbatore studio — authentic aari, maggam, and custom embroidery with premium silk finishing.`
+          : `Handcrafted ${cat.name.toLowerCase()} drape from our Coimbatore studio — authentic pure weave with artisan gold zari border and matched unstitched blouse piece.`,
+      } satisfies SeedProduct;
+    });
+  }
+  return subs.flatMap((sub, sIdx) =>
     Array.from({ length: 4 }, (_, i) => {
       const imgs = rotate(sub.images, i);
       const price = 1499 + sIdx * 1800 + i * 950 + (cat.id === "half-saree" ? 5200 : 0);
@@ -385,5 +383,5 @@ export const seedProducts: SeedProduct[] = categories.flatMap((cat) =>
         description: `${sub.name} from our ${cat.name} studio line — ${sub.blurb.toLowerCase()}, stitched to your exact measurements with neat inside-out finishing.`,
       } satisfies SeedProduct;
     }),
-  ),
-);
+  );
+});

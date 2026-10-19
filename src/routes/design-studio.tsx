@@ -130,11 +130,14 @@ function DesignStudio() {
       setErrorMsg("Please select a design category.");
       return;
     }
-    if (!spec.sub) {
+    const isSaree = spec.category === "sarees";
+    const isBlouse = spec.category === "blouses";
+    const catHasNoSubs = isSaree || isBlouse;
+    if (!catHasNoSubs && !spec.sub) {
       setErrorMsg("Please select a design style.");
       return;
     }
-    if (!spec.size || !spec.size.trim()) {
+    if (!isSaree && (!spec.size || !spec.size.trim())) {
       setErrorMsg("Please select an outfit size.");
       return;
     }

@@ -3,9 +3,10 @@ import { ArrowRight, Sparkles } from "lucide-react";
 import { PageHeader, PageSection, PageShell } from "@/components/shared/Page";
 import { Reveal, stagger } from "@/components/shared/Reveal";
 import { AutoImageFade } from "@/components/shared/AutoImageFade";
+import { ProductCard } from "@/components/boutique/ProductCard";
 import { findCategory, type CategoryId } from "@/data/boutique";
 import { categoryCopy } from "@/data/copy";
-import { useCategories } from "@/lib/useStorefront";
+import { useCategories, useProductsByCategory } from "@/lib/useStorefront";
 import { abs, breadcrumbJsonLd, seoTitle, socialMeta } from "@/lib/seo";
 
 export const Route = createFileRoute("/category/$category/")({
@@ -34,11 +35,25 @@ function CategoryPage() {
   const { categoryId } = Route.useLoaderData() as { categoryId: CategoryId };
   const categoriesList = useCategories();
   const cat = categoriesList.find((c) => c.id === categoryId) ?? findCategory(categoryId)!;
+  const hasSubCategories = Boolean(cat.subs && cat.subs.length > 0);
+
+  // Directly fetch category products if no subcategories exist (e.g. Sarees)
+  const { data: directProducts, loading } = useProductsByCategory(hasSubCategories ? "" : categoryId);
 
   const crumbsJsonLd = breadcrumbJsonLd([
     { name: "Home", path: "/" },
     { name: cat.name, path: `/category/${cat.id}/` },
   ]);
+
+  const headerEyebrow = hasSubCategories
+    ? "Step 1 of 2 · Pick a style"
+    : `Collection · ${cat.name}`;
+
+  const headerSubtitle = hasSubCategories
+    ? `${cat.blurb} — choose the style you're looking for and we'll show you every design we stitch in it.`
+    : loading && directProducts.length === 0
+      ? `${cat.blurb} — Loading designs...`
+      : `${cat.blurb} — ${directProducts.length} handcrafted design${directProducts.length === 1 ? "" : "s"} from our Coimbatore atelier.`;
 
   return (
     <PageShell>
@@ -47,9 +62,9 @@ function CategoryPage() {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(crumbsJsonLd) }}
       />
       <PageHeader
-        eyebrow="Step 1 of 2 · Pick a style"
+        eyebrow={headerEyebrow}
         title={cat.name}
-        subtitle={`${cat.blurb} — choose the style you're looking for and we'll show you every design we stitch in it.`}
+        subtitle={headerSubtitle}
         crumbs={[{ label: "Collections", to: "/" }, { label: cat.name }]}
         actions={
           <Link
@@ -63,56 +78,91 @@ function CategoryPage() {
       />
 
       <PageSection>
-        <div className="flex flex-wrap justify-center gap-4 sm:gap-6 lg:gap-8">
-          {cat.subs.map((sub, i) => {
-            const count =
-              sub.designCount != null
-                ? sub.designCount
-                : sub.design_count;
-            // count === -1 means "no live DB data yet" — hide badge entirely
-            const badgeText = (count != null && count >= 0) ? `${count} ${count === 1 ? "design" : "designs"}` : null;
-            return (
-              <Reveal
-                key={sub.id}
-                delay={stagger(i, 80)}
-                className="w-full sm:w-[calc(50%-0.75rem)] lg:w-[calc(33.333%-1.35rem)] max-w-[420px]"
-              >
-                <Link
-                  to="/category/$category/$sub"
-                  params={{ category: cat.id, sub: sub.id }}
-                  className="card-lift group relative block aspect-[4/5] sm:aspect-[3/3.8] w-full overflow-hidden rounded-3xl bg-card shadow-lift"
+        {hasSubCategories ? (
+          <div className="flex flex-wrap justify-center gap-4 sm:gap-6 lg:gap-8">
+            {cat.subs.map((sub, i) => {
+              const count =
+                sub.designCount != null
+                  ? sub.designCount
+                  : sub.design_count;
+              // count === -1 means "no live DB data yet" — hide badge entirely
+              const badgeText = (count != null && count >= 0) ? `${count} ${count === 1 ? "design" : "designs"}` : null;
+              return (
+                <Reveal
+                  key={sub.id}
+                  delay={stagger(i, 80)}
+                  className="w-full sm:w-[calc(50%-0.75rem)] lg:w-[calc(33.333%-1.35rem)] max-w-[420px]"
                 >
-                  <AutoImageFade
-                    images={sub.images}
-                    alt={`${sub.name} designs`}
-                    className="absolute inset-0 h-full w-full object-cover object-top"
-                    interval={7000}
-                    offset={i * 1500}
-                  />
-                  <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-maroon/85 via-maroon/20 to-transparent" />
-                  <div className="absolute top-3 left-3 z-10">
-                    {badgeText != null && (
-                      <span className="inline-flex items-center rounded-full bg-primary px-2.5 py-1 text-[0.6rem] sm:text-[0.65rem] font-bold tracking-wide text-primary-foreground shadow-soft border border-accent/40">
-                        {badgeText}
+                  <Link
+                    to="/category/$category/$sub"
+                    params={{ category: cat.id, sub: sub.id }}
+                    className="card-lift group relative block aspect-[4/5] sm:aspect-[3/3.8] w-full overflow-hidden rounded-3xl bg-card shadow-lift"
+                  >
+                    <AutoImageFade
+                      images={sub.images}
+                      alt={`${sub.name} designs`}
+                      className="absolute inset-0 h-full w-full object-cover object-top"
+                      interval={7000}
+                      offset={i * 1500}
+                    />
+                    <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-maroon/85 via-maroon/20 to-transparent" />
+                    <div className="absolute top-3 left-3 z-10">
+                      {badgeText != null && (
+                        <span className="inline-flex items-center rounded-full bg-primary px-2.5 py-1 text-[0.6rem] sm:text-[0.65rem] font-bold tracking-wide text-primary-foreground shadow-soft border border-accent/40">
+                          {badgeText}
+                        </span>
+                      )}
+                    </div>
+                    <div className="absolute inset-x-0 bottom-0 z-10 p-5 sm:p-6">
+                      <h2 className="font-display text-xl leading-tight font-semibold text-primary-foreground sm:text-2xl">
+                        {sub.name}
+                      </h2>
+                      <p className="mt-1.5 text-xs text-primary-foreground/85 sm:text-sm">
+                        {sub.blurb}
+                      </p>
+                      <span className="mt-3.5 inline-flex items-center gap-1.5 text-[0.68rem] font-bold tracking-[0.18em] text-accent uppercase">
+                        View Designs <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-1" />
                       </span>
-                    )}
-                  </div>
-                  <div className="absolute inset-x-0 bottom-0 z-10 p-5 sm:p-6">
-                    <h2 className="font-display text-xl leading-tight font-semibold text-primary-foreground sm:text-2xl">
-                      {sub.name}
-                    </h2>
-                    <p className="mt-1.5 text-xs text-primary-foreground/85 sm:text-sm">
-                      {sub.blurb}
-                    </p>
-                    <span className="mt-3.5 inline-flex items-center gap-1.5 text-[0.68rem] font-bold tracking-[0.18em] text-accent uppercase">
-                      View Designs <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-1" />
-                    </span>
-                  </div>
-                </Link>
-              </Reveal>
-            );
-          })}
-        </div>
+                    </div>
+                  </Link>
+                </Reveal>
+              );
+            })}
+          </div>
+        ) : (
+          <div>
+            {loading && directProducts.length === 0 ? (
+              <div className="py-20 text-center">
+                <div className="mx-auto h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+                <p className="mt-4 text-xs font-medium text-muted-foreground">Loading {cat.name} designs...</p>
+              </div>
+            ) : directProducts.length === 0 ? (
+              <div className="rounded-3xl border border-border bg-card p-12 text-center shadow-soft">
+                <h3 className="font-display text-lg font-semibold text-foreground">No Designs Currently Displayed</h3>
+                <p className="mt-2 text-xs text-muted-foreground max-w-md mx-auto">
+                  We are updating our new {cat.name.toLowerCase()} collection. You can request a custom {cat.name.toLowerCase()} design through our Design Studio!
+                </p>
+                <div className="mt-6">
+                  <Link
+                    to="/design-studio"
+                    search={{ category: cat.id }}
+                    className="inline-flex items-center gap-2 rounded-full bg-primary px-6 py-2.5 text-xs font-semibold text-primary-foreground uppercase shadow-soft"
+                  >
+                    <Sparkles className="h-4 w-4" /> Design Custom {cat.name}
+                  </Link>
+                </div>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6 lg:gap-8">
+                {directProducts.map((p, i) => (
+                  <Reveal key={p.id} delay={stagger(i, 60)}>
+                    <ProductCard product={p} index={i} />
+                  </Reveal>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
       </PageSection>
     </PageShell>
   );

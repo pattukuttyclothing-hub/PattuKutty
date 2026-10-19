@@ -162,11 +162,11 @@ export const serviceJsonLd = {
 /** Category-level Product schema so AI engines can cite what each range is. */
 export const categoryProducts = [
   {
-    id: "silk-sarees",
-    name: "Custom Silk Sarees",
-    path: "/category/sarees/silk-sarees",
+    id: "sarees",
+    name: "Custom Sarees Collection",
+    path: "/category/sarees",
     description:
-      "Custom silk sarees from Pattu Kutty in Coimbatore, stitched with matching blouses to your measurements and delivered across India, with express stitching in as fast as 1 hour.",
+      "Custom sarees from Pattu Kutty in Coimbatore, continuous 5.5m drapes with matching unstitched blouse pieces delivered across India, with express delivery available.",
     lowPrice: 1499,
     highPrice: 24999,
     offerCount: 15,
@@ -174,7 +174,7 @@ export const categoryProducts = [
   {
     id: "bridal-wear",
     name: "Bridal Wear & Kalyana Pattu",
-    path: "/category/blouses/bridal-blouses",
+    path: "/category/blouses",
     description:
       "Bridal wear from Pattu Kutty in Coimbatore, including kalyana pattu sarees, bridal blouses, bridal lehengas and wedding frocks, all made to the bride's measurements.",
     lowPrice: 2999,

@@ -9,6 +9,7 @@ import {
 } from "react";
 import {
   categories,
+  imagePools,
   seedProducts,
   storeSettings,
   type CategoryId,
@@ -303,18 +304,18 @@ const seedRequests = (): CustomRequest[] => {
       customerPhone: "+91 98765 43210",
       createdAt: hoursAgo(3),
       category: bl.id,
-      sub: "bridal-blouses",
-      referenceImages: bl.subs[0]!.images.slice(0, 3),
+      sub: "",
+      referenceImages: imagePools.blouse.slice(0, 3),
       colour: "Maroon",
       fabricNotes:
         "Bridal blouse with heavy aari work on the sleeves, boat neck in front and a deep back with tassels. Fabric already purchased.",
       voiceNote: voice,
-      size: "M",
+      size: "38",
       qty: 1,
       timeline: "3-day",
       fulfilment: "doorstep",
       status: "submitted",
-      customColourImage: bl.subs[0]!.images[3] ?? bl.subs[0]!.images[0]!,
+      customColourImage: imagePools.blouse[0]!,
     },
     {
       id: "req-2",

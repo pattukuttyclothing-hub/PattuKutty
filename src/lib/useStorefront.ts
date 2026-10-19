@@ -4,6 +4,8 @@ import {
   heroBanners as seedHeroBanners,
   featuredProducts as seedFeaturedProducts,
   products as seedProducts,
+  productsByCategory,
+  productsBySub,
   reels as seedReels,
   reviews as seedReviews,
   type Category,
@@ -195,8 +197,12 @@ export interface UseProductsBySubCategoryResult {
 
 export function useProductsBySubCategory(
   categoryId: string,
-  subCategoryId: string
+  subCategoryId?: string
 ): UseProductsBySubCategoryResult {
+  const seedFallback = subCategoryId
+    ? productsBySub(categoryId, subCategoryId)
+    : productsByCategory(categoryId);
+
   const {
     data,
     isLoading,
@@ -204,16 +210,19 @@ export function useProductsBySubCategory(
     error,
     refetch: refetchQuery,
   } = useQuery({
-    queryKey: ["productsBySub", categoryId, subCategoryId],
+    queryKey: ["productsBySub", categoryId, subCategoryId || ""],
     queryFn: () => fetchProductsBySubCategory(categoryId, subCategoryId),
+    placeholderData: seedFallback,
     staleTime: 10 * 1000,
     refetchOnWindowFocus: true,
-    enabled: Boolean(categoryId && subCategoryId),
+    enabled: Boolean(categoryId),
   });
 
+  const productList = (data ?? seedFallback) as Product[];
+
   return {
-    data: data ?? [],
-    loading: isLoading,
+    data: isError && productList.length === 0 ? seedFallback : productList,
+    loading: isLoading && productList.length === 0,
     error: isError
       ? error instanceof Error
         ? error.message
@@ -223,6 +232,10 @@ export function useProductsBySubCategory(
       void refetchQuery();
     },
   };
+}
+
+export function useProductsByCategory(categoryId: string): UseProductsBySubCategoryResult {
+  return useProductsBySubCategory(categoryId, "");
 }
 
 export interface UseProductResult {

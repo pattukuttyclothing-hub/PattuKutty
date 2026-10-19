@@ -205,52 +205,14 @@ export const categories: Category[] = [
     name: "Sarees",
     blurb: "Silk, fancy & designer drapes",
     image: "https://res.cloudinary.com/vy7aodsr/image/upload/v1786514181/Saree_Carousel_Banner.jpg",
-    subs: [
-      {
-        id: "silk-sarees",
-        name: "Silk Sarees",
-        blurb: "Kanchi silk with gold zari",
-        images: rotate(pools.saree, 0),
-      },
-      {
-        id: "fancy-sarees",
-        name: "Fancy Sarees",
-        blurb: "Light drapes for functions",
-        images: rotate(pools.saree, 2),
-      },
-      {
-        id: "designer-sarees",
-        name: "Designer Sarees",
-        blurb: "Custom pallu & blouse pairing",
-        images: rotate(pools.saree, 4),
-      },
-    ],
+    subs: [],
   },
   {
     id: "blouses",
     name: "Blouses",
     blurb: "Aari, maggam & designer work",
     image: "https://res.cloudinary.com/vy7aodsr/image/upload/v1786515414/ClipDown.com_636776992_1234791172100082_8411992496655131403_n.jpg",
-    subs: [
-      {
-        id: "bridal-blouses",
-        name: "Bridal Blouses",
-        blurb: "Heavy zari & sleeve work",
-        images: rotate(pools.blouse, 0),
-      },
-      {
-        id: "pattern-blouses",
-        name: "Pattern Blouses",
-        blurb: "Princess cut, boat & sweetheart",
-        images: rotate(pools.blouse, 1),
-      },
-      {
-        id: "designer-blouses",
-        name: "Designer Blouses",
-        blurb: "Aari and maggam couture",
-        images: rotate(pools.blouse, 2),
-      },
-    ],
+    subs: [],
   },
   {
     id: "salwar",
@@ -375,7 +337,8 @@ export type Product = {
   description: string;
 };
 
-export const sareeSizes = ["Free Size (5.5m + Blouse)", "With Running Blouse", "Without Blouse", "6.3m Grand Pallu"];
+export const sareeSizes = ["Standard"];
+export const blouseSizes = ["32", "34", "36", "38", "40", "42"];
 export const stitchedSizes = ["XS", "S", "M", "L", "XL", "XXL"];
 export const halfSareeSizes = ["S", "M", "L", "XL", "XXL"];
 export const lehengaSizes = ["S", "M", "L", "XL", "XXL"];
@@ -397,15 +360,24 @@ export function isHalfSareeCategory(categoryId?: string, subId?: string): boolea
   return categoryId === "half-saree" && !isPattuPaavadaiCategory(categoryId, subId);
 }
 
+export function isBlouseCategory(categoryId: string): boolean {
+  return categoryId === "blouses" || categoryId === "blouse";
+}
+
 export function getSizesForCategory(categoryId: string, subId?: string): string[] {
   if (isSareeCategory(categoryId, subId)) {
     return sareeSizes;
   }
+<<<<<<< HEAD
   if (isPattuPaavadaiCategory(categoryId, subId)) {
     return pattuPaavadaiAgeSizes;
   }
   if (isHalfSareeCategory(categoryId, subId)) {
     return halfSareeSizes;
+=======
+  if (isBlouseCategory(categoryId)) {
+    return blouseSizes;
+>>>>>>> 56bc624 (SIZE CHART)
   }
   return stitchedSizes;
 }
@@ -415,13 +387,46 @@ const defaultSizes = ["S", "M", "L", "XL", "XXL"];
 const nameBits = ["Signature", "Heritage", "Studio", "Festive", "Couture", "Classic"];
 
 /** PRODUCTS — boutique model (one-of-a-kind design) */
-export const products: Product[] = categories.flatMap((cat) =>
-  getAllSubCategories(cat).flatMap((sub, sIdx) =>
+export const products: Product[] = categories.flatMap((cat) => {
+  const subs = getAllSubCategories(cat);
+  if (subs.length === 0) {
+    const isBlouse = cat.id === "blouses";
+    return Array.from({ length: 6 }, (_, i) => {
+      const imgs = rotate(isBlouse ? pools.blouse : pools.saree, i);
+      const base = isBlouse ? 1899 + i * 800 : 2499 + i * 1200;
+      const price = base;
+      const categorySizes = isBlouse ? blouseSizes : sareeSizes;
+      const variants: SizeVariant[] = categorySizes.map((s) => ({
+        size: s,
+        available: true,
+        stockQty: 5,
+      }));
+      return {
+        id: `${cat.id}-${i + 1}`,
+        name: `${nameBits[i % nameBits.length]} ${cat.name}`,
+        price,
+        mrp: Math.round((price * 1.38) / 10) * 10,
+        image: imgs[0]!,
+        images: imgs.slice(0, 4),
+        category: cat.id,
+        sub: "",
+        sizes: categorySizes,
+        variants,
+        deliveryCharge: 0,
+        soldOut: false,
+        description: isBlouse
+          ? `Handcrafted ${cat.name.toLowerCase()} design from our Coimbatore studio — authentic aari, maggam, and custom embroidery with premium silk finishing.`
+          : `Handcrafted ${cat.name.toLowerCase()} drape from our Coimbatore studio — authentic pure weave with artisan gold zari border and matched unstitched blouse piece.`,
+      } satisfies Product;
+    });
+  }
+  return subs.flatMap((sub, sIdx) =>
     Array.from({ length: 4 }, (_, i) => {
       const imgs = rotate(sub.images, i);
       const base = 1499 + sIdx * 1800 + i * 950 + (cat.id === "half-saree" ? 5200 : 0);
       const price = base;
       const isUnstitched = isSareeCategory(cat.id, sub.id);
+<<<<<<< HEAD
       const isPattu = isPattuPaavadaiCategory(cat.id, sub.id);
       const isHalf = isHalfSareeCategory(cat.id, sub.id);
       const categorySizes = isUnstitched
@@ -431,6 +436,9 @@ export const products: Product[] = categories.flatMap((cat) =>
         : isHalf
         ? halfSareeSizes
         : defaultSizes;
+=======
+      const categorySizes = isUnstitched ? ["Standard"] : defaultSizes;
+>>>>>>> 56bc624 (SIZE CHART)
       const variants: SizeVariant[] = categorySizes.map((s, si) => ({
         size: s,
         available: isUnstitched ? true : (sIdx + i + si) % 5 !== 0,
@@ -452,10 +460,13 @@ export const products: Product[] = categories.flatMap((cat) =>
         description: productCopy(sub.id, `${nameBits[(sIdx + i) % nameBits.length]} ${sub.name}`),
       } satisfies Product;
     }),
-  ),
-);
+  );
+});
 
 export const productsBySub = (categoryId: string, subId: string) => {
+  if (!subId || categoryId === "sarees" || categoryId === "blouses") {
+    return productsByCategory(categoryId);
+  }
   const sub = findSub(categoryId, subId);
   const targetSubIds = new Set<string>([subId]);
   if (sub?.subs) {
@@ -467,7 +478,19 @@ export const productsBySub = (categoryId: string, subId: string) => {
 };
 export const productsByCategory = (categoryId: string) =>
   products.filter((p) => p.category === categoryId);
-export const findProduct = (id: string) => products.find((p) => p.id === id);
+export const findProduct = (id: string) => {
+  const direct = products.find((p) => p.id === id);
+  if (direct) return direct;
+  if (id.includes("-sarees-")) {
+    const num = id.split("-").pop();
+    return products.find((p) => p.id === `sarees-${num}`) || products.find((p) => p.category === "sarees");
+  }
+  if (id.includes("-blouses-")) {
+    const num = id.split("-").pop();
+    return products.find((p) => p.id === `blouses-${num}`) || products.find((p) => p.category === "blouses");
+  }
+  return undefined;
+};
 export const subCount = (categoryId: string, subId: string) =>
   productsBySub(categoryId, subId).length;
 
@@ -475,11 +498,11 @@ export const subCount = (categoryId: string, subId: string) =>
 export const featuredProducts = [
   "lehenga-1",
   "half-saree-classic-1",
-  "bridal-blouses-1",
+  "blouses-1",
   "normal-frocks-1",
-  "silk-sarees-2",
+  "sarees-2",
   "wedding-frocks-2",
-  "designer-blouses-3",
+  "blouses-2",
   "pattu-pudavai-1",
 ]
   .map((id) => findProduct(id))
@@ -579,7 +602,7 @@ export const reels = [
     videoUrl:
       "https://res.cloudinary.com/vy7aodsr/video/upload/v1786515894/ClipDown.com_AQPPSE7-Q4Y4RtJooqD9SmiTlqWeE1O_c51iUC_p6PhhK521S4I3ABZScPvIne2E34NdDPeoqeKCGIrzRs2hxHzJ.mp4",
     posterUrl: "https://res.cloudinary.com/vy7aodsr/image/upload/v1786515414/ClipDown.com_636776992_1234791172100082_8411992496655131403_n.jpg",
-    productId: "bridal-blouses-1",
+    productId: "blouses-1",
   },
   {
     id: "reel-3",
@@ -595,7 +618,7 @@ export const reels = [
     videoUrl:
       "https://res.cloudinary.com/vy7aodsr/video/upload/v1786515894/ClipDown.com_AQPPSE7-Q4Y4RtJooqD9SmiTlqWeE1O_c51iUC_p6PhhK521S4I3ABZScPvIne2E34NdDPeoqeKCGIrzRs2hxHzJ.mp4",
     posterUrl: "https://res.cloudinary.com/vy7aodsr/image/upload/v1786514181/Saree_Carousel_Banner.jpg",
-    productId: "silk-sarees-1",
+    productId: "sarees-1",
   },
   {
     id: "reel-5",

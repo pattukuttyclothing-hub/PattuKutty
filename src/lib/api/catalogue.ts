@@ -64,11 +64,16 @@ export async function fetchTestimonials(): Promise<Testimonial[]> {
   return [];
 }
 
-export async function fetchProductsBySubCategory(categoryId: string, subCategoryId: string): Promise<Product[]> {
-  const res = await apiFetch<any>(`/storefront/products?category=${categoryId}&sub=${subCategoryId}`);
+export async function fetchProductsBySubCategory(categoryId: string, subCategoryId?: string): Promise<Product[]> {
+  const query = subCategoryId ? `category=${categoryId}&sub=${subCategoryId}` : `category=${categoryId}`;
+  const res = await apiFetch<any>(`/storefront/products?${query}`);
   if (Array.isArray(res)) return res;
   if (res && Array.isArray(res.data)) return res.data;
   return [];
+}
+
+export async function fetchProductsByCategory(categoryId: string): Promise<Product[]> {
+  return fetchProductsBySubCategory(categoryId, "");
 }
 
 export async function fetchProductById(id: string): Promise<Product | undefined> {

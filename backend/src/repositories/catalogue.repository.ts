@@ -32,22 +32,14 @@ const fallbackCategories = [
     name: "Sarees",
     blurb: "Silk, fancy & designer drapes",
     image: "https://res.cloudinary.com/vy7aodsr/image/upload/v1786514181/Saree_Carousel_Banner.jpg",
-    subs: [
-      { id: "silk-sarees", name: "Silk Sarees", blurb: "Kanchi silk with gold zari" },
-      { id: "fancy-sarees", name: "Fancy Sarees", blurb: "Light drapes for functions" },
-      { id: "designer-sarees", name: "Designer Sarees", blurb: "Custom pallu & blouse pairing" },
-    ],
+    subs: [],
   },
   {
     id: "blouses",
     name: "Blouses",
     blurb: "Aari, maggam & designer work",
     image: "https://res.cloudinary.com/vy7aodsr/image/upload/v1786515414/ClipDown.com_636776992_1234791172100082_8411992496655131403_n.jpg",
-    subs: [
-      { id: "bridal-blouses", name: "Bridal Blouses", blurb: "Heavy zari & sleeve work" },
-      { id: "pattern-blouses", name: "Pattern Blouses", blurb: "Princess cut, boat & sweetheart" },
-      { id: "designer-blouses", name: "Designer Blouses", blurb: "Aari and maggam couture" },
-    ],
+    subs: [],
   },
   {
     id: "salwar",
@@ -71,7 +63,7 @@ const fallbackProducts = [
     image: "https://images.unsplash.com/photo-1610030469983-98e550d6193c?w=900&auto=format&fit=crop&q=80",
     images: ["https://images.unsplash.com/photo-1610030469983-98e550d6193c?w=900&auto=format&fit=crop&q=80"],
     category: "blouses",
-    sub: "bridal-blouses",
+    sub: "",
     delivery_charge: 0,
     sold_out: false,
     is_active: true,
@@ -223,7 +215,9 @@ export class CatalogueRepository {
       if (error || !data) throw new Error("Failed to fetch categories");
 
       return data.map((cat) => {
-        const subCategories = cat.sub_categories || cat.subs || [];
+        const isSaree = cat.slug === "sarees" || cat.id === "sarees";
+        const isBlouse = cat.slug === "blouses" || cat.id === "blouses" || cat.slug === "blouse" || cat.id === "blouse";
+        const subCategories = (isSaree || isBlouse) ? [] : (cat.sub_categories || cat.subs || []);
         const enrichedSubs = subCategories.map((sub: Record<string, unknown>) => {
           const count = Number(sub.product_count ?? sub.design_count ?? sub.designCount ?? 0);
           return { ...sub, design_count: count, designCount: count, product_count: count };
@@ -1129,6 +1123,7 @@ export class CatalogueRepository {
         // Category-driven default size seeding
         const catSlug = String(payload.category_id || payload.category || "");
         const subSlug = String(payload.sub_category_id || payload.sub || "");
+<<<<<<< HEAD
         const isSaree = catSlug === "sarees";
         const isPattuPaavadai = subSlug === "pattu-pudavai" || subSlug === "pattu-paavadai";
         const isHalfSareeOrLehenga = catSlug === "half-saree" && !isPattuPaavadai;
@@ -1146,6 +1141,15 @@ export class CatalogueRepository {
         } else {
           defaultSizes = ["S", "M", "L", "XL", "XXL"];
         }
+=======
+        const isSaree = catSlug === "sarees" || (catSlug === "half-saree" && subSlug === "pattu-pudavai");
+        const isBlouse = catSlug === "blouses" || catSlug === "blouse";
+        const defaultSizes = isSaree
+          ? ["Free Size (5.5m + Blouse)"]
+          : isBlouse
+          ? ["32", "34", "36", "38", "40", "42"]
+          : ["S", "M", "L"];
+>>>>>>> 56bc624 (SIZE CHART)
         const { error: defaultVarErr } = await db.from("product_variants").insert(
           defaultSizes.map((size) => ({
             product_id: product.id,

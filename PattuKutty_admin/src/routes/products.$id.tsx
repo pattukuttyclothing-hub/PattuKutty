@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState, useRef } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { ArrowLeft, Save, Share2, Upload, X, AlertTriangle, CheckCircle2, Loader2, RefreshCw, Trash2 } from "lucide-react";
+import { ArrowLeft, Save, Share2, Upload, X, AlertTriangle, CheckCircle2, Loader2, RefreshCw, Trash2, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { shareProduct } from "@/lib/share";
 import { AdminShell, PageHead } from "@/components/admin/AdminShell";
@@ -234,11 +234,18 @@ function ProductEditor() {
       setDraft(stored);
     } else if (!draft && isCreateMode) {
       const initialCat = (search.category as CategoryId) || "blouses";
+<<<<<<< HEAD
       const initialSub = search.sub || "bridal-blouses";
       const initialPermitted = getPermittedSizesForCategory(initialCat, initialSub);
       const defaultInitialSizes = isPattuPaavadaiCategory(initialCat, initialSub)
         ? ["1 Year", "2 Year", "3 Year", "4 Year", "5 Year"]
         : initialPermitted.slice(0, 5);
+=======
+      const isSaree = initialCat === "sarees";
+      const isBlouse = initialCat === "blouses";
+      const catObj = categories.find((c) => c.id === initialCat);
+      const initialSub = (isSaree || isBlouse) ? "" : (search.sub || (catObj?.subs[0]?.id ?? ""));
+>>>>>>> 56bc624 (SIZE CHART)
       setDraft({
         id: id || `design-new-${Date.now().toString(36)}`,
         name: "",
@@ -254,7 +261,26 @@ function ProductEditor() {
         isActive: true,
         soldOut: false,
         images: [],
+<<<<<<< HEAD
         variants: defaultInitialSizes.map((sz) => ({ size: sz, available: true, stockQty: 1 })),
+=======
+        variants: isSaree
+          ? [{ size: "Standard", available: true, stockQty: 5 }]
+          : isBlouse
+            ? [
+                { size: "32", available: true, stockQty: 2 },
+                { size: "34", available: true, stockQty: 2 },
+                { size: "36", available: true, stockQty: 2 },
+                { size: "38", available: true, stockQty: 2 },
+                { size: "40", available: true, stockQty: 2 },
+                { size: "42", available: true, stockQty: 2 },
+              ]
+            : [
+                { size: "S", available: true, stockQty: 1 },
+                { size: "M", available: true, stockQty: 1 },
+                { size: "L", available: true, stockQty: 1 },
+              ],
+>>>>>>> 56bc624 (SIZE CHART)
       });
     }
   }, [stored, draft, isCreateMode, id]);
@@ -368,7 +394,7 @@ function ProductEditor() {
     if (!d.category) {
       missing.push("Category");
     }
-    if (!d.sub) {
+    if (d.category !== "sarees" && !d.sub) {
       missing.push("Sub-Category");
     }
     if (!d.basePrice || Number(d.basePrice) <= 0) {
@@ -398,7 +424,7 @@ function ProductEditor() {
           slug: draft.id,
           name: draft.name,
           categoryId: draft.category,
-          subCategoryId: draft.sub,
+          subCategoryId: draft.category === "sarees" ? "" : draft.sub,
           description: draft.description,
           blurb: draft.blurb,
           badge: draft.badge,
@@ -417,7 +443,7 @@ function ProductEditor() {
         if (!stored || draft.blurb !== stored.blurb) patchPayload["blurb"] = draft.blurb;
         if (!stored || draft.badge !== stored.badge) patchPayload["badge"] = draft.badge;
         if (!stored || draft.category !== stored.category) patchPayload["category"] = draft.category;
-        if (!stored || draft.sub !== stored.sub) patchPayload["sub"] = draft.sub;
+        if (!stored || draft.sub !== stored.sub) patchPayload["sub"] = draft.category === "sarees" ? "" : draft.sub;
         if (!stored || draft.basePrice !== stored.basePrice) patchPayload["basePrice"] = draft.basePrice;
         if (!stored || draft.mrp !== stored.mrp) patchPayload["mrp"] = draft.mrp;
         if (!stored || draft.deliveryCharge !== stored.deliveryCharge) patchPayload["deliveryCharge"] = draft.deliveryCharge;
@@ -468,7 +494,7 @@ function ProductEditor() {
   return (
     <AdminShell>
       <PageHead
-        eyebrow={`${cat?.name ?? draft.category} · ${subName(draft.sub)}`}
+        eyebrow={draft.sub ? `${cat?.name ?? draft.category} · ${subName(draft.sub)}` : (cat?.name ?? draft.category)}
         title={
           <span className="inline-flex items-center gap-3">
             <span>{isCreateMode ? (draft.name.trim() ? `Create — ${draft.name}` : "Create New Design") : draft.name}</span>
@@ -706,12 +732,44 @@ function ProductEditor() {
               <Field label="Category">
                 <div className="flex flex-wrap gap-2">
                   {categories.map((c) => {
-                    const firstSubId = c.subs[0]!.id;
+                    const firstSubId = c.subs && c.subs.length > 0 ? c.subs[0]!.id : "";
+                    const isSaree = c.id === "sarees";
+                    const isBlouse = c.id === "blouses";
                     return (
                       <button
                         key={c.id}
                         type="button"
-                        onClick={() => set({ category: c.id, sub: firstSubId })}
+                        onClick={() => {
+                          if (isSaree) {
+                            set({
+                              category: c.id,
+                              sub: "",
+                              variants: [{ size: "Standard", available: true, stockQty: 5 }],
+                            });
+                          } else if (isBlouse) {
+                            set({
+                              category: c.id,
+                              sub: "",
+                              variants: [
+                                { size: "32", available: true, stockQty: 2 },
+                                { size: "34", available: true, stockQty: 2 },
+                                { size: "36", available: true, stockQty: 2 },
+                                { size: "38", available: true, stockQty: 2 },
+                                { size: "40", available: true, stockQty: 2 },
+                                { size: "42", available: true, stockQty: 2 },
+                              ],
+                            });
+                          } else {
+                            const newVariants = (draft.category === "sarees" || draft.category === "blouses")
+                              ? [
+                                  { size: "S", available: true, stockQty: 1 },
+                                  { size: "M", available: true, stockQty: 1 },
+                                  { size: "L", available: true, stockQty: 1 },
+                                ]
+                              : draft.variants;
+                            set({ category: c.id, sub: firstSubId, variants: newVariants });
+                          }
+                        }}
                         className={`flex items-center gap-2 rounded-full border py-1.5 pr-3.5 pl-1.5 text-[0.75rem] font-medium transition-colors ${
                           draft.category === c.id
                             ? "border-primary bg-secondary text-primary font-bold shadow-xs"
@@ -726,32 +784,34 @@ function ProductEditor() {
                 </div>
               </Field>
 
-              <Field label="Sub-Category">
-                <div className="flex flex-wrap gap-2">
-                  {(cat?.subs ?? []).map((s) => {
-                    const isMainSubActive =
-                      draft.sub === s.id || (s.subs && s.subs.some((child) => child.id === draft.sub));
-                    return (
-                      <button
-                        key={s.id}
-                        type="button"
-                        onClick={() => {
-                          const targetSub = s.subs && s.subs.length > 0 ? s.subs[0]!.id : s.id;
-                          set({ sub: targetSub });
-                        }}
-                        className={`flex items-center gap-2 rounded-full border py-1.5 pr-3.5 pl-1.5 text-[0.75rem] font-medium transition-colors ${
-                          isMainSubActive
-                            ? "border-primary bg-secondary text-primary font-bold shadow-xs"
-                            : "border-border hover:bg-secondary/50"
-                        }`}
-                      >
-                        <img src={s.images[0]} alt="" className="h-6 w-6 rounded-full object-cover object-top shrink-0 border border-border/50" />
-                        {s.name}
-                      </button>
-                    );
-                  })}
-                </div>
-              </Field>
+              {cat?.subs && cat.subs.length > 0 ? (
+                <Field label="Sub-Category">
+                  <div className="flex flex-wrap gap-2">
+                    {cat.subs.map((s) => {
+                      const isMainSubActive =
+                        draft.sub === s.id || (s.subs && s.subs.some((child) => child.id === draft.sub));
+                      return (
+                        <button
+                          key={s.id}
+                          type="button"
+                          onClick={() => {
+                            const targetSub = s.subs && s.subs.length > 0 ? s.subs[0]!.id : s.id;
+                            set({ sub: targetSub });
+                          }}
+                          className={`flex items-center gap-2 rounded-full border py-1.5 pr-3.5 pl-1.5 text-[0.75rem] font-medium transition-colors ${
+                            isMainSubActive
+                              ? "border-primary bg-secondary text-primary font-bold shadow-xs"
+                              : "border-border hover:bg-secondary/50"
+                          }`}
+                        >
+                          <img src={s.images[0]} alt="" className="h-6 w-6 rounded-full object-cover object-top shrink-0 border border-border/50" />
+                          {s.name}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </Field>
+              ) : null}
 
               {/* Render child style options ONLY if active subcategory has sub-styles (e.g. Readymade -> Top / Kurthi) */}
               {(cat?.subs ?? []).map((s) => {
@@ -796,6 +856,7 @@ function ProductEditor() {
             </label>
           </Section>
 
+<<<<<<< HEAD
           <Section
             title={
               isSareeCategory(draft?.category, draft?.sub)
@@ -810,71 +871,167 @@ function ProductEditor() {
                 ? "Select saree specifications for this product and set stock quantity."
                 : isPattuPaavadaiCategory(draft?.category, draft?.sub)
                 ? "Select age categories for this Pattu Paavadai set (1 Year to 16 Year) and specify the stock quantity available for each age independently."
+=======
+          <Section title={isSareeCategory(draft?.category, draft?.sub) ? "Saree Inventory & Direct Stock" : "Sizes & independent stock"}>
+            <p className="text-xs text-muted-foreground">
+              {isSareeCategory(draft?.category, draft?.sub)
+                ? "Manage stock quantity and availability directly. Sarees are universal fit (5.5m Saree + 0.8m Blouse Piece) and do not have clothing sizes."
+>>>>>>> 56bc624 (SIZE CHART)
                 : "Select sizes for this design and specify the stock quantity available for each size independently."}
             </p>
-            <div className="flex flex-wrap gap-2 sm:gap-2.5">
-              {getPermittedSizesForCategory(draft?.category, draft?.sub).map((s) => (
-                <button
-                  key={s}
-                  type="button"
-                  onClick={() => toggleSize(s)}
-                  className={`rounded-xl sm:rounded-full border px-4 py-2 sm:px-4.5 sm:py-2.5 text-xs sm:text-sm font-medium transition-all leading-normal ${
-                    sizes.includes(s) ? "border-primary bg-secondary text-primary font-semibold shadow-sm" : "border-border hover:bg-secondary/40"
-                  }`}
-                >
-                  {s}
-                </button>
-              ))}
-            </div>
 
-            {sizes.length ? (
-              <div className="space-y-3">
-                {currentVariants.map((v) => (
-                  <div
-                    key={v.size}
-                    className={`flex flex-col sm:flex-row sm:items-center justify-between rounded-2xl border p-3.5 sm:p-4 gap-3 ${
-                      v.available
-                        ? "border-emerald-500/20 bg-emerald-500/5"
-                        : "border-destructive/20 bg-destructive/5"
-                    }`}
-                  >
-                    <div className="flex items-center gap-3">
-                      <span className="text-sm sm:text-base font-semibold">{v.size}</span>
-                      <span className={`text-xs font-medium ${v.available ? "text-emerald-600" : "text-destructive"}`}>
-                        {v.available ? `${v.stockQty ?? 1} in stock` : "Sold Out"}
-                      </span>
-                    </div>
-
-                    <div className="flex items-center gap-3">
-                      <div className="flex items-center gap-1.5">
-                        <span className="text-[0.7rem] sm:text-xs font-medium text-muted-foreground">Qty:</span>
-                        <input
-                          id={`variant_stock_${v.size}`}
-                          name={`variant_stock_${v.size}`}
-                          type="number"
-                          min={0}
-                          value={v.stockQty ?? 0}
-                          onChange={(e) => updateVariantStock(v.size, Number(e.target.value))}
-                          className="w-16 rounded-xl border border-border bg-card px-2.5 py-1 text-xs outline-none focus:border-primary"
-                        />
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => toggleAvailability(v.size)}
-                        className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-[0.7rem] font-semibold transition-colors ${
-                          v.available
-                            ? "border-destructive/30 text-destructive hover:bg-destructive/10"
-                            : "border-emerald-500/30 text-emerald-600 hover:bg-emerald-500/10"
-                        }`}
-                      >
-                        {v.available ? "Mark sold out" : "Re-stock"}
-                      </button>
-                    </div>
+            {isSareeCategory(draft?.category, draft?.sub) ? (
+              <div className="rounded-2xl border border-primary/20 bg-primary/5 p-4 sm:p-5 space-y-4">
+                <div className="flex items-start gap-3">
+                  <div className="rounded-xl bg-primary/10 p-2.5 text-primary shrink-0">
+                    <Sparkles className="h-5 w-5" />
                   </div>
-                ))}
+                  <div>
+                    <h4 className="text-sm font-semibold text-foreground">Standard Saree Dimension (Free Size)</h4>
+                    <p className="text-xs text-muted-foreground mt-0.5 leading-relaxed">
+                      Sarees are continuous drapes (5.5m Saree + 0.8m Blouse Piece) and do not require clothing size variants or size charts. Manage physical inventory directly below.
+                    </p>
+                  </div>
+                </div>
+
+                {(() => {
+                  const sareeVar = currentVariants.find((v) => v.size === "Standard") || currentVariants[0] || { size: "Standard", available: true, stockQty: 5 };
+                  const isAvail = sareeVar.available !== false && (sareeVar.stockQty ?? 0) > 0;
+                  const qty = sareeVar.stockQty ?? 0;
+
+                  const handleSareeQty = (newQty: number) => {
+                    const safe = Number.isNaN(newQty) ? 0 : Math.max(0, newQty);
+                    set({
+                      variants: [{ size: "Standard", available: safe > 0, stockQty: safe }],
+                      soldOut: safe === 0,
+                    });
+                  };
+
+                  const handleSareeToggleAvail = () => {
+                    if (isAvail) {
+                      setSoldOutConfirm("Standard");
+                    } else {
+                      const restoredQty = qty > 0 ? qty : 5;
+                      set({
+                        variants: [{ size: "Standard", available: true, stockQty: restoredQty }],
+                        soldOut: false,
+                      });
+                      if (draft?.id && !isCreateMode) {
+                        toggleSizeAvailability(draft.id, "Standard", true).catch((err: any) => {
+                          toast.error("Failed to re-enable stock: " + (err?.message || "Please try again."));
+                        });
+                      }
+                    }
+                  };
+
+                  return (
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 rounded-xl border border-border/80 bg-card p-3.5 sm:p-4 shadow-xs">
+                      <div className="flex items-center gap-3">
+                        <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold ${
+                          isAvail ? "bg-emerald-500/10 text-emerald-600 border border-emerald-500/20" : "bg-destructive/10 text-destructive border border-destructive/20"
+                        }`}>
+                          <span className={`h-2 w-2 rounded-full ${isAvail ? "bg-emerald-500 animate-pulse" : "bg-destructive"}`} />
+                          {isAvail ? `${qty} in stock` : "Sold Out"}
+                        </span>
+                        <span className="text-xs text-muted-foreground font-medium">Standard / Universal Fit</span>
+                      </div>
+
+                      <div className="flex items-center gap-3">
+                        <div className="flex items-center gap-2">
+                          <label htmlFor="sareeStockQty" className="text-xs font-medium text-muted-foreground">Stock Qty:</label>
+                          <input
+                            id="sareeStockQty"
+                            name="sareeStockQty"
+                            type="number"
+                            min={0}
+                            value={qty}
+                            onChange={(e) => handleSareeQty(Number(e.target.value))}
+                            className="w-20 rounded-xl border border-border bg-background px-3 py-1.5 text-xs font-semibold outline-none focus:border-primary"
+                          />
+                        </div>
+                        <button
+                          type="button"
+                          onClick={handleSareeToggleAvail}
+                          className={`inline-flex items-center gap-1.5 rounded-full border px-3.5 py-1.5 text-xs font-semibold transition-colors ${
+                            isAvail
+                              ? "border-destructive/30 text-destructive hover:bg-destructive/10"
+                              : "border-emerald-500/30 text-emerald-600 hover:bg-emerald-500/10"
+                          }`}
+                        >
+                          {isAvail ? "Mark sold out" : "Re-stock"}
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })()}
               </div>
             ) : (
-              <p className="text-xs text-muted-foreground">Add at least one size.</p>
+              <>
+                <div className="flex flex-wrap gap-2 sm:gap-2.5">
+                  {getPermittedSizesForCategory(draft?.category, draft?.sub).map((s) => (
+                    <button
+                      key={s}
+                      type="button"
+                      onClick={() => toggleSize(s)}
+                      className={`rounded-xl sm:rounded-full border px-4 py-2 sm:px-4.5 sm:py-2.5 text-xs sm:text-sm font-medium transition-all leading-normal ${
+                        sizes.includes(s) ? "border-primary bg-secondary text-primary font-semibold shadow-sm" : "border-border hover:bg-secondary/40"
+                      }`}
+                    >
+                      {s}
+                    </button>
+                  ))}
+                </div>
+
+                {sizes.length ? (
+                  <div className="space-y-3">
+                    {currentVariants.map((v) => (
+                      <div
+                        key={v.size}
+                        className={`flex flex-col sm:flex-row sm:items-center justify-between rounded-2xl border p-3.5 sm:p-4 gap-3 ${
+                          v.available
+                            ? "border-emerald-500/20 bg-emerald-500/5"
+                            : "border-destructive/20 bg-destructive/5"
+                        }`}
+                      >
+                        <div className="flex items-center gap-3">
+                          <span className="text-sm sm:text-base font-semibold">{v.size}</span>
+                          <span className={`text-xs font-medium ${v.available ? "text-emerald-600" : "text-destructive"}`}>
+                            {v.available ? `${v.stockQty ?? 1} in stock` : "Sold Out"}
+                          </span>
+                        </div>
+
+                        <div className="flex items-center gap-3">
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-[0.7rem] sm:text-xs font-medium text-muted-foreground">Qty:</span>
+                            <input
+                              id={`variant_stock_${v.size}`}
+                              name={`variant_stock_${v.size}`}
+                              type="number"
+                              min={0}
+                              value={v.stockQty ?? 0}
+                              onChange={(e) => updateVariantStock(v.size, Number(e.target.value))}
+                              className="w-16 rounded-xl border border-border bg-card px-2.5 py-1 text-xs outline-none focus:border-primary"
+                            />
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => toggleAvailability(v.size)}
+                            className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-[0.7rem] font-semibold transition-colors ${
+                              v.available
+                                ? "border-destructive/30 text-destructive hover:bg-destructive/10"
+                                : "border-emerald-500/30 text-emerald-600 hover:bg-emerald-500/10"
+                            }`}
+                          >
+                            {v.available ? "Mark sold out" : "Re-stock"}
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-xs text-muted-foreground">Add at least one size.</p>
+                )}
+              </>
             )}
           </Section>
 

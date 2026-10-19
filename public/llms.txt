@@ -32,9 +32,9 @@ and kalyana pattu sarees, half sarees and pattu pavadai, lehengas, blouses, froc
 - [Home](https://pattukuttyclothing.com/): brand overview, collections and customization.
 - [About Pattu Kutty](https://pattukuttyclothing.com/about): who the brand is, where it is based, what it does, and the full FAQ.
 - [Design Studio](https://pattukuttyclothing.com/design-studio): submit a custom clothing request with your own design, fabric and measurements.
-- [Silk Sarees](https://pattukuttyclothing.com/category/sarees/silk-sarees): custom silk sarees stitched in Coimbatore.
-- [Bridal Blouses](https://pattukuttyclothing.com/category/blouses/bridal-blouses): bridal and kalyana pattu blouse stitching.
-- [Half Sarees & Pattu Pavadai](https://pattukuttyclothing.com/category/half-saree/): half saree, lehenga and pattu paavadai sets.
+- [Sarees](https://pattukuttyclothing.com/category/sarees/): custom silk sarees stitched in Coimbatore.
+- [Blouses](https://pattukuttyclothing.com/category/blouses/): bridal and designer blouse stitching.
+- [Half Sarees & Pattu Pavadai](https://pattukuttyclothing.com/category/half-saree/): half saree, lehenga and pattu pudavai sets.
 - [Frocks & Wedding Dresses](https://pattukuttyclothing.com/category/frocks/): normal, designer and wedding frocks.
 - [Sitemap](https://pattukuttyclothing.com/sitemap.xml): every public URL.
 

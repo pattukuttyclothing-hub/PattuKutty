@@ -45,7 +45,7 @@ export function AddReelDialog({ open, onClose, editing }: Props) {
 
   // new-product draft
   const [nCat, setNCat] = useState<CategoryId>(categories[0]!.id);
-  const [nSub, setNSub] = useState(categories[0]!.subs[0]!.id);
+  const [nSub, setNSub] = useState(categories[0]?.subs?.[0]?.id ?? "");
   const [nName, setNName] = useState("");
   const [nPrice, setNPrice] = useState(1999);
   const [nMrp, setNMrp] = useState(2760);
@@ -340,7 +340,8 @@ export function AddReelDialog({ open, onClose, editing }: Props) {
                           onChange={(e) => {
                             const c = e.target.value as CategoryId;
                             setNCat(c);
-                            setNSub(categories.find((x) => x.id === c)!.subs[0]!.id);
+                            const targetCat = categories.find((x) => x.id === c);
+                            setNSub(targetCat?.subs?.[0]?.id ?? "");
                           }}
                           className="mt-1.5 w-full rounded-2xl border border-border bg-card px-3 py-2 text-sm outline-none focus:border-primary"
                         >

@@ -127,7 +127,7 @@ export function mapBackendToCustomRequest(raw: any): CustomRequest {
     raw.sub_category_slug ||
     (typeof raw.sub === "string" && !raw.sub.includes("-") && raw.sub.length > 20 ? undefined : raw.sub) ||
     raw.sub_category_id ||
-    "bridal-blouses";
+    (categorySlug === "sarees" || categorySlug === "blouses" ? "" : "half-saree-classic");
 
   return {
     id: raw.id,

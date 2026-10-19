@@ -24,7 +24,7 @@ export const seedReels: ReelItem[] = [
     id: "rl-2",
     videoUrl: `${VCDN}/v1786515898/ClipDown.com_AQPe63WglNr3xEd2W7i1I37yID282AYcr5ZjPxazA6ezH4PSi52XfaRemkOuYsFZ2I8eIkYuHPyYr70LPGi87JmWz3XFIuRkNxVb9cE.mp4`,
     title: "Aari blouse detailing",
-    productId: "bridal-blouses-1",
+    productId: "blouses-1",
   },
   {
     id: "rl-3",
@@ -44,10 +44,10 @@ export const seedReels: ReelItem[] = [
 export const seedFeaturedIds = [
   "lehenga-1",
   "half-saree-classic-1",
-  "bridal-blouses-1",
+  "blouses-1",
   "normal-frocks-1",
-  "silk-sarees-2",
+  "sarees-2",
   "wedding-frocks-2",
-  "designer-blouses-3",
+  "blouses-2",
   "pattu-pudavai-1",
 ];

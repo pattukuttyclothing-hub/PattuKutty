@@ -1,10 +1,14 @@
 import { useState, useEffect, useMemo } from "react";
 import { createFileRoute, Link, notFound, useNavigate } from "@tanstack/react-router";
-import { ArrowLeft, AlertCircle, Heart, MessageCircle, Minus, Plus, Share2, ShoppingBag, Sparkles } from "lucide-react";
+import { ArrowLeft, ArrowRight, AlertCircle, Heart, MessageCircle, Minus, Plus, Share2, ShoppingBag, Sparkles } from "lucide-react";
 import { PageShell, PageHeader } from "@/components/shared/Page";
 import { ProductGallery } from "@/components/shared/ProductGallery";
 import { ProductCard } from "@/components/boutique/ProductCard";
+<<<<<<< HEAD
 import { findCategory, findProduct, findSub, isHalfSareeCategory, isPattuPaavadaiCategory, isSareeCategory, type Product } from "@/data/boutique";
+=======
+import { findCategory, findProduct, findSub, isSareeCategory, isBlouseCategory, blouseSizes, type Product } from "@/data/boutique";
+>>>>>>> 56bc624 (SIZE CHART)
 import { fetchProductById } from "@/lib/api/catalogue";
 import { abs, absImage, BRAND, breadcrumbJsonLd, seoDescription, seoTitle, socialMeta } from "@/lib/seo";
 import { inr, orderWaLink, useCart } from "@/lib/cart";
@@ -90,9 +94,12 @@ function ProductPage() {
 
   const categorySlug = product?.category ?? "";
   const subCategorySlug = product?.sub ?? "";
-  const relatedRes = useProductsBySubCategory(categorySlug, subCategorySlug);
+  const isSaree = categorySlug === "sarees" || isSareeCategory(categorySlug, subCategorySlug);
+  const isBlouse = categorySlug === "blouses" || isBlouseCategory(categorySlug);
+  const relatedRes = useProductsBySubCategory(categorySlug, (isSaree || isBlouse) ? "" : subCategorySlug);
 
-  const [size, setSize] = useState<string>("");
+  const [size, setSize] = useState<string>(isSaree ? "Standard" : isBlouse ? "38" : "");
+  const [showBlouseSizeGuide, setShowBlouseSizeGuide] = useState<boolean>(false);
   const [qty, setQty] = useState<number>(1);
 
   // Filter available variants strictly from backend variant stock/availability
@@ -120,6 +127,7 @@ function ProductPage() {
       }
     });
 
+<<<<<<< HEAD
     if (rawSizes.length > 0) {
       if (isHalfSareeOrLehenga) {
         const allowed = ["S", "M", "L", "XL", "XXL"];
@@ -140,17 +148,42 @@ function ProductPage() {
     }
     return product?.sizes || ["S", "M", "L", "XL", "XXL"];
   }, [availableVariants, isHalfSareeOrLehenga, isPattuPaavadai, product?.sizes]);
+=======
+    if (isBlouse) {
+      // Check if real backend blouse sizes (numeric) are present
+      const hasBlouseSizes = sizes.some((s) => blouseSizes.includes(s));
+      if (!hasBlouseSizes) {
+        return blouseSizes;
+      }
+      return blouseSizes.filter((s) => sizes.includes(s));
+    }
+
+    if (sizes.length === 0 && (!product?.variants || product.variants.length === 0)) {
+      if (isSaree) return ["Standard"];
+      if (product?.sizes && product.sizes.length > 0) return product.sizes;
+      return ["S", "M", "L", "XL"];
+    }
+
+    return sizes;
+  }, [availableVariants, isBlouse, isSaree, product?.variants, product?.sizes]);
+>>>>>>> 56bc624 (SIZE CHART)
 
   // Set default selected size when real backend product variants load
   useEffect(() => {
-    if (uniqueAvailableSizes.length > 0) {
+    if (isSaree) {
+      setSize("Standard");
+    } else if (isBlouse) {
+      if (!size || !blouseSizes.includes(size)) {
+        setSize(uniqueAvailableSizes.includes("38") ? "38" : (uniqueAvailableSizes[0] ?? "38"));
+      }
+    } else if (uniqueAvailableSizes.length > 0) {
       if (!size || !uniqueAvailableSizes.includes(size)) {
         setSize(uniqueAvailableSizes[0] ?? "");
       }
     } else {
       setSize("");
     }
-  }, [uniqueAvailableSizes]);
+  }, [uniqueAvailableSizes, isSaree, isBlouse]);
 
   if (loading && !product) {
     return (
@@ -189,7 +222,13 @@ function ProductPage() {
   const sub = findSub(activeProduct.category, activeProduct.sub);
   const related = (relatedRes.data || []).filter((x) => x.id !== activeProduct.id).slice(0, 4);
 
-  const isSoldOut = activeProduct.soldOut || (activeProduct.variants && activeProduct.variants.length > 0 && uniqueAvailableSizes.length === 0);
+  const isSoldOut = activeProduct.soldOut || (
+    isSaree
+      ? Boolean(activeProduct.variants && activeProduct.variants.length > 0 && !activeProduct.variants.some(v => v.available !== false && (v.stockQty === undefined || v.stockQty > 0)))
+      : (activeProduct.variants && activeProduct.variants.length > 0 && uniqueAvailableSizes.length === 0)
+  );
+
+  const selectedSize = isSaree ? "Standard" : (size || uniqueAvailableSizes[0] || "S");
 
   const handleAddToCart = () => {
     gate(() => {
@@ -198,7 +237,7 @@ function ProductPage() {
         name: activeProduct.name,
         image: activeProduct.image || (activeProduct.images && activeProduct.images[0]) || "",
         price: activeProduct.price,
-        size: size || uniqueAvailableSizes[0] || "S",
+        size: selectedSize,
         colour: "Design Colour",
         qty,
       });
@@ -212,7 +251,7 @@ function ProductPage() {
         name: activeProduct.name,
         image: activeProduct.image || (activeProduct.images && activeProduct.images[0]) || "",
         price: activeProduct.price,
-        size: size || uniqueAvailableSizes[0] || "S",
+        size: selectedSize,
         colour: "Design Colour",
         qty,
       });
@@ -234,10 +273,10 @@ function ProductPage() {
       <PageHeader
         crumbs={[
           { label: category.name, to: "/category/$category", params: { category: activeProduct.category } },
-          ...(sub ? [{ label: sub.name, to: "/category/$category/$sub", params: { category: activeProduct.category, sub: sub.id } }] : []),
+          ...(!isSaree && !isBlouse && sub ? [{ label: sub.name, to: "/category/$category/$sub", params: { category: activeProduct.category, sub: sub.id } }] : []),
           { label: activeProduct.name },
         ]}
-        eyebrow={`${category.name}${sub ? ` · ${sub.name}` : ""}`}
+        eyebrow={`${category.name}${!isSaree && !isBlouse && sub ? ` · ${sub.name}` : ""}`}
         title={activeProduct.name}
         subtitle={
           <span className="inline-flex items-center gap-2">
@@ -363,6 +402,7 @@ function ProductPage() {
                 {activeProduct.description}
               </p>
 
+<<<<<<< HEAD
               {/* Size / Variation Selection */}
               <div className="mt-8">
                 <div className="flex flex-wrap items-center justify-between gap-2">
@@ -420,12 +460,93 @@ function ProductPage() {
                     {uniqueAvailableSizes.map((sz) => {
                       const isSelected = size === sz;
                       const isLongText = sz.length > 4;
+=======
+              {/* Size Selection */}
+              {isSaree ? (
+                <div className="mt-6 rounded-2xl border border-border/60 bg-secondary/30 p-4 shadow-xs">
+                  <div className="flex items-center gap-2">
+                    <span className="inline-flex items-center gap-1.5 text-xs font-bold tracking-wider uppercase text-primary">
+                      <Sparkles className="h-3.5 w-3.5 text-accent fill-accent/20" /> Standard Saree Specifications
+                    </span>
+                  </div>
+                  <p className="mt-1.5 text-xs text-muted-foreground leading-relaxed">
+                    Full traditional drape (5.5m length) with matching unstitched blouse piece (0.8m). Crafted with authentic borders and high-end finish.
+                  </p>
+                  <div className="mt-2.5 flex flex-wrap gap-2 text-[0.7rem] font-medium text-foreground/80">
+                    <span className="rounded-full border border-border/60 bg-card px-2.5 py-1">✓ 5.5m Saree</span>
+                    <span className="rounded-full border border-border/60 bg-card px-2.5 py-1">✓ Running Blouse Piece</span>
+                    <span className="rounded-full border border-border/60 bg-card px-2.5 py-1">✓ Express Delivery Available</span>
+                  </div>
+                </div>
+              ) : isBlouse ? (
+                <div className="mt-8 space-y-3.5">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <div className="flex items-center gap-2">
+                      <label className="text-xs font-semibold tracking-[0.12em] text-foreground uppercase">
+                        Select Blouse Size (Bust in Inches)
+                      </label>
+                      <span className="inline-flex items-center gap-1 rounded-full bg-accent/15 px-2.5 py-0.5 text-[0.68rem] font-bold text-accent dark:text-accent-foreground border border-accent/30 shadow-xs">
+                        <Sparkles className="h-3 w-3" /> Can Be Customisable
+                      </span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setShowBlouseSizeGuide((v) => !v)}
+                      className="text-xs font-medium text-accent hover:underline inline-flex items-center gap-1 cursor-pointer"
+                    >
+                      {showBlouseSizeGuide ? "Hide Size Chart ✕" : "Size Chart 📏"}
+                    </button>
+                  </div>
+
+                  {/* Expandable Blouse Size Chart / Measurement Guide */}
+                  {showBlouseSizeGuide ? (
+                    <div className="rounded-2xl border border-accent/30 bg-accent/5 p-3.5 sm:p-4 text-xs transition-all animate-fadeIn">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="font-semibold text-foreground text-xs">Standard Blouse Size Guide (Inches)</span>
+                        <span className="text-[0.65rem] text-muted-foreground">Coimbatore Boutique Fit</span>
+                      </div>
+                      <div className="overflow-x-auto">
+                        <table className="w-full text-center text-xs">
+                          <thead>
+                            <tr className="border-b border-border/60 text-muted-foreground text-[0.7rem]">
+                              <th className="py-1 px-1.5 font-medium text-left">Size</th>
+                              {blouseSizes.map((sz) => (
+                                <th key={sz} className="py-1 px-1.5 font-semibold text-foreground">{sz}</th>
+                              ))}
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-border/40 text-[0.72rem]">
+                            <tr>
+                              <td className="py-1.5 px-1.5 font-medium text-muted-foreground text-left">Bust</td>
+                              {blouseSizes.map((sz) => (
+                                <td key={`bust-${sz}`} className="py-1.5 px-1.5 font-semibold text-foreground">{sz}"</td>
+                              ))}
+                            </tr>
+                            <tr>
+                              <td className="py-1.5 px-1.5 font-medium text-muted-foreground text-left">Waist</td>
+                              {["26", "28", "30", "32", "34", "36"].map((w, i) => (
+                                <td key={`waist-${i}`} className="py-1.5 px-1.5 text-muted-foreground">{w}"</td>
+                              ))}
+                            </tr>
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  ) : null}
+
+                  {/* 32, 34, 36, 38, 40, 42 Size Buttons */}
+                  <div className="grid grid-cols-6 gap-2 sm:gap-2.5">
+                    {blouseSizes.map((sz) => {
+                      const isSelected = size === sz;
+                      const isAvailable = uniqueAvailableSizes.length === 0 || uniqueAvailableSizes.includes(sz);
+>>>>>>> 56bc624 (SIZE CHART)
 
                       return (
                         <button
                           key={sz}
                           type="button"
                           onClick={() => setSize(sz)}
+<<<<<<< HEAD
                           className={`relative rounded-xl border font-semibold transition-all leading-snug flex items-center justify-center text-center cursor-pointer ${
                             isLongText
                               ? "min-h-[2.75rem] px-4 py-2.5 sm:px-5 sm:py-3 text-xs sm:text-sm"
@@ -437,10 +558,26 @@ function ProductPage() {
                           }`}
                         >
                           {sz}
+=======
+                          disabled={!isAvailable}
+                          className={`relative rounded-xl border font-bold transition-all min-h-[3rem] flex flex-col items-center justify-center text-xs sm:text-sm cursor-pointer ${
+                            isSelected
+                              ? "border-primary bg-primary text-primary-foreground shadow-soft ring-2 ring-primary/20 scale-[1.02]"
+                              : isAvailable
+                                ? "border-border bg-card text-foreground hover:bg-secondary hover:border-primary/40 active:scale-95"
+                                : "border-border/40 bg-muted/30 text-muted-foreground/40 cursor-not-allowed line-through"
+                          }`}
+                        >
+                          <span className="text-sm font-bold tracking-tight">{sz}</span>
+                          <span className={`text-[0.62rem] font-normal leading-none mt-0.5 ${isSelected ? "text-primary-foreground/80" : "text-muted-foreground"}`}>
+                            inch
+                          </span>
+>>>>>>> 56bc624 (SIZE CHART)
                         </button>
                       );
                     })}
                   </div>
+<<<<<<< HEAD
                 )}
 
                 {/* Customize button below size chart */}
@@ -473,6 +610,86 @@ function ProductPage() {
                   </p>
                 </div>
               </div>
+=======
+
+                  {/* Mention: "Can Be Customisable" & Explanation */}
+                  <div className="rounded-xl border border-accent/30 bg-accent/10 p-3 sm:p-3.5 flex items-start gap-3">
+                    <Sparkles className="h-4 w-4 text-accent shrink-0 mt-0.5" />
+                    <div className="text-xs space-y-0.5">
+                      <p className="font-semibold text-foreground flex items-center gap-1.5">
+                        Can Be Customisable
+                      </p>
+                      <p className="text-muted-foreground leading-relaxed text-[0.72rem]">
+                        Have unique body measurements, prefer specific neck cuts, sleeve styles, or want a custom fabric color? We tailor each blouse to your exact requirement.
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Below that: Add a Button "Customize Your Size & Color" */}
+                  <button
+                    type="button"
+                    onClick={handleCustomizeClick}
+                    className="w-full flex items-center justify-center gap-2 rounded-xl border-2 border-primary/30 bg-gradient-to-r from-primary/10 via-accent/10 to-primary/10 hover:from-primary/20 hover:to-accent/20 text-foreground font-semibold px-4 py-3 text-xs sm:text-sm transition-all shadow-xs hover:border-primary active:scale-[0.99] group cursor-pointer"
+                  >
+                    <Sparkles className="h-4 w-4 text-accent transition-transform group-hover:rotate-12" />
+                    <span>Customize Your Size & Color</span>
+                    <ArrowRight className="h-3.5 w-3.5 text-muted-foreground ml-auto group-hover:translate-x-1 transition-transform" />
+                  </button>
+                </div>
+              ) : (
+                <div className="mt-8">
+                  <div className="flex items-center justify-between">
+                    <label className="text-xs font-semibold tracking-[0.12em] text-foreground uppercase">
+                      Select Size
+                    </label>
+                    <button
+                      type="button"
+                      onClick={handleCustomizeClick}
+                      className="inline-flex items-center gap-1 text-xs font-medium text-accent hover:underline"
+                    >
+                      Custom Size / Fit? <Sparkles className="h-3 w-3" />
+                    </button>
+                  </div>
+
+                  <div className="mt-3 flex flex-wrap gap-2 sm:gap-2.5">
+                    {uniqueAvailableSizes.map((sz) => {
+                      const isSelected = size === sz;
+                      const isLongText = sz.length > 4;
+
+                      return (
+                        <button
+                          key={sz}
+                          type="button"
+                          onClick={() => setSize(sz)}
+                          className={`relative rounded-xl border font-semibold transition-all leading-snug flex items-center justify-center text-center ${
+                            isLongText
+                              ? "min-h-[2.75rem] px-4 py-2.5 sm:px-5 sm:py-3 text-xs sm:text-sm"
+                              : "min-w-[3.5rem] min-h-[2.75rem] px-3.5 py-2 text-xs sm:text-sm"
+                          } ${
+                            isSelected
+                              ? "border-primary bg-primary text-primary-foreground shadow-soft ring-2 ring-primary/20"
+                              : "border-border bg-card text-foreground hover:bg-secondary"
+                          }`}
+                        >
+                          {sz}
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  <div className="mt-3 space-y-1 rounded-xl bg-secondary/30 p-3 border border-border/50">
+                    <p className="text-xs text-muted-foreground flex items-center gap-1.5 font-medium">
+                      <Sparkles className="h-3.5 w-3.5 text-accent shrink-0" />
+                      Need a different size? Custom sizing is available.
+                    </p>
+                    <p className="text-xs text-muted-foreground flex items-center gap-1.5 font-medium">
+                      <Sparkles className="h-3.5 w-3.5 text-accent shrink-0" />
+                      Want a different color? Color customization is available.
+                    </p>
+                  </div>
+                </div>
+              )}
+>>>>>>> 56bc624 (SIZE CHART)
 
               {/* Quantity */}
               <div className="mt-6">
@@ -552,7 +769,7 @@ function ProductPage() {
                     </div>
 
                     <a
-                      href={orderWaLink([{ key: activeProduct.id, id: activeProduct.id, name: activeProduct.name, image: activeProduct.image || "", price: activeProduct.price, size: size || uniqueAvailableSizes[0] || "S", colour: "Original Colour", qty }])}
+                      href={orderWaLink([{ key: activeProduct.id, id: activeProduct.id, name: activeProduct.name, image: activeProduct.image || "", price: activeProduct.price, size: selectedSize, colour: "Original Colour", qty }])}
                       target="_blank"
                       rel="noreferrer"
                       className="flex w-full items-center justify-center gap-2 rounded-full border border-border bg-secondary/60 py-3 text-xs font-semibold text-secondary-foreground hover:bg-secondary"

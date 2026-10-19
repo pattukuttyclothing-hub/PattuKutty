@@ -34,12 +34,17 @@ export type Spec = {
   sourceProductId?: string | undefined;
 };
 
+<<<<<<< HEAD
 export const sizeOptions = ["S", "M", "L", "XL", "XXL", "3XL", "4XL", "5XL", "Custom"];
 export const ageSizeOptions = [
   "1 Year", "2 Year", "3 Year", "4 Year", "5 Year", "6 Year", "7 Year", "8 Year",
   "9 Year", "10 Year", "11 Year", "12 Year", "13 Year", "14 Year", "15 Year", "16 Year",
   "Custom",
 ];
+=======
+export const sizeOptions = ["XS", "S", "M", "L", "XL", "XXL", "XXXL", "Custom"];
+export const blouseSizeOptions = ["32", "34", "36", "38", "40", "42", "Custom"];
+>>>>>>> 56bc624 (SIZE CHART)
 
 const categoryMeasurementFields: Record<string, { key: string; label: string }[]> = {
   blouses: [
@@ -82,9 +87,13 @@ const categoryMeasurementFields: Record<string, { key: string; label: string }[]
 export const makeSpec = (category?: string, sub?: string): Spec => {
   const cat = findCategory(category || "blouses");
   const validCategory = cat.id as CategoryId;
-  const validSub = sub && cat.subs?.some((s) => s.id === sub || s.subs?.some((child) => child.id === sub))
-    ? sub
-    : (cat.subs?.[0]?.id ?? "bridal-blouses");
+  const isSaree = validCategory === "sarees";
+  const isBlouse = validCategory === "blouses";
+  const validSub = (isSaree || isBlouse)
+    ? ""
+    : (sub && cat.subs?.some((s) => s.id === sub || s.subs?.some((child) => child.id === sub))
+      ? sub
+      : (cat.subs?.[0]?.id ?? ""));
 
   return {
     category: validCategory,
@@ -95,7 +104,7 @@ export const makeSpec = (category?: string, sub?: string): Spec => {
     /** phone is pre-filled from the saved customer profile / details, editable */
     phone: typeof window === "undefined" ? "" : window.localStorage.getItem("butterflies-phone") || "",
     qty: 1,
-    size: "M",
+    size: isSaree ? "Standard" : isBlouse ? "38" : "M",
     measurements: {},
     timeline: "1-day",
     fulfilment: "pickup",
@@ -195,78 +204,80 @@ export function SpecForm({
 
       {/* -------- right: specifications -------- */}
       <div className="space-y-7">
-        <Field label={`${cat.name} style`}>
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-            {cat.subs.map((s) => {
-              const on = spec.sub === s.id || (s.subs && s.subs.some((child) => child.id === spec.sub));
-              return (
-                <button
-                  key={s.id}
-                  type="button"
-                  onClick={() => {
-                    const targetSub = s.subs && s.subs.length > 0 ? s.subs[0]!.id : s.id;
-                    set({ sub: targetSub });
-                  }}
-                  className={`group relative overflow-hidden rounded-2xl border-2 text-left transition-all ${
-                    on
-                      ? "border-primary shadow-lift"
-                      : "border-transparent shadow-soft hover:border-primary/40"
-                  }`}
-                >
-                  <img
-                    loading="lazy"
-                    src={s.images[0]}
-                    alt={s.name}
-                    className="aspect-[3/4] w-full bg-secondary object-cover transition-transform duration-500 group-hover:scale-[1.04]"
-                  />
-                  <span className="absolute inset-0 bg-gradient-to-t from-foreground/80 via-foreground/10 to-transparent" />
-                  <span className="absolute inset-x-0 bottom-0 flex items-center justify-between gap-2 p-3">
-                    <span className="text-xs leading-tight font-semibold text-background">
-                      {s.name}
-                    </span>
-                    {on ? (
-                      <span className="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-primary text-primary-foreground">
-                        <Check className="h-3.5 w-3.5" />
+        {cat.subs && cat.subs.length > 0 ? (
+          <Field label={`${cat.name} style`}>
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+              {cat.subs.map((s) => {
+                const on = spec.sub === s.id || (s.subs && s.subs.some((child) => child.id === spec.sub));
+                return (
+                  <button
+                    key={s.id}
+                    type="button"
+                    onClick={() => {
+                      const targetSub = s.subs && s.subs.length > 0 ? s.subs[0]!.id : s.id;
+                      set({ sub: targetSub });
+                    }}
+                    className={`group relative overflow-hidden rounded-2xl border-2 text-left transition-all ${
+                      on
+                        ? "border-primary shadow-lift"
+                        : "border-transparent shadow-soft hover:border-primary/40"
+                    }`}
+                  >
+                    <img
+                      loading="lazy"
+                      src={s.images[0]}
+                      alt={s.name}
+                      className="aspect-[3/4] w-full bg-secondary object-cover transition-transform duration-500 group-hover:scale-[1.04]"
+                    />
+                    <span className="absolute inset-0 bg-gradient-to-t from-foreground/80 via-foreground/10 to-transparent" />
+                    <span className="absolute inset-x-0 bottom-0 flex items-center justify-between gap-2 p-3">
+                      <span className="text-xs leading-tight font-semibold text-background">
+                        {s.name}
                       </span>
-                    ) : null}
-                  </span>
-                </button>
+                      {on ? (
+                        <span className="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-primary text-primary-foreground">
+                          <Check className="h-3.5 w-3.5" />
+                        </span>
+                      ) : null}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+
+            {cat.subs.map((s) => {
+              const hasSubs = s.subs && s.subs.length > 0;
+              const isActiveParent = hasSubs && (spec.sub === s.id || s.subs!.some((child) => child.id === spec.sub));
+              if (!isActiveParent || !s.subs) return null;
+              return (
+                <div key={`nested-${s.id}`} className="mt-4 rounded-2xl border border-primary/30 bg-secondary/30 p-4">
+                  <p className="mb-2 text-xs font-semibold tracking-wide text-foreground">
+                    Select {s.name} Type:
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    {s.subs.map((nestedSub) => {
+                      const isNestedOn = spec.sub === nestedSub.id;
+                      return (
+                        <button
+                          key={nestedSub.id}
+                          type="button"
+                          onClick={() => set({ sub: nestedSub.id })}
+                          className={`rounded-full border px-4 py-2 text-xs font-semibold transition-colors ${
+                            isNestedOn
+                              ? "border-primary bg-primary text-primary-foreground shadow-soft"
+                              : "border-border bg-card text-foreground hover:bg-secondary"
+                          }`}
+                        >
+                          {nestedSub.name}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
               );
             })}
-          </div>
-
-          {cat.subs.map((s) => {
-            const hasSubs = s.subs && s.subs.length > 0;
-            const isActiveParent = hasSubs && (spec.sub === s.id || s.subs!.some((child) => child.id === spec.sub));
-            if (!isActiveParent || !s.subs) return null;
-            return (
-              <div key={`nested-${s.id}`} className="mt-4 rounded-2xl border border-primary/30 bg-secondary/30 p-4">
-                <p className="mb-2 text-xs font-semibold tracking-wide text-foreground">
-                  Select {s.name} Type:
-                </p>
-                <div className="flex flex-wrap gap-2">
-                  {s.subs.map((nestedSub) => {
-                    const isNestedOn = spec.sub === nestedSub.id;
-                    return (
-                      <button
-                        key={nestedSub.id}
-                        type="button"
-                        onClick={() => set({ sub: nestedSub.id })}
-                        className={`rounded-full border px-4 py-2 text-xs font-semibold transition-colors ${
-                          isNestedOn
-                            ? "border-primary bg-primary text-primary-foreground shadow-soft"
-                            : "border-border bg-card text-foreground hover:bg-secondary"
-                        }`}
-                      >
-                        {nestedSub.name}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-            );
-          })}
-        </Field>
+          </Field>
+        ) : null}
 
         <Field
           label="Colour (Optional)"
@@ -380,6 +391,7 @@ export function SpecForm({
             />
           </Field>
 
+<<<<<<< HEAD
           <Field label={isPattu ? "Age / Size Label" : "Size Label"} hint={<InfoTip text="Select standard size or specify custom size label." />}>
             <div className="flex flex-wrap gap-2">
               {activeSizeOptions.map((s) => {
@@ -416,46 +428,106 @@ export function SpecForm({
                   }}
                   className="w-full rounded-full border border-border bg-card px-4 py-2.5 text-xs text-foreground outline-none focus:border-primary"
                 />
+=======
+          {cat.id === "sarees" ? (
+            <Field label="Saree Specification" hint={<InfoTip text="Sarees are authentic standard 5.5m drapes with matching unstitched blouse piece." />}>
+              <div className="rounded-2xl border border-border bg-card p-4">
+                <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-primary">
+                  <Sparkles className="h-4 w-4 text-accent" /> Standard One-Size (5.5m Saree + 0.8m Blouse Piece)
+                </span>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Custom sizing is not required for sarees. If you want custom blouse stitching, describe it in the notes below.
+                </p>
+>>>>>>> 56bc624 (SIZE CHART)
               </div>
-            ) : null}
-          </Field>
+            </Field>
+          ) : (
+            <Field label="Size Label" hint={<InfoTip text="Select standard size or specify custom size label." />}>
+              {(() => {
+                const currentOptions = cat.id === "blouses" ? blouseSizeOptions : sizeOptions;
+                return (
+                  <>
+                    <div className="flex flex-wrap gap-2">
+                      {currentOptions.map((s) => {
+                        const isSelected = spec.size === s || (s === "Custom" && !currentOptions.slice(0, -1).includes(spec.size));
+                        return (
+                          <button
+                            key={s}
+                            type="button"
+                            onClick={() => {
+                              if (s === "Custom") {
+                                set({ size: customSizeInput.trim() || "Custom" });
+                              } else {
+                                set({ size: s });
+                              }
+                            }}
+                            className={pill(isSelected)}
+                          >
+                            {s}
+                          </button>
+                        );
+                      })}
+                    </div>
+                    {(!currentOptions.slice(0, -1).includes(spec.size) || spec.size === "Custom") ? (
+                      <div className="mt-3">
+                        <input
+                          id="customSizeInput"
+                          name="customSizeInput"
+                          type="text"
+                          value={customSizeInput}
+                          placeholder={cat.id === "blouses" ? "Enter custom bust size (e.g. 30, 44, 46)" : "Enter custom size label (e.g. Custom-42, 4XL)"}
+                          onChange={(e) => {
+                            setCustomSizeInput(e.target.value);
+                            set({ size: e.target.value.trim() || "Custom" });
+                          }}
+                          className="w-full rounded-full border border-border bg-card px-4 py-2.5 text-xs text-foreground outline-none focus:border-primary"
+                        />
+                      </div>
+                    ) : null}
+                  </>
+                );
+              })()}
+            </Field>
+          )}
         </div>
 
         {/* -------- Category-Specific Optional Measurements -------- */}
-        <Field
-          label="Optional Exact Body Measurements (Inches)"
-          hint={<InfoTip text="Only fill the measurements you know. Leave unknown fields empty — we will never force fake values." />}
-        >
-          <div className="rounded-2xl border border-border/80 bg-secondary/30 p-4">
-            <p className="text-[0.72rem] text-muted-foreground mb-3">
-              Optional for <span className="font-semibold text-foreground">{cat.name}</span> stitching. Leave unknown values blank.
-            </p>
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-              {measFields.map((f) => {
-                const currentVal = spec.measurements?.[f.key];
-                return (
-                  <div key={f.key} className="space-y-1">
-                    <label htmlFor={`meas_${f.key}`} className="text-[0.7rem] font-medium text-foreground block">
-                      {f.label}
-                    </label>
-                    <input
-                      id={`meas_${f.key}`}
-                      name={`meas_${f.key}`}
-                      type="number"
-                      step="0.5"
-                      min="1"
-                      max="100"
-                      placeholder="Optional"
-                      value={currentVal !== undefined ? currentVal : ""}
-                      onChange={(e) => updateMeasurement(f.key, e.target.value)}
-                      className="w-full rounded-xl border border-border bg-card px-3 py-2 text-xs text-foreground outline-none focus:border-primary"
-                    />
-                  </div>
-                );
-              })}
+        {cat.id !== "sarees" && (
+          <Field
+            label="Optional Exact Body Measurements (Inches)"
+            hint={<InfoTip text="Only fill the measurements you know. Leave unknown fields empty — we will never force fake values." />}
+          >
+            <div className="rounded-2xl border border-border/80 bg-secondary/30 p-4">
+              <p className="text-[0.72rem] text-muted-foreground mb-3">
+                Optional for <span className="font-semibold text-foreground">{cat.name}</span> stitching. Leave unknown values blank.
+              </p>
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+                {measFields.map((f) => {
+                  const currentVal = spec.measurements?.[f.key];
+                  return (
+                    <div key={f.key} className="space-y-1">
+                      <label htmlFor={`meas_${f.key}`} className="text-[0.7rem] font-medium text-foreground block">
+                        {f.label}
+                      </label>
+                      <input
+                        id={`meas_${f.key}`}
+                        name={`meas_${f.key}`}
+                        type="number"
+                        step="0.5"
+                        min="1"
+                        max="100"
+                        placeholder="Optional"
+                        value={currentVal !== undefined ? currentVal : ""}
+                        onChange={(e) => updateMeasurement(f.key, e.target.value)}
+                        className="w-full rounded-xl border border-border bg-card px-3 py-2 text-xs text-foreground outline-none focus:border-primary"
+                      />
+                    </div>
+                  );
+                })}
+              </div>
             </div>
-          </div>
-        </Field>
+          </Field>
+        )}
 
         <Field label="Quantity">
           <div className="inline-flex items-center gap-4 rounded-full border border-border bg-card px-3 py-2">

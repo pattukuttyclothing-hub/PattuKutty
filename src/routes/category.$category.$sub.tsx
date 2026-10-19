@@ -1,4 +1,4 @@
-import { createFileRoute, Link, notFound } from "@tanstack/react-router";
+import { createFileRoute, Link, notFound, redirect } from "@tanstack/react-router";
 import { AlertCircle, ArrowRight, RefreshCw, Sparkles } from "lucide-react";
 import { PageHeader, PageShell } from "@/components/shared/Page";
 import { ProductCard } from "@/components/boutique/ProductCard";
@@ -26,6 +26,12 @@ export const Route = createFileRoute("/category/$category/$sub")({
     };
   },
   loader: ({ params }) => {
+    if (params.category === "sarees") {
+      throw redirect({
+        to: "/category/$category",
+        params: { category: "sarees" },
+      });
+    }
     const cat = findCategory(params.category);
     const sub = findSub(params.category, params.sub);
     if (!cat || !sub) throw notFound();
