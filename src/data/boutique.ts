@@ -464,7 +464,8 @@ export const productsBySub = (categoryId: string, subId: string) => {
 };
 export const productsByCategory = (categoryId: string) =>
   products.filter((p) => p.category === categoryId);
-export const findProduct = (id: string) => {
+export const findProduct = (id?: string | null): Product | undefined => {
+  if (!id || typeof id !== "string") return undefined;
   const direct = products.find((p) => p.id === id);
   if (direct) return direct;
   if (id.includes("-sarees-")) {

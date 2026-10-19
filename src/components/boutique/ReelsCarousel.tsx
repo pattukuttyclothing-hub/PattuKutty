@@ -97,7 +97,7 @@ export function ReelsCarousel() {
                 const rawProd =
                   r.products?.[0] ||
                   (Array.isArray((r as any).reel_products) ? (r as any).reel_products[0]?.products : undefined) ||
-                  findProduct((r as any).productId || (r as any).product_id);
+                  ((r as any).productId || (r as any).product_id ? findProduct((r as any).productId || (r as any).product_id) : undefined);
 
                 const product = rawProd
                   ? {

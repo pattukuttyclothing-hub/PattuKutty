@@ -46,7 +46,7 @@ async function cancelOrderApi(orderId: string, reason: string): Promise<Cancella
 /** Cancel section — only shown when order is in a cancellable state */
 function CancelSection({ order, onCancelled }: { order: Order; onCancelled: () => void }) {
   const cancellableStages = ["placed", "measuring", "stitching", "quality-check", "packed"];
-  const isCancellable = cancellableStages.includes(order.status);
+  const isCancellable = Boolean(order?.status && cancellableStages.includes(order.status));
   const isShipped = order.status === "shipped" || order.status === "in-transit" || order.status === "out-for-delivery";
 
   const [confirming, setConfirming] = useState(false);
