@@ -33,8 +33,15 @@ export const Route = createFileRoute("/category/$category/$sub")({
       });
     }
     const cat = findCategory(params.category);
+    if (!cat) throw notFound();
+    if (!cat.subs || cat.subs.length === 0) {
+      throw redirect({ to: "/category/$category", params: { category: cat.id } });
+    }
+    if (params.sub === "salwar-readymade-top" || params.sub === "salwar-readymade-kurthi") {
+      throw redirect({ to: "/category/$category/$sub", params: { category: cat.id, sub: "salwar-readymade" } });
+    }
     const sub = findSub(params.category, params.sub);
-    if (!cat || !sub) throw notFound();
+    if (!sub) throw notFound();
     return { categoryId: cat.id, subId: sub.id };
   },
   component: SubCategoryPage,

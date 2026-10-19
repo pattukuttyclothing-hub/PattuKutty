@@ -1,5 +1,5 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
-import { ArrowRight, Sparkles } from "lucide-react";
+import { AlertCircle, ArrowRight, RefreshCw, Sparkles } from "lucide-react";
 import { PageHeader, PageSection, PageShell } from "@/components/shared/Page";
 import { Reveal, stagger } from "@/components/shared/Reveal";
 import { AutoImageFade } from "@/components/shared/AutoImageFade";
@@ -35,25 +35,29 @@ function CategoryPage() {
   const { categoryId } = Route.useLoaderData() as { categoryId: CategoryId };
   const categoriesList = useCategories();
   const cat = categoriesList.find((c) => c.id === categoryId) ?? findCategory(categoryId)!;
-  const hasSubCategories = Boolean(cat.subs && cat.subs.length > 0);
+  const hasSubs = Boolean(cat.subs && cat.subs.length > 0);
 
-  // Directly fetch category products if no subcategories exist (e.g. Sarees)
-  const { data: directProducts, loading } = useProductsByCategory(hasSubCategories ? "" : categoryId);
+  // When category has no subcategories (e.g. Sarees, Blouses, Frocks), fetch products directly
+  const { data: directProducts, loading, error, refetch } = useProductsByCategory(
+    hasSubs ? "" : categoryId
+  );
 
   const crumbsJsonLd = breadcrumbJsonLd([
     { name: "Home", path: "/" },
     { name: cat.name, path: `/category/${cat.id}/` },
   ]);
 
-  const headerEyebrow = hasSubCategories
+  const headerEyebrow = hasSubs
     ? "Step 1 of 2 · Pick a style"
-    : `Collection · ${cat.name}`;
+    : `${cat.name} Collection`;
 
-  const headerSubtitle = hasSubCategories
+  const headerSubtitle = hasSubs
     ? `${cat.blurb} — choose the style you're looking for and we'll show you every design we stitch in it.`
     : loading && directProducts.length === 0
       ? `${cat.blurb} — Loading designs...`
-      : `${cat.blurb} — ${directProducts.length} handcrafted design${directProducts.length === 1 ? "" : "s"} from our Coimbatore atelier.`;
+      : error
+        ? `${cat.blurb}`
+        : `${cat.blurb} — ${directProducts.length} handcrafted design${directProducts.length === 1 ? "" : "s"} from our Coimbatore atelier.`;
 
   return (
     <PageShell>
@@ -78,7 +82,7 @@ function CategoryPage() {
       />
 
       <PageSection>
-        {hasSubCategories ? (
+        {hasSubs ? (
           <div className="flex flex-wrap justify-center gap-4 sm:gap-6 lg:gap-8">
             {cat.subs.map((sub, i) => {
               const count =
@@ -129,12 +133,27 @@ function CategoryPage() {
               );
             })}
           </div>
-        ) : (
+) : (
           <div>
             {loading && directProducts.length === 0 ? (
               <div className="py-20 text-center">
                 <div className="mx-auto h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
                 <p className="mt-4 text-xs font-medium text-muted-foreground">Loading {cat.name} designs...</p>
+              </div>
+            ) : error ? (
+              <div className="rounded-2xl border border-destructive/30 bg-destructive/5 p-8 text-center">
+                <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-destructive/10 text-destructive">
+                  <AlertCircle className="h-6 w-6" />
+                </div>
+                <h3 className="mt-4 text-base font-semibold text-foreground">Unable to load designs</h3>
+                <p className="mt-1 text-xs text-muted-foreground">{error}</p>
+                <button
+                  type="button"
+                  onClick={() => refetch()}
+                  className="mt-4 inline-flex items-center gap-2 rounded-full bg-primary px-5 py-2 text-xs font-semibold text-primary-foreground shadow-soft transition-transform hover:scale-105"
+                >
+                  <RefreshCw className="h-3.5 w-3.5" /> Retry Loading
+                </button>
               </div>
             ) : directProducts.length === 0 ? (
               <div className="rounded-3xl border border-border bg-card p-12 text-center shadow-soft">

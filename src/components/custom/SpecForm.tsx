@@ -5,6 +5,7 @@ import { VoiceNote } from "@/components/shared/VoiceNote";
 import { InfoTip } from "@/components/shared/Dialogs";
 import { StatusBadge } from "@/components/shared/Badge";
 import {
+  categories,
   colourSwatches,
   findCategory,
   timelines,
@@ -34,17 +35,13 @@ export type Spec = {
   sourceProductId?: string | undefined;
 };
 
-<<<<<<< HEAD
-export const sizeOptions = ["S", "M", "L", "XL", "XXL", "3XL", "4XL", "5XL", "Custom"];
+export const sizeOptions = ["XS", "S", "M", "L", "XL", "XXL", "XXXL", "Custom"];
+export const blouseSizeOptions = ["32", "34", "36", "38", "40", "42", "Custom"];
 export const ageSizeOptions = [
   "1 Year", "2 Year", "3 Year", "4 Year", "5 Year", "6 Year", "7 Year", "8 Year",
   "9 Year", "10 Year", "11 Year", "12 Year", "13 Year", "14 Year", "15 Year", "16 Year",
   "Custom",
 ];
-=======
-export const sizeOptions = ["XS", "S", "M", "L", "XL", "XXL", "XXXL", "Custom"];
-export const blouseSizeOptions = ["32", "34", "36", "38", "40", "42", "Custom"];
->>>>>>> 56bc624 (SIZE CHART)
 
 const categoryMeasurementFields: Record<string, { key: string; label: string }[]> = {
   blouses: [
@@ -85,7 +82,7 @@ const categoryMeasurementFields: Record<string, { key: string; label: string }[]
 };
 
 export const makeSpec = (category?: string, sub?: string): Spec => {
-  const cat = findCategory(category || "blouses");
+  const cat = findCategory(category || "blouses") ?? categories[0]!;
   const validCategory = cat.id as CategoryId;
   const isSaree = validCategory === "sarees";
   const isBlouse = validCategory === "blouses";
@@ -204,7 +201,7 @@ export function SpecForm({
 
       {/* -------- right: specifications -------- */}
       <div className="space-y-7">
-        {cat.subs && cat.subs.length > 0 ? (
+        {(cat.subs && cat.subs.length > 0) ? (
           <Field label={`${cat.name} style`}>
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
               {cat.subs.map((s) => {
@@ -391,44 +388,6 @@ export function SpecForm({
             />
           </Field>
 
-<<<<<<< HEAD
-          <Field label={isPattu ? "Age / Size Label" : "Size Label"} hint={<InfoTip text="Select standard size or specify custom size label." />}>
-            <div className="flex flex-wrap gap-2">
-              {activeSizeOptions.map((s) => {
-                const isSelected = spec.size === s || (s === "Custom" && !activeSizeOptions.slice(0, -1).includes(spec.size));
-                return (
-                  <button
-                    key={s}
-                    type="button"
-                    onClick={() => {
-                      if (s === "Custom") {
-                        set({ size: customSizeInput.trim() || "Custom" });
-                      } else {
-                        set({ size: s });
-                      }
-                    }}
-                    className={pill(isSelected)}
-                  >
-                    {s}
-                  </button>
-                );
-              })}
-            </div>
-            {(!activeSizeOptions.slice(0, -1).includes(spec.size) || spec.size === "Custom") ? (
-              <div className="mt-3">
-                <input
-                  id="customSizeInput"
-                  name="customSizeInput"
-                  type="text"
-                  value={customSizeInput}
-                  placeholder="Enter custom size label (e.g. Custom-42, 4XL)"
-                  onChange={(e) => {
-                    setCustomSizeInput(e.target.value);
-                    set({ size: e.target.value.trim() || "Custom" });
-                  }}
-                  className="w-full rounded-full border border-border bg-card px-4 py-2.5 text-xs text-foreground outline-none focus:border-primary"
-                />
-=======
           {cat.id === "sarees" ? (
             <Field label="Saree Specification" hint={<InfoTip text="Sarees are authentic standard 5.5m drapes with matching unstitched blouse piece." />}>
               <div className="rounded-2xl border border-border bg-card p-4">
@@ -438,13 +397,12 @@ export function SpecForm({
                 <p className="mt-1 text-xs text-muted-foreground">
                   Custom sizing is not required for sarees. If you want custom blouse stitching, describe it in the notes below.
                 </p>
->>>>>>> 56bc624 (SIZE CHART)
               </div>
             </Field>
           ) : (
             <Field label="Size Label" hint={<InfoTip text="Select standard size or specify custom size label." />}>
               {(() => {
-                const currentOptions = cat.id === "blouses" ? blouseSizeOptions : sizeOptions;
+                const currentOptions = isPattu ? ageSizeOptions : (cat.id === "blouses" ? blouseSizeOptions : sizeOptions);
                 return (
                   <>
                     <div className="flex flex-wrap gap-2">
@@ -475,7 +433,7 @@ export function SpecForm({
                           name="customSizeInput"
                           type="text"
                           value={customSizeInput}
-                          placeholder={cat.id === "blouses" ? "Enter custom bust size (e.g. 30, 44, 46)" : "Enter custom size label (e.g. Custom-42, 4XL)"}
+                          placeholder={isPattu ? "Enter age / custom size" : cat.id === "blouses" ? "Enter custom bust size (e.g. 30, 44, 46)" : "Enter custom size label (e.g. Custom-42, 4XL)"}
                           onChange={(e) => {
                             setCustomSizeInput(e.target.value);
                             set({ size: e.target.value.trim() || "Custom" });

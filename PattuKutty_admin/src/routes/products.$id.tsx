@@ -11,7 +11,9 @@ import {
   findCategory,
   getAllSubCategories,
   getPermittedSizesForCategory,
+  isFrocksCategory,
   isPattuPaavadaiCategory,
+  isSalwarReadymadeCategory,
   isSareeCategory,
   sizeOptions,
   subName,
@@ -234,18 +236,15 @@ function ProductEditor() {
       setDraft(stored);
     } else if (!draft && isCreateMode) {
       const initialCat = (search.category as CategoryId) || "blouses";
-<<<<<<< HEAD
-      const initialSub = search.sub || "bridal-blouses";
-      const initialPermitted = getPermittedSizesForCategory(initialCat, initialSub);
-      const defaultInitialSizes = isPattuPaavadaiCategory(initialCat, initialSub)
-        ? ["1 Year", "2 Year", "3 Year", "4 Year", "5 Year"]
-        : initialPermitted.slice(0, 5);
-=======
       const isSaree = initialCat === "sarees";
       const isBlouse = initialCat === "blouses";
       const catObj = categories.find((c) => c.id === initialCat);
       const initialSub = (isSaree || isBlouse) ? "" : (search.sub || (catObj?.subs[0]?.id ?? ""));
->>>>>>> 56bc624 (SIZE CHART)
+      const initialPermitted = getPermittedSizesForCategory(initialCat, initialSub);
+      const defaultInitialSizes = isPattuPaavadaiCategory(initialCat, initialSub)
+        ? ["1 Year", "2 Year", "3 Year", "4 Year", "5 Year"]
+        : initialPermitted.slice(0, 5);
+
       setDraft({
         id: id || `design-new-${Date.now().toString(36)}`,
         name: "",
@@ -261,9 +260,6 @@ function ProductEditor() {
         isActive: true,
         soldOut: false,
         images: [],
-<<<<<<< HEAD
-        variants: defaultInitialSizes.map((sz) => ({ size: sz, available: true, stockQty: 1 })),
-=======
         variants: isSaree
           ? [{ size: "Standard", available: true, stockQty: 5 }]
           : isBlouse
@@ -275,12 +271,35 @@ function ProductEditor() {
                 { size: "40", available: true, stockQty: 2 },
                 { size: "42", available: true, stockQty: 2 },
               ]
-            : [
-                { size: "S", available: true, stockQty: 1 },
-                { size: "M", available: true, stockQty: 1 },
-                { size: "L", available: true, stockQty: 1 },
-              ],
->>>>>>> 56bc624 (SIZE CHART)
+            : defaultInitialSizes.map((sz) => ({ size: sz, available: true, stockQty: 1 })),
+      });
+      setDraft({
+        id: id || `design-new-${Date.now().toString(36)}`,
+        name: "",
+        description: "",
+        category: initialCat,
+        sub: initialSub,
+        basePrice: 0,
+        mrp: 0,
+        blurb: "",
+        badge: "",
+        expressFromPrice: 0,
+        deliveryCharge: 0,
+        isActive: true,
+        soldOut: false,
+        images: [],
+        variants: isSaree
+          ? [{ size: "Standard", available: true, stockQty: 5 }]
+          : isBlouse
+            ? [
+                { size: "32", available: true, stockQty: 2 },
+                { size: "34", available: true, stockQty: 2 },
+                { size: "36", available: true, stockQty: 2 },
+                { size: "38", available: true, stockQty: 2 },
+                { size: "40", available: true, stockQty: 2 },
+                { size: "42", available: true, stockQty: 2 },
+              ]
+            : defaultInitialSizes.map((sz) => ({ size: sz, available: true, stockQty: 1 })),
       });
     }
   }, [stored, draft, isCreateMode, id]);
@@ -784,10 +803,10 @@ function ProductEditor() {
                 </div>
               </Field>
 
-              {cat?.subs && cat.subs.length > 0 ? (
+              {(cat?.subs ?? []).length > 0 ? (
                 <Field label="Sub-Category">
                   <div className="flex flex-wrap gap-2">
-                    {cat.subs.map((s) => {
+                    {(cat?.subs ?? []).map((s) => {
                       const isMainSubActive =
                         draft.sub === s.id || (s.subs && s.subs.some((child) => child.id === draft.sub));
                       return (
@@ -856,11 +875,12 @@ function ProductEditor() {
             </label>
           </Section>
 
-<<<<<<< HEAD
           <Section
             title={
               isSareeCategory(draft?.category, draft?.sub)
-                ? "Saree specifications & stock"
+                ? "Saree Inventory & Direct Stock"
+                : isBlouseCategory(draft?.category)
+                ? "Blouse Sizes (32–42) & independent stock"
                 : isPattuPaavadaiCategory(draft?.category, draft?.sub)
                 ? "Age-based sizes (1–16 Years) & independent stock"
                 : "Sizes & independent stock"
@@ -868,15 +888,15 @@ function ProductEditor() {
           >
             <p className="text-xs text-muted-foreground">
               {isSareeCategory(draft?.category, draft?.sub)
-                ? "Select saree specifications for this product and set stock quantity."
+                ? "Manage stock quantity and availability directly. Sarees are universal fit (5.5m Saree + 0.8m Blouse Piece) and do not have clothing sizes."
+                : isBlouseCategory(draft?.category)
+                ? "Select blouse bust sizes (32 to 42 inches) and specify the stock quantity available for each size independently."
                 : isPattuPaavadaiCategory(draft?.category, draft?.sub)
                 ? "Select age categories for this Pattu Paavadai set (1 Year to 16 Year) and specify the stock quantity available for each age independently."
-=======
-          <Section title={isSareeCategory(draft?.category, draft?.sub) ? "Saree Inventory & Direct Stock" : "Sizes & independent stock"}>
-            <p className="text-xs text-muted-foreground">
-              {isSareeCategory(draft?.category, draft?.sub)
-                ? "Manage stock quantity and availability directly. Sarees are universal fit (5.5m Saree + 0.8m Blouse Piece) and do not have clothing sizes."
->>>>>>> 56bc624 (SIZE CHART)
+                : isFrocksCategory(draft?.category)
+                ? "Select sizes (S to XXL) for this Frock and specify the stock quantity available for each size independently."
+                : isSalwarReadymadeCategory(draft?.category, draft?.sub)
+                ? "Select sizes (S to XXL) for this Readymade Salwar and specify the stock quantity available for each size independently."
                 : "Select sizes for this design and specify the stock quantity available for each size independently."}
             </p>
 

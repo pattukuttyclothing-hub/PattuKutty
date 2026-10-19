@@ -108,26 +108,7 @@ export const categories: Category[] = [
     name: "Frocks",
     blurb: "Everyday to wedding wear",
     image: "https://res.cloudinary.com/vy7aodsr/image/upload/v1786514176/Kurti_Carousel_Banner.jpg",
-    subs: [
-      {
-        id: "normal-frocks",
-        name: "Normal Frocks",
-        blurb: "Soft cottons for daily comfort",
-        images: rotate(pools.frock, 0),
-      },
-      {
-        id: "wedding-frocks",
-        name: "Wedding Frocks",
-        blurb: "Layered gowns for the big day",
-        images: rotate(pools.frock, 3),
-      },
-      {
-        id: "designer-frocks",
-        name: "Designer Frocks",
-        blurb: "Statement cuts & hand work",
-        images: rotate(pools.frock, 5),
-      },
-    ],
+    subs: [],
   },
   {
     id: "sarees",
@@ -154,20 +135,6 @@ export const categories: Category[] = [
         name: "Readymade",
         blurb: "Stitched tops & kurtis ready to wear",
         images: rotate(pools.frock, 1),
-        subs: [
-          {
-            id: "salwar-readymade-top",
-            name: "Top",
-            blurb: "Stitched salwar tops & tunics",
-            images: rotate(pools.frock, 2),
-          },
-          {
-            id: "salwar-readymade-kurthi",
-            name: "Kurthi",
-            blurb: "Designer kurtis & tunic sets",
-            images: rotate(pools.frock, 4),
-          },
-        ],
       },
       {
         id: "salwar-materials",
@@ -218,6 +185,8 @@ export const blouseSizeOptions = ["32", "34", "36", "38", "40", "42"] as const;
 export const stitchedSizeOptions = ["XS", "S", "M", "L", "XL", "XXL"] as const;
 export const halfSareeSizes = ["S", "M", "L", "XL", "XXL"] as const;
 export const lehengaSizes = ["S", "M", "L", "XL", "XXL"] as const;
+export const frocksSizes = ["S", "M", "L", "XL", "XXL"] as const;
+export const salwarReadymadeSizes = ["S", "M", "L", "XL", "XXL"] as const;
 export const pattuPaavadaiAgeSizes = [
   "1 Year", "2 Year", "3 Year", "4 Year", "5 Year", "6 Year", "7 Year", "8 Year",
   "9 Year", "10 Year", "11 Year", "12 Year", "13 Year", "14 Year", "15 Year", "16 Year",
@@ -236,15 +205,8 @@ export const sizeOptions = [
   "L",
   "XL",
   "XXL",
-<<<<<<< HEAD
-  "Free Size (5.5m + Blouse)",
-  "With Running Blouse",
-  "Without Blouse",
-  "6.3m Grand Pallu",
-  ...pattuPaavadaiAgeSizes,
-=======
   "Standard",
->>>>>>> 56bc624 (SIZE CHART)
+  ...pattuPaavadaiAgeSizes,
 ] as const;
 export type SizeOption = string;
 
@@ -253,33 +215,49 @@ export function isSareeCategory(categoryId?: string, subId?: string): boolean {
   return false;
 }
 
-<<<<<<< HEAD
 export function isPattuPaavadaiCategory(categoryId?: string, subId?: string): boolean {
   return subId === "pattu-pudavai" || subId === "pattu-paavadai";
 }
 
 export function isHalfSareeCategory(categoryId?: string, subId?: string): boolean {
   return categoryId === "half-saree" && !isPattuPaavadaiCategory(categoryId, subId);
-=======
+}
+
 export function isBlouseCategory(categoryId?: string): boolean {
   return categoryId === "blouses" || categoryId === "blouse";
->>>>>>> 56bc624 (SIZE CHART)
+}
+
+export function isFrocksCategory(categoryId?: string): boolean {
+  return categoryId === "frocks";
+}
+
+export function isSalwarReadymadeCategory(categoryId?: string, subId?: string): boolean {
+  const cleanCat = (categoryId || "").toLowerCase().trim();
+  const cleanSub = (subId || "").toLowerCase().trim();
+  return (
+    (cleanCat === "salwar" || cleanCat === "salwars") &&
+    (cleanSub === "salwar-readymade" || cleanSub === "readymade" || cleanSub === "salwar-readymade-top" || cleanSub === "salwar-readymade-kurthi")
+  );
 }
 
 export function getPermittedSizesForCategory(categoryId?: string, subId?: string): readonly string[] {
   if (isSareeCategory(categoryId, subId)) {
     return sareeSizeOptions;
   }
-<<<<<<< HEAD
+  if (isBlouseCategory(categoryId)) {
+    return blouseSizeOptions;
+  }
   if (isPattuPaavadaiCategory(categoryId, subId)) {
     return pattuPaavadaiAgeSizes;
   }
   if (isHalfSareeCategory(categoryId, subId)) {
     return halfSareeSizes;
-=======
-  if (isBlouseCategory(categoryId)) {
-    return blouseSizeOptions;
->>>>>>> 56bc624 (SIZE CHART)
+  }
+  if (isFrocksCategory(categoryId)) {
+    return frocksSizes;
+  }
+  if (isSalwarReadymadeCategory(categoryId, subId)) {
+    return salwarReadymadeSizes;
   }
   return stitchedSizeOptions;
 }
@@ -349,9 +327,10 @@ export const seedProducts: SeedProduct[] = categories.flatMap((cat) => {
   const subs = getAllSubCategories(cat);
   if (subs.length === 0) {
     const isBlouse = cat.id === "blouses";
+    const isFrock = cat.id === "frocks";
     return Array.from({ length: 6 }, (_, i) => {
-      const imgs = rotate(isBlouse ? pools.blouse : pools.saree, i);
-      const price = isBlouse ? 1899 + i * 800 : 2499 + i * 1200;
+      const imgs = rotate(isBlouse ? pools.blouse : isFrock ? pools.frock : pools.saree, i);
+      const price = isBlouse ? 1899 + i * 800 : isFrock ? 1899 + i * 650 : 2499 + i * 1200;
       return {
         id: `${cat.id}-${i + 1}`,
         name: `${nameBits[i % nameBits.length]} ${cat.name}`,
@@ -360,9 +339,11 @@ export const seedProducts: SeedProduct[] = categories.flatMap((cat) => {
         images: imgs.slice(0, 4),
         category: cat.id,
         sub: "",
-        sizes: isBlouse ? [...blouseSizeOptions] : ["Standard"],
+        sizes: isBlouse ? [...blouseSizeOptions] : isFrock ? [...frocksSizes] : ["Standard"],
         description: isBlouse
           ? `Handcrafted ${cat.name.toLowerCase()} design from our Coimbatore studio — authentic aari, maggam, and custom embroidery with premium silk finishing.`
+          : isFrock
+          ? `${cat.name} from our studio line, stitched to your exact measurements with neat inside-out finishing.`
           : `Handcrafted ${cat.name.toLowerCase()} drape from our Coimbatore studio — authentic pure weave with artisan gold zari border and matched unstitched blouse piece.`,
       } satisfies SeedProduct;
     });
