@@ -5,6 +5,7 @@ import { VoiceNote } from "@/components/shared/VoiceNote";
 import { InfoTip } from "@/components/shared/Dialogs";
 import { StatusBadge } from "@/components/shared/Badge";
 import {
+  categories,
   colourSwatches,
   findCategory,
   timelines,
@@ -80,11 +81,11 @@ const categoryMeasurementFields: Record<string, { key: string; label: string }[]
 };
 
 export const makeSpec = (category?: string, sub?: string): Spec => {
-  const cat = findCategory(category || "blouses");
+  const cat = findCategory(category || "blouses") ?? categories[0]!;
   const validCategory = cat.id as CategoryId;
   const validSub = sub && cat.subs?.some((s) => s.id === sub || s.subs?.some((child) => child.id === sub))
     ? sub
-    : (cat.subs?.[0]?.id ?? "bridal-blouses");
+    : (cat.subs?.[0]?.id ?? cat.id);
 
   return {
     category: validCategory,
@@ -195,78 +196,80 @@ export function SpecForm({
 
       {/* -------- right: specifications -------- */}
       <div className="space-y-7">
-        <Field label={`${cat.name} style`}>
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-            {cat.subs.map((s) => {
-              const on = spec.sub === s.id || (s.subs && s.subs.some((child) => child.id === spec.sub));
-              return (
-                <button
-                  key={s.id}
-                  type="button"
-                  onClick={() => {
-                    const targetSub = s.subs && s.subs.length > 0 ? s.subs[0]!.id : s.id;
-                    set({ sub: targetSub });
-                  }}
-                  className={`group relative overflow-hidden rounded-2xl border-2 text-left transition-all ${
-                    on
-                      ? "border-primary shadow-lift"
-                      : "border-transparent shadow-soft hover:border-primary/40"
-                  }`}
-                >
-                  <img
-                    loading="lazy"
-                    src={s.images[0]}
-                    alt={s.name}
-                    className="aspect-[3/4] w-full bg-secondary object-cover transition-transform duration-500 group-hover:scale-[1.04]"
-                  />
-                  <span className="absolute inset-0 bg-gradient-to-t from-foreground/80 via-foreground/10 to-transparent" />
-                  <span className="absolute inset-x-0 bottom-0 flex items-center justify-between gap-2 p-3">
-                    <span className="text-xs leading-tight font-semibold text-background">
-                      {s.name}
-                    </span>
-                    {on ? (
-                      <span className="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-primary text-primary-foreground">
-                        <Check className="h-3.5 w-3.5" />
+        {(cat.subs && cat.subs.length > 0) ? (
+          <Field label={`${cat.name} style`}>
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+              {cat.subs.map((s) => {
+                const on = spec.sub === s.id || (s.subs && s.subs.some((child) => child.id === spec.sub));
+                return (
+                  <button
+                    key={s.id}
+                    type="button"
+                    onClick={() => {
+                      const targetSub = s.subs && s.subs.length > 0 ? s.subs[0]!.id : s.id;
+                      set({ sub: targetSub });
+                    }}
+                    className={`group relative overflow-hidden rounded-2xl border-2 text-left transition-all ${
+                      on
+                        ? "border-primary shadow-lift"
+                        : "border-transparent shadow-soft hover:border-primary/40"
+                    }`}
+                  >
+                    <img
+                      loading="lazy"
+                      src={s.images[0]}
+                      alt={s.name}
+                      className="aspect-[3/4] w-full bg-secondary object-cover transition-transform duration-500 group-hover:scale-[1.04]"
+                    />
+                    <span className="absolute inset-0 bg-gradient-to-t from-foreground/80 via-foreground/10 to-transparent" />
+                    <span className="absolute inset-x-0 bottom-0 flex items-center justify-between gap-2 p-3">
+                      <span className="text-xs leading-tight font-semibold text-background">
+                        {s.name}
                       </span>
-                    ) : null}
-                  </span>
-                </button>
+                      {on ? (
+                        <span className="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-primary text-primary-foreground">
+                          <Check className="h-3.5 w-3.5" />
+                        </span>
+                      ) : null}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+
+            {cat.subs.map((s) => {
+              const hasSubs = s.subs && s.subs.length > 0;
+              const isActiveParent = hasSubs && (spec.sub === s.id || s.subs!.some((child) => child.id === spec.sub));
+              if (!isActiveParent || !s.subs) return null;
+              return (
+                <div key={`nested-${s.id}`} className="mt-4 rounded-2xl border border-primary/30 bg-secondary/30 p-4">
+                  <p className="mb-2 text-xs font-semibold tracking-wide text-foreground">
+                    Select {s.name} Type:
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    {s.subs.map((nestedSub) => {
+                      const isNestedOn = spec.sub === nestedSub.id;
+                      return (
+                        <button
+                          key={nestedSub.id}
+                          type="button"
+                          onClick={() => set({ sub: nestedSub.id })}
+                          className={`rounded-full border px-4 py-2 text-xs font-semibold transition-colors ${
+                            isNestedOn
+                              ? "border-primary bg-primary text-primary-foreground shadow-soft"
+                              : "border-border bg-card text-foreground hover:bg-secondary"
+                          }`}
+                        >
+                          {nestedSub.name}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
               );
             })}
-          </div>
-
-          {cat.subs.map((s) => {
-            const hasSubs = s.subs && s.subs.length > 0;
-            const isActiveParent = hasSubs && (spec.sub === s.id || s.subs!.some((child) => child.id === spec.sub));
-            if (!isActiveParent || !s.subs) return null;
-            return (
-              <div key={`nested-${s.id}`} className="mt-4 rounded-2xl border border-primary/30 bg-secondary/30 p-4">
-                <p className="mb-2 text-xs font-semibold tracking-wide text-foreground">
-                  Select {s.name} Type:
-                </p>
-                <div className="flex flex-wrap gap-2">
-                  {s.subs.map((nestedSub) => {
-                    const isNestedOn = spec.sub === nestedSub.id;
-                    return (
-                      <button
-                        key={nestedSub.id}
-                        type="button"
-                        onClick={() => set({ sub: nestedSub.id })}
-                        className={`rounded-full border px-4 py-2 text-xs font-semibold transition-colors ${
-                          isNestedOn
-                            ? "border-primary bg-primary text-primary-foreground shadow-soft"
-                            : "border-border bg-card text-foreground hover:bg-secondary"
-                        }`}
-                      >
-                        {nestedSub.name}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-            );
-          })}
-        </Field>
+          </Field>
+        ) : null}
 
         <Field
           label="Colour (Optional)"

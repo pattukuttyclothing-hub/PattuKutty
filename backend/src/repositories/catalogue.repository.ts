@@ -21,11 +21,7 @@ const fallbackCategories = [
     name: "Frocks",
     blurb: "Everyday to wedding wear",
     image: "https://res.cloudinary.com/vy7aodsr/image/upload/v1786514176/Kurti_Carousel_Banner.jpg",
-    subs: [
-      { id: "normal-frocks", name: "Normal Frocks", blurb: "Soft cottons for daily comfort" },
-      { id: "wedding-frocks", name: "Wedding Frocks", blurb: "Layered gowns for the big day" },
-      { id: "designer-frocks", name: "Designer Frocks", blurb: "Statement cuts & hand work" },
-    ],
+    subs: [],
   },
   {
     id: "sarees",
@@ -631,21 +627,35 @@ export class CatalogueRepository {
     if (!catIdOrSlug) return null;
     if (this.isUUID(catIdOrSlug)) return catIdOrSlug;
 
-    // Normalize category slug aliases to canonical slugs
+    // Normalize category slug aliases to canonical slugs (strictly lowercase, trimmed, hyphenated)
+    const rawClean = catIdOrSlug.trim().toLowerCase().replace(/[\s_]+/g, "-");
     const categoryAliasMap: Record<string, string> = {
+      "half-saree": "half-saree",
       "half-sarees": "half-saree",
       "halfsaree": "half-saree",
       "half_saree": "half-saree",
+      "salwar": "salwar",
       "salwars": "salwar",
       "churidhar": "salwar",
+      "saree": "sarees",
+      "sarees": "sarees",
+      "blouse": "blouses",
+      "blouses": "blouses",
+      "frock": "frocks",
+      "frocks": "frocks",
     };
-    const canonicalCatSlug = categoryAliasMap[catIdOrSlug] || catIdOrSlug;
+    const canonicalCatSlug = categoryAliasMap[rawClean] || rawClean;
 
     try {
-      const { data } = await db.from("categories").select("id").eq("slug", canonicalCatSlug).maybeSingle();
-      if (data?.id) return data.id;
+      // 1. Try exact canonical slug
+      const { data: exact } = await db.from("categories").select("id").eq("slug", canonicalCatSlug).maybeSingle();
+      if (exact?.id) return exact.id;
 
-      // Auto-create category row in PostgreSQL if missing
+      // 2. Try case-insensitive slug match
+      const { data: ilikeSlug } = await db.from("categories").select("id").ilike("slug", canonicalCatSlug).maybeSingle();
+      if (ilikeSlug?.id) return ilikeSlug.id;
+
+      // 3. Try case-insensitive name match
       const categoryNames: Record<string, string> = {
         "half-saree": "Half Saree",
         "frocks": "Frocks",
@@ -653,8 +663,12 @@ export class CatalogueRepository {
         "blouses": "Blouses",
         "salwar": "Salwar",
       };
-      const name = categoryNames[canonicalCatSlug] || canonicalCatSlug.replace(/-/g, " ").replace(/\b\w/g, (l) => l.toUpperCase());
-      const { data: newCat } = await db.from("categories").insert({ slug: canonicalCatSlug, name }).select("id").maybeSingle();
+      const canonicalName = categoryNames[canonicalCatSlug] || canonicalCatSlug.replace(/-/g, " ").replace(/\b\w/g, (l) => l.toUpperCase());
+      const { data: ilikeName } = await db.from("categories").select("id").ilike("name", canonicalName).maybeSingle();
+      if (ilikeName?.id) return ilikeName.id;
+
+      // 4. Auto-create ONLY if category genuinely does not exist anywhere in DB
+      const { data: newCat } = await db.from("categories").insert({ slug: canonicalCatSlug, name: canonicalName, product_count: 0 }).select("id").maybeSingle();
       return newCat?.id ?? null;
     } catch { return null; }
   }
@@ -663,57 +677,104 @@ export class CatalogueRepository {
     if (!subIdOrSlug) return null;
     if (this.isUUID(subIdOrSlug)) return subIdOrSlug;
 
-    // Normalize subcategory slug aliases to canonical slugs
+    // Normalize subcategory slug aliases to canonical slugs (strictly lowercase, trimmed, hyphenated)
+    const rawClean = subIdOrSlug.trim().toLowerCase().replace(/[\s_]+/g, "-");
     const subCategoryAliasMap: Record<string, string> = {
-      "kurti": "salwar-readymade-kurthi",
-      "kurtis": "salwar-readymade-kurthi",
-      "kurthi": "salwar-readymade-kurthi",
-      "readymade-kurthi": "salwar-readymade-kurthi",
-      "top": "salwar-readymade-top",
-      "readymade-top": "salwar-readymade-top",
+      "kurti": "salwar-readymade",
+      "kurtis": "salwar-readymade",
+      "kurthi": "salwar-readymade",
+      "readymade-kurthi": "salwar-readymade",
+      "salwar-readymade-kurthi": "salwar-readymade",
+      "top": "salwar-readymade",
+      "tops": "salwar-readymade",
+      "readymade-top": "salwar-readymade",
+      "salwar-readymade-top": "salwar-readymade",
       "readymade": "salwar-readymade",
+      "salwar-readymade": "salwar-readymade",
       "materials": "salwar-materials",
+      "salwar-materials": "salwar-materials",
+      "pattu-pudavai": "pattu-pudavai",
+      "pattu-paavadai": "pattu-pudavai",
+      "half-saree-classic": "half-saree-classic",
+      "lehenga": "lehenga",
+      "fancy-sarees": "fancy-sarees",
+      "silk-sarees": "silk-sarees",
+      "designer-sarees": "designer-sarees",
+      "bridal-blouses": "bridal-blouses",
+      "pattern-blouses": "pattern-blouses",
+      "designer-blouses": "designer-blouses",
+      "simple-blouses": "simple-blouses",
+      "aari-work-blouses": "aari-work-blouses",
+      "blouse": "blouse",
     };
-    const canonicalSubSlug = subCategoryAliasMap[subIdOrSlug] || subIdOrSlug;
+    const canonicalSubSlug = subCategoryAliasMap[rawClean] || rawClean;
 
     try {
-      const { data } = await db.from("sub_categories").select("id").eq("slug", canonicalSubSlug).maybeSingle();
-      if (data?.id) return data.id;
-
-      // Auto-create sub_category row in PostgreSQL if missing
       let parentCatUuid: string | null = null;
       if (categorySlugOrUuid) {
         parentCatUuid = await this.resolveCategoryUuid(categorySlugOrUuid);
       }
-      if (!parentCatUuid) {
-        // Find default category
-        const { data: defaultCat } = await db.from("categories").select("id").limit(1).maybeSingle();
-        parentCatUuid = defaultCat?.id ?? null;
+
+      // 1. If parent category is known, look for subcategory under this category first
+      if (parentCatUuid) {
+        const { data: subUnderParent } = await db
+          .from("sub_categories")
+          .select("id")
+          .eq("category_id", parentCatUuid)
+          .or(`slug.eq.${canonicalSubSlug},slug.ilike.${canonicalSubSlug}`)
+          .maybeSingle();
+        if (subUnderParent?.id) return subUnderParent.id;
       }
 
+      // 2. Global lookup by canonical slug or case-insensitive slug
+      const { data: existingSub } = await db
+        .from("sub_categories")
+        .select("id, category_id")
+        .or(`slug.eq.${canonicalSubSlug},slug.ilike.${canonicalSubSlug}`)
+        .maybeSingle();
+      if (existingSub?.id) {
+        // If it exists but parent category was misassigned, update category_id to correct parent
+        if (parentCatUuid && existingSub.category_id !== parentCatUuid) {
+          await db.from("sub_categories").update({ category_id: parentCatUuid }).eq("id", existingSub.id);
+        }
+        return existingSub.id;
+      }
+
+      // 3. Global lookup by name (case-insensitive)
+      const subNames: Record<string, string> = {
+        "half-saree-classic": "Half Saree Classic",
+        "lehenga": "Lehenga",
+        "pattu-pudavai": "Pattu Paavadai",
+        "silk-sarees": "Silk Sarees",
+        "fancy-sarees": "Fancy Sarees",
+        "designer-sarees": "Designer Sarees",
+        "bridal-blouses": "Bridal Blouses",
+        "pattern-blouses": "Pattern Blouses",
+        "designer-blouses": "Designer Blouses",
+        "simple-blouses": "Simple Blouses",
+        "aari-work-blouses": "Aari Work Blouses",
+        "blouse": "Blouse",
+        "salwar-readymade": "Readymade",
+        "salwar-materials": "Materials",
+      };
+      const canonicalName = subNames[canonicalSubSlug] || canonicalSubSlug.replace(/-/g, " ").replace(/\b\w/g, (l) => l.toUpperCase());
+      const { data: nameMatch } = await db
+        .from("sub_categories")
+        .select("id, category_id")
+        .ilike("name", canonicalName)
+        .maybeSingle();
+      if (nameMatch?.id) {
+        if (parentCatUuid && nameMatch.category_id !== parentCatUuid) {
+          await db.from("sub_categories").update({ category_id: parentCatUuid }).eq("id", nameMatch.id);
+        }
+        return nameMatch.id;
+      }
+
+      // 4. Auto-create sub_category row ONLY if parentCatUuid is strictly valid
       if (parentCatUuid) {
-        const subNames: Record<string, string> = {
-          "half-saree-classic": "Half Saree",
-          "lehenga": "Lehenga",
-          "pattu-pudavai": "Pattu Paavadai",
-          "normal-frocks": "Normal Frocks",
-          "wedding-frocks": "Wedding Frocks",
-          "designer-frocks": "Designer Frocks",
-          "silk-sarees": "Silk Sarees",
-          "fancy-sarees": "Fancy Sarees",
-          "designer-sarees": "Designer Sarees",
-          "bridal-blouses": "Bridal Blouses",
-          "pattern-blouses": "Pattern Blouses",
-          "designer-blouses": "Designer Blouses",
-          "salwar-readymade": "Readymade",
-          "salwar-materials": "Materials",
-          "salwar-readymade-top": "Top",
-          "salwar-readymade-kurthi": "Kurthi",
-        };
-        const name = subNames[canonicalSubSlug] || canonicalSubSlug.replace(/-/g, " ").replace(/\b\w/g, (l) => l.toUpperCase());
         const { data: newSub } = await db
           .from("sub_categories")
-          .insert({ category_id: parentCatUuid, slug: canonicalSubSlug, name })
+          .insert({ category_id: parentCatUuid, slug: canonicalSubSlug, name: canonicalName, product_count: 0 })
           .select("id")
           .maybeSingle();
         return newSub?.id ?? null;
@@ -866,7 +927,8 @@ export class CatalogueRepository {
         String(productPayload.categoryId || productPayload.category || "")
       );
       const subUuid = await this.resolveSubCategoryUuid(
-        String(productPayload.subCategoryId || productPayload.sub || "")
+        String(productPayload.subCategoryId || productPayload.sub || ""),
+        catUuid ?? undefined
       );
 
       const updateData: Record<string, unknown> = {};

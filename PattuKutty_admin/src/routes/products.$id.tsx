@@ -11,7 +11,9 @@ import {
   findCategory,
   getAllSubCategories,
   getPermittedSizesForCategory,
+  isFrocksCategory,
   isPattuPaavadaiCategory,
+  isSalwarReadymadeCategory,
   isSareeCategory,
   sizeOptions,
   subName,
@@ -706,7 +708,7 @@ function ProductEditor() {
               <Field label="Category">
                 <div className="flex flex-wrap gap-2">
                   {categories.map((c) => {
-                    const firstSubId = c.subs[0]!.id;
+                    const firstSubId = c.subs[0]?.id ?? c.id;
                     return (
                       <button
                         key={c.id}
@@ -726,32 +728,34 @@ function ProductEditor() {
                 </div>
               </Field>
 
-              <Field label="Sub-Category">
-                <div className="flex flex-wrap gap-2">
-                  {(cat?.subs ?? []).map((s) => {
-                    const isMainSubActive =
-                      draft.sub === s.id || (s.subs && s.subs.some((child) => child.id === draft.sub));
-                    return (
-                      <button
-                        key={s.id}
-                        type="button"
-                        onClick={() => {
-                          const targetSub = s.subs && s.subs.length > 0 ? s.subs[0]!.id : s.id;
-                          set({ sub: targetSub });
-                        }}
-                        className={`flex items-center gap-2 rounded-full border py-1.5 pr-3.5 pl-1.5 text-[0.75rem] font-medium transition-colors ${
-                          isMainSubActive
-                            ? "border-primary bg-secondary text-primary font-bold shadow-xs"
-                            : "border-border hover:bg-secondary/50"
-                        }`}
-                      >
-                        <img src={s.images[0]} alt="" className="h-6 w-6 rounded-full object-cover object-top shrink-0 border border-border/50" />
-                        {s.name}
-                      </button>
-                    );
-                  })}
-                </div>
-              </Field>
+              {(cat?.subs ?? []).length > 0 ? (
+                <Field label="Sub-Category">
+                  <div className="flex flex-wrap gap-2">
+                    {(cat?.subs ?? []).map((s) => {
+                      const isMainSubActive =
+                        draft.sub === s.id || (s.subs && s.subs.some((child) => child.id === draft.sub));
+                      return (
+                        <button
+                          key={s.id}
+                          type="button"
+                          onClick={() => {
+                            const targetSub = s.subs && s.subs.length > 0 ? s.subs[0]!.id : s.id;
+                            set({ sub: targetSub });
+                          }}
+                          className={`flex items-center gap-2 rounded-full border py-1.5 pr-3.5 pl-1.5 text-[0.75rem] font-medium transition-colors ${
+                            isMainSubActive
+                              ? "border-primary bg-secondary text-primary font-bold shadow-xs"
+                              : "border-border hover:bg-secondary/50"
+                          }`}
+                        >
+                          <img src={s.images[0]} alt="" className="h-6 w-6 rounded-full object-cover object-top shrink-0 border border-border/50" />
+                          {s.name}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </Field>
+              ) : null}
 
               {/* Render child style options ONLY if active subcategory has sub-styles (e.g. Readymade -> Top / Kurthi) */}
               {(cat?.subs ?? []).map((s) => {
@@ -810,6 +814,10 @@ function ProductEditor() {
                 ? "Select saree specifications for this product and set stock quantity."
                 : isPattuPaavadaiCategory(draft?.category, draft?.sub)
                 ? "Select age categories for this Pattu Paavadai set (1 Year to 16 Year) and specify the stock quantity available for each age independently."
+                : isFrocksCategory(draft?.category)
+                ? "Select sizes (S to XXL) for this Frock and specify the stock quantity available for each size independently."
+                : isSalwarReadymadeCategory(draft?.category, draft?.sub)
+                ? "Select sizes (S to XXL) for this Readymade Salwar and specify the stock quantity available for each size independently."
                 : "Select sizes for this design and specify the stock quantity available for each size independently."}
             </p>
             <div className="flex flex-wrap gap-2 sm:gap-2.5">

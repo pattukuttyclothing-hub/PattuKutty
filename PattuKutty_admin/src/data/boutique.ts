@@ -108,26 +108,7 @@ export const categories: Category[] = [
     name: "Frocks",
     blurb: "Everyday to wedding wear",
     image: "https://res.cloudinary.com/vy7aodsr/image/upload/v1786514176/Kurti_Carousel_Banner.jpg",
-    subs: [
-      {
-        id: "normal-frocks",
-        name: "Normal Frocks",
-        blurb: "Soft cottons for daily comfort",
-        images: rotate(pools.frock, 0),
-      },
-      {
-        id: "wedding-frocks",
-        name: "Wedding Frocks",
-        blurb: "Layered gowns for the big day",
-        images: rotate(pools.frock, 3),
-      },
-      {
-        id: "designer-frocks",
-        name: "Designer Frocks",
-        blurb: "Statement cuts & hand work",
-        images: rotate(pools.frock, 5),
-      },
-    ],
+    subs: [],
   },
   {
     id: "sarees",
@@ -192,20 +173,6 @@ export const categories: Category[] = [
         name: "Readymade",
         blurb: "Stitched tops & kurtis ready to wear",
         images: rotate(pools.frock, 1),
-        subs: [
-          {
-            id: "salwar-readymade-top",
-            name: "Top",
-            blurb: "Stitched salwar tops & tunics",
-            images: rotate(pools.frock, 2),
-          },
-          {
-            id: "salwar-readymade-kurthi",
-            name: "Kurthi",
-            blurb: "Designer kurtis & tunic sets",
-            images: rotate(pools.frock, 4),
-          },
-        ],
       },
       {
         id: "salwar-materials",
@@ -261,6 +228,8 @@ export const sareeSizeOptions = [
 export const stitchedSizeOptions = ["XS", "S", "M", "L", "XL", "XXL"] as const;
 export const halfSareeSizes = ["S", "M", "L", "XL", "XXL"] as const;
 export const lehengaSizes = ["S", "M", "L", "XL", "XXL"] as const;
+export const frocksSizes = ["S", "M", "L", "XL", "XXL"] as const;
+export const salwarReadymadeSizes = ["S", "M", "L", "XL", "XXL"] as const;
 export const pattuPaavadaiAgeSizes = [
   "1 Year", "2 Year", "3 Year", "4 Year", "5 Year", "6 Year", "7 Year", "8 Year",
   "9 Year", "10 Year", "11 Year", "12 Year", "13 Year", "14 Year", "15 Year", "16 Year",
@@ -294,6 +263,19 @@ export function isHalfSareeCategory(categoryId?: string, subId?: string): boolea
   return categoryId === "half-saree" && !isPattuPaavadaiCategory(categoryId, subId);
 }
 
+export function isFrocksCategory(categoryId?: string): boolean {
+  return categoryId === "frocks";
+}
+
+export function isSalwarReadymadeCategory(categoryId?: string, subId?: string): boolean {
+  const cleanCat = (categoryId || "").toLowerCase().trim();
+  const cleanSub = (subId || "").toLowerCase().trim();
+  return (
+    (cleanCat === "salwar" || cleanCat === "salwars") &&
+    (cleanSub === "salwar-readymade" || cleanSub === "readymade" || cleanSub === "salwar-readymade-top" || cleanSub === "salwar-readymade-kurthi")
+  );
+}
+
 export function getPermittedSizesForCategory(categoryId?: string, subId?: string): readonly string[] {
   if (isSareeCategory(categoryId, subId)) {
     return sareeSizeOptions;
@@ -303,6 +285,12 @@ export function getPermittedSizesForCategory(categoryId?: string, subId?: string
   }
   if (isHalfSareeCategory(categoryId, subId)) {
     return halfSareeSizes;
+  }
+  if (isFrocksCategory(categoryId)) {
+    return frocksSizes;
+  }
+  if (isSalwarReadymadeCategory(categoryId, subId)) {
+    return salwarReadymadeSizes;
   }
   return stitchedSizeOptions;
 }
@@ -368,8 +356,26 @@ export type SeedProduct = {
 };
 
 /** The same 48 catalogue products the storefront renders. */
-export const seedProducts: SeedProduct[] = categories.flatMap((cat) =>
-  cat.subs.flatMap((sub, sIdx) =>
+export const seedProducts: SeedProduct[] = categories.flatMap((cat) => {
+  if (cat.subs.length === 0) {
+    return Array.from({ length: 4 }, (_, i) => {
+      const imgs = rotate(pools.frock, i);
+      const price = 1899 + i * 650;
+      return {
+        id: `${cat.id}-${i + 1}`,
+        name: `${nameBits[i % nameBits.length]} ${cat.name}`,
+        price,
+        mrp: Math.round((price * 1.38) / 10) * 10,
+        images: imgs.slice(0, 4),
+        category: cat.id,
+        sub: cat.id,
+        sizes: [...frocksSizes],
+        description: `${cat.name} from our studio line, stitched to your exact measurements with neat inside-out finishing.`,
+      } satisfies SeedProduct;
+    });
+  }
+
+  return cat.subs.flatMap((sub, sIdx) =>
     Array.from({ length: 4 }, (_, i) => {
       const imgs = rotate(sub.images, i);
       const price = 1499 + sIdx * 1800 + i * 950 + (cat.id === "half-saree" ? 5200 : 0);
@@ -385,5 +391,5 @@ export const seedProducts: SeedProduct[] = categories.flatMap((cat) =>
         description: `${sub.name} from our ${cat.name} studio line — ${sub.blurb.toLowerCase()}, stitched to your exact measurements with neat inside-out finishing.`,
       } satisfies SeedProduct;
     }),
-  ),
-);
+  );
+});

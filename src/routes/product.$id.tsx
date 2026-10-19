@@ -4,7 +4,7 @@ import { ArrowLeft, AlertCircle, Heart, MessageCircle, Minus, Plus, Share2, Shop
 import { PageShell, PageHeader } from "@/components/shared/Page";
 import { ProductGallery } from "@/components/shared/ProductGallery";
 import { ProductCard } from "@/components/boutique/ProductCard";
-import { findCategory, findProduct, findSub, isHalfSareeCategory, isPattuPaavadaiCategory, isSareeCategory, type Product } from "@/data/boutique";
+import { findCategory, findProduct, findSub, isFrocksCategory, isHalfSareeCategory, isPattuPaavadaiCategory, isSalwarReadymadeCategory, isSareeCategory, type Product } from "@/data/boutique";
 import { fetchProductById } from "@/lib/api/catalogue";
 import { abs, absImage, BRAND, breadcrumbJsonLd, seoDescription, seoTitle, socialMeta } from "@/lib/seo";
 import { inr, orderWaLink, useCart } from "@/lib/cart";
@@ -110,6 +110,9 @@ function ProductPage() {
     isHalfSareeCategory(product?.category, product?.sub) ||
     product?.sub === "half-saree-classic" ||
     product?.sub === "lehenga";
+  const isFrocks = isFrocksCategory(product?.category);
+  const isSalwarReadymade = isSalwarReadymadeCategory(product?.category, product?.sub);
+  const isCustomizableStitched = isHalfSareeOrLehenga || isFrocks || isSalwarReadymade;
 
   // Extract unique size labels from available variants or category defaults
   const uniqueAvailableSizes = useMemo(() => {
@@ -121,7 +124,7 @@ function ProductPage() {
     });
 
     if (rawSizes.length > 0) {
-      if (isHalfSareeOrLehenga) {
+      if (isCustomizableStitched) {
         const allowed = ["S", "M", "L", "XL", "XXL"];
         const filtered = rawSizes.filter((s) => allowed.includes(s));
         if (filtered.length > 0) return filtered;
@@ -135,11 +138,11 @@ function ProductPage() {
         "9 Year", "10 Year", "11 Year", "12 Year", "13 Year", "14 Year", "15 Year", "16 Year",
       ];
     }
-    if (isHalfSareeOrLehenga) {
+    if (isCustomizableStitched) {
       return ["S", "M", "L", "XL", "XXL"];
     }
     return product?.sizes || ["S", "M", "L", "XL", "XXL"];
-  }, [availableVariants, isHalfSareeOrLehenga, isPattuPaavadai, product?.sizes]);
+  }, [availableVariants, isCustomizableStitched, isPattuPaavadai, product?.sizes]);
 
   // Set default selected size when real backend product variants load
   useEffect(() => {
@@ -234,7 +237,7 @@ function ProductPage() {
       <PageHeader
         crumbs={[
           { label: category.name, to: "/category/$category", params: { category: activeProduct.category } },
-          ...(sub ? [{ label: sub.name, to: "/category/$category/$sub", params: { category: activeProduct.category, sub: sub.id } }] : []),
+          ...(sub && sub.id !== activeProduct.category ? [{ label: sub.name, to: "/category/$category/$sub", params: { category: activeProduct.category, sub: sub.id } }] : []),
           { label: activeProduct.name },
         ]}
         eyebrow={`${category.name}${sub ? ` · ${sub.name}` : ""}`}
@@ -373,7 +376,7 @@ function ProductPage() {
                       ? "Select Age / Size"
                       : "Select Size"}
                   </label>
-                  {isHalfSareeOrLehenga ? (
+                  {isCustomizableStitched ? (
                     <span className="inline-flex items-center gap-1.5 rounded-full bg-accent/15 px-3 py-1 text-xs font-semibold text-accent border border-accent/20">
                       <Sparkles className="h-3.5 w-3.5 text-accent shrink-0" />
                       Upto 5XL it can Be customisable
@@ -453,7 +456,7 @@ function ProductPage() {
                     <Sparkles className="h-3.5 w-3.5 text-amber-500 fill-amber-500 shrink-0" />
                     Customize Your Size & Color
                   </button>
-                  {isHalfSareeOrLehenga && (
+                  {isCustomizableStitched && (
                     <span className="text-[0.72rem] text-muted-foreground font-medium">
                       Need 3XL, 4XL or 5XL? Click to customize exact fit.
                     </span>
