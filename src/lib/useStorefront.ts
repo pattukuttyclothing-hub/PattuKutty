@@ -2,11 +2,6 @@ import { useQuery } from "@tanstack/react-query";
 import {
   categories as seedCategories,
   heroBanners as seedHeroBanners,
-  featuredProducts as seedFeaturedProducts,
-  products as seedProducts,
-  productsByCategory,
-  productsBySub,
-  reels as seedReels,
   reviews as seedReviews,
   type Category,
   type Product,
@@ -141,9 +136,6 @@ export function useFeaturedProducts(): Product[] {
   const { data, isError } = useQuery({
     queryKey: ["featuredProducts"],
     queryFn: fetchFeaturedProducts,
-    // Seed data is only a pre-fetch placeholder; a real (even empty) API
-    // response always wins so the storefront never masks backend state.
-    placeholderData: seedFeaturedProducts,
     staleTime: 0,
     refetchOnWindowFocus: true,
   });
@@ -167,13 +159,10 @@ export function useReels(): ReelItem[] {
       }
       return [];
     },
-    placeholderData: seedReels as unknown as ReelItem[],
     staleTime: 0,
     refetchOnWindowFocus: true,
   });
-  return isError
-    ? (seedReels as unknown as ReelItem[])
-    : (data ?? (seedReels as unknown as ReelItem[]));
+  return isError ? [] : (data ?? []);
 }
 
 export function useTestimonials(): Testimonial[] {
@@ -199,10 +188,6 @@ export function useProductsBySubCategory(
   categoryId: string,
   subCategoryId?: string
 ): UseProductsBySubCategoryResult {
-  const seedFallback = subCategoryId
-    ? productsBySub(categoryId, subCategoryId)
-    : productsByCategory(categoryId);
-
   const {
     data,
     isLoading,
@@ -212,17 +197,16 @@ export function useProductsBySubCategory(
   } = useQuery({
     queryKey: ["productsBySub", categoryId, subCategoryId || ""],
     queryFn: () => fetchProductsBySubCategory(categoryId, subCategoryId),
-    placeholderData: seedFallback,
     staleTime: 10 * 1000,
     refetchOnWindowFocus: true,
     enabled: Boolean(categoryId),
   });
 
-  const productList = (data ?? seedFallback) as Product[];
+  const productList = (data ?? []) as Product[];
 
   return {
-    data: isError && productList.length === 0 ? seedFallback : productList,
-    loading: isLoading && productList.length === 0,
+    data: isError ? [] : productList,
+    loading: isLoading,
     error: isError
       ? error instanceof Error
         ? error.message
@@ -245,27 +229,22 @@ export interface UseProductResult {
 }
 
 export function useProduct(id: string): UseProductResult {
-  const seed = seedProducts.find((p: Product) => p.id === id);
-
   const { data, isLoading, isError } = useQuery({
     queryKey: ["product", id],
     queryFn: () => fetchProductById(id),
-    placeholderData: seed,
     staleTime: 10 * 1000,
     refetchOnWindowFocus: true,
     enabled: Boolean(id),
   });
 
   return {
-    product: isError && !seed ? undefined : (data ?? seed),
-    loading: isLoading && !seed,
-    error: isError && !seed,
+    product: isError ? undefined : data,
+    loading: isLoading,
+    error: isError,
   };
 }
 
 // ─── Wishlist resolution hook ────────────────────────────────────────────────
-// Retains seed-product-first resolution: resolves static seed products
-// instantly and fetches only missing UUIDs from the API.
 
 export interface UseWishlistProductsResult {
   products: Product[];
@@ -277,31 +256,10 @@ export function useWishlistProducts(ids: string[]): UseWishlistProductsResult {
     queryKey: ["wishlistProducts", ids.join(",")],
     queryFn: async (): Promise<Product[]> => {
       if (!ids || ids.length === 0) return [];
-
-      const seedMatches: Record<string, Product> = {};
-      ids.forEach((id) => {
-        const match = seedProducts.find((p: Product) => p.id === id);
-        if (match) seedMatches[id] = match;
-      });
-
-      const missingIds = ids.filter((id) => !seedMatches[id]);
-
-      if (missingIds.length === 0) {
-        return ids.map((id) => seedMatches[id]).filter((p): p is Product => !!p);
-      }
-
       const fetchedArr = await Promise.all(
-        missingIds.map((id) => fetchProductById(id).catch(() => undefined))
+        ids.map((id) => fetchProductById(id).catch(() => undefined))
       );
-
-      const fetchedMap: Record<string, Product> = {};
-      fetchedArr.forEach((p) => {
-        if (p && p.id) fetchedMap[p.id] = p;
-      });
-
-      return ids
-        .map((id) => seedMatches[id] || fetchedMap[id])
-        .filter((p): p is Product => !!p);
+      return fetchedArr.filter((p): p is Product => !!p);
     },
     enabled: ids.length > 0,
     staleTime: 10 * 1000,

@@ -1,10 +1,10 @@
 import { useState, useEffect, useMemo } from "react";
 import { createFileRoute, Link, notFound, useNavigate } from "@tanstack/react-router";
 import { ArrowLeft, ArrowRight, AlertCircle, Heart, MessageCircle, Minus, Plus, Share2, ShoppingBag, Sparkles } from "lucide-react";
-import { PageShell, PageHeader } from "@/components/shared/Page";
+import { PageShell, PageHeader, ComingSoonView, NoInternetConnectionView } from "@/components/shared/Page";
 import { ProductGallery } from "@/components/shared/ProductGallery";
 import { ProductCard } from "@/components/boutique/ProductCard";
-import { findCategory, findProduct, findSub, isFrocksCategory, isHalfSareeCategory, isPattuPaavadaiCategory, isSalwarReadymadeCategory, isSareeCategory, isBlouseCategory, blouseSizes, type Product } from "@/data/boutique";
+import { findCategory, findSub, isFrocksCategory, isHalfSareeCategory, isPattuPaavadaiCategory, isSalwarReadymadeCategory, isSareeCategory, isBlouseCategory, blouseSizes, type Product } from "@/data/boutique";
 import { fetchProductById } from "@/lib/api/catalogue";
 import { abs, absImage, BRAND, breadcrumbJsonLd, seoDescription, seoTitle, socialMeta } from "@/lib/seo";
 import { inr, orderWaLink, useCart } from "@/lib/cart";
@@ -15,7 +15,7 @@ import { useProduct, useProductsBySubCategory } from "@/lib/useStorefront";
 
 export const Route = createFileRoute("/product/$id")({
   head: ({ params, loaderData }) => {
-    const p = (loaderData as { product?: Product | null } | undefined)?.product ?? findProduct(params.id);
+    const p = (loaderData as { product?: Product | null } | undefined)?.product ?? null;
     const path = `/product/${params.id}`;
     const title = seoTitle(p?.name ?? "Design", "Buy Custom Silk & Bridal Wear | Pattu Kutty");
     const description =
@@ -74,7 +74,7 @@ export const Route = createFileRoute("/product/$id")({
     } catch {
       live = undefined;
     }
-    return { id: params.id, product: live ?? findProduct(params.id) ?? null };
+    return { id: params.id, product: live ?? null };
   },
   component: ProductPage,
 });
@@ -187,23 +187,21 @@ function ProductPage() {
     );
   }
 
-  if ((error || !product) && !loading) {
+  if (error && !loading) {
     return (
       <PageShell>
-        <div className="mx-auto max-w-7xl px-4 py-24 text-center sm:px-6">
-          <h1 className="font-display text-2xl font-bold text-foreground">Design Not Found</h1>
-          <p className="mt-2 text-sm text-muted-foreground">
-            The design you are looking for does not exist or has been removed.
-          </p>
-          <div className="mt-6">
-            <Link
-              to="/"
-              className="inline-flex items-center gap-2 rounded-full bg-primary px-6 py-2.5 text-xs font-semibold text-primary-foreground hover:bg-primary/90"
-            >
-              <ArrowLeft className="h-4 w-4" /> Back to Collections
-            </Link>
-          </div>
-        </div>
+        <NoInternetConnectionView />
+      </PageShell>
+    );
+  }
+
+  if (!product && !loading) {
+    return (
+      <PageShell>
+        <ComingSoonView
+          title="Design Not Available"
+          subtitle="The design you are looking for does not exist or has been removed."
+        />
       </PageShell>
     );
   }
@@ -358,6 +356,12 @@ function ProductPage() {
                   <Share2 className="h-4.5 w-4.5" />
                 </button>
               </div>
+
+              {activeProduct.blurb ? (
+                <p className="mt-2 text-sm text-muted-foreground leading-relaxed">
+                  {activeProduct.blurb}
+                </p>
+              ) : null}
 
               <div className="mt-4 flex items-baseline gap-3">
                 <span className="font-display text-2xl font-bold text-primary sm:text-3xl">

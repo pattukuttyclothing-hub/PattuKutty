@@ -1,6 +1,6 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
-import { AlertCircle, ArrowRight, RefreshCw, Sparkles } from "lucide-react";
-import { PageHeader, PageSection, PageShell } from "@/components/shared/Page";
+import { ArrowRight, Sparkles } from "lucide-react";
+import { ComingSoonView, NoInternetConnectionView, PageHeader, PageSection, PageShell } from "@/components/shared/Page";
 import { Reveal, stagger } from "@/components/shared/Reveal";
 import { AutoImageFade } from "@/components/shared/AutoImageFade";
 import { ProductCard } from "@/components/boutique/ProductCard";
@@ -141,36 +141,13 @@ function CategoryPage() {
                 <p className="mt-4 text-xs font-medium text-muted-foreground">Loading {cat.name} designs...</p>
               </div>
             ) : error ? (
-              <div className="rounded-2xl border border-destructive/30 bg-destructive/5 p-8 text-center">
-                <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-destructive/10 text-destructive">
-                  <AlertCircle className="h-6 w-6" />
-                </div>
-                <h3 className="mt-4 text-base font-semibold text-foreground">Unable to load designs</h3>
-                <p className="mt-1 text-xs text-muted-foreground">{error}</p>
-                <button
-                  type="button"
-                  onClick={() => refetch()}
-                  className="mt-4 inline-flex items-center gap-2 rounded-full bg-primary px-5 py-2 text-xs font-semibold text-primary-foreground shadow-soft transition-transform hover:scale-105"
-                >
-                  <RefreshCw className="h-3.5 w-3.5" /> Retry Loading
-                </button>
-              </div>
+              <NoInternetConnectionView onRetry={() => refetch()} />
             ) : directProducts.length === 0 ? (
-              <div className="rounded-3xl border border-border bg-card p-12 text-center shadow-soft">
-                <h3 className="font-display text-lg font-semibold text-foreground">No Designs Currently Displayed</h3>
-                <p className="mt-2 text-xs text-muted-foreground max-w-md mx-auto">
-                  We are updating our new {cat.name.toLowerCase()} collection. You can request a custom {cat.name.toLowerCase()} design through our Design Studio!
-                </p>
-                <div className="mt-6">
-                  <Link
-                    to="/design-studio"
-                    search={{ category: cat.id }}
-                    className="inline-flex items-center gap-2 rounded-full bg-primary px-6 py-2.5 text-xs font-semibold text-primary-foreground uppercase shadow-soft"
-                  >
-                    <Sparkles className="h-4 w-4" /> Design Custom {cat.name}
-                  </Link>
-                </div>
-              </div>
+              <ComingSoonView
+                title={`${cat.name} Collection`}
+                subtitle={`We are currently curating and uploading exclusive designs for ${cat.name}. Check back shortly or design a custom piece in our studio!`}
+                category={cat.id}
+              />
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6 lg:gap-8">
                 {directProducts.map((p, i) => (

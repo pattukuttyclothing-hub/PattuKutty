@@ -92,6 +92,11 @@ export function ProductCard({ product: p, index = 0 }: { product: Product; index
             <Share2 className="h-3.5 w-3.5" />
           </button>
         </div>
+        {p.blurb ? (
+          <p className="mt-1 line-clamp-1 text-xs text-muted-foreground leading-normal">
+            {p.blurb}
+          </p>
+        ) : null}
         <div className="mt-2 flex items-baseline gap-2">
           <span className="text-base font-semibold text-primary">{inr(priceVal)}</span>
           {mrpVal > priceVal ? (

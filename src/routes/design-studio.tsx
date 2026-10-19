@@ -6,7 +6,7 @@ import { SpecForm, makeSpec, type Spec } from "@/components/custom/SpecForm";
 import { StudioSpotlight } from "@/components/custom/StudioSpotlight";
 import { SubmissionCelebration } from "@/components/custom/SubmissionCelebration";
 import { StatusBadge } from "@/components/shared/Badge";
-import { findProduct, type CategoryId } from "@/data/boutique";
+import { type CategoryId } from "@/data/boutique";
 import { useRequests } from "@/lib/requests";
 import { useAuth, useAuthGate } from "@/lib/auth";
 import { useCategories, useProduct } from "@/lib/useStorefront";
@@ -48,7 +48,7 @@ function DesignStudio() {
   const gate = useAuthGate();
 
   const { product: fetchedProduct } = useProduct(search.product || "");
-  const source = fetchedProduct || (search.product ? findProduct(search.product) : undefined);
+  const source = fetchedProduct;
 
   // Protect workflow: Redirect unauthenticated user to login before entering protected request workflow
   useEffect(() => {

@@ -1,6 +1,6 @@
 import { createFileRoute, Link, notFound, redirect } from "@tanstack/react-router";
-import { AlertCircle, ArrowRight, RefreshCw, Sparkles } from "lucide-react";
-import { PageHeader, PageShell } from "@/components/shared/Page";
+import { ArrowRight, Sparkles } from "lucide-react";
+import { ComingSoonView, NoInternetConnectionView, PageHeader, PageShell } from "@/components/shared/Page";
 import { ProductCard } from "@/components/boutique/ProductCard";
 import { Reveal, stagger } from "@/components/shared/Reveal";
 import { AutoImageFade } from "@/components/shared/AutoImageFade";
@@ -209,37 +209,14 @@ function SubCategoryPage() {
               ))}
             </div>
           ) : error ? (
-            <div className="mt-8 rounded-2xl border border-destructive/30 bg-destructive/5 p-8 text-center">
-              <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-destructive/10 text-destructive">
-                <AlertCircle className="h-6 w-6" />
-              </div>
-              <h3 className="mt-4 text-base font-semibold text-foreground">Unable to load designs</h3>
-              <p className="mt-1 text-xs text-muted-foreground">{error}</p>
-              <button
-                type="button"
-                onClick={() => refetch()}
-                className="mt-4 inline-flex items-center gap-2 rounded-full bg-primary px-5 py-2 text-xs font-semibold text-primary-foreground shadow-soft transition-transform hover:scale-105"
-              >
-                <RefreshCw className="h-3.5 w-3.5" /> Retry Loading
-              </button>
-            </div>
+            <NoInternetConnectionView onRetry={() => refetch()} />
           ) : items.length === 0 ? (
-            <div className="mt-8 rounded-2xl border border-border/70 bg-card p-12 text-center">
-              <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-secondary text-muted-foreground">
-                <Sparkles className="h-6 w-6" />
-              </div>
-              <h3 className="mt-4 text-base font-semibold text-foreground">No products available</h3>
-              <p className="mt-1 text-xs text-muted-foreground">
-                There are no designs available in this category yet. Check back soon or design your own custom outfit!
-              </p>
-              <Link
-                to="/design-studio"
-                search={{ category: cat.id, sub: sub.id }}
-                className="mt-6 inline-flex items-center gap-2 rounded-full bg-primary px-5 py-2.5 text-xs font-semibold tracking-[0.1em] text-primary-foreground uppercase shadow-soft hover:bg-primary/90"
-              >
-                <Sparkles className="h-4 w-4" /> Design Your Own
-              </Link>
-            </div>
+            <ComingSoonView
+              title={`${sub.name} Designs`}
+              subtitle={`We are currently curating and uploading exclusive designs for ${sub.name}. Check back shortly or design a custom piece in our studio!`}
+              category={cat.id}
+              sub={sub.id}
+            />
           ) : (
             <div className="mt-8 grid grid-cols-2 gap-4 sm:gap-6 lg:grid-cols-4">
               {items.map((p, i) => (

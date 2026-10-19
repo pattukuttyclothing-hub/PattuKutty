@@ -69,13 +69,25 @@ export function ReelsCarousel() {
 
         {reels.length === 0 ? (
           <div className="mt-12 flex justify-center">
-            <EmptyState
-              icon={<Video className="h-6 w-6" />}
-              title="No reels yet"
-              message="Studio reels will appear here once they're added. Browse our collections in the meantime."
-              actionLabel="Browse collections"
-              actionTo="/#collections"
-            />
+            <div className="mx-auto max-w-lg w-full rounded-3xl border border-accent/25 bg-card p-10 text-center shadow-soft ring-1 ring-accent/10">
+              <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-accent/15 text-accent ring-8 ring-accent/5">
+                <Video className="h-8 w-8" />
+              </div>
+              <h3 className="font-display mt-5 text-2xl font-bold tracking-tight text-foreground">
+                Studio Reels Coming Soon
+              </h3>
+              <p className="mt-2 text-sm text-muted-foreground leading-relaxed max-w-sm mx-auto">
+                We are currently filming fresh design and stitching reels in our Coimbatore boutique studio. Stay tuned!
+              </p>
+              <div className="mt-6">
+                <Link
+                  to="/#collections"
+                  className="inline-flex items-center gap-2 rounded-full bg-primary px-6 py-2.5 text-xs font-semibold tracking-wider uppercase text-primary-foreground shadow-soft transition-transform hover:scale-105"
+                >
+                  Explore Collections
+                </Link>
+              </div>
+            </div>
           </div>
         ) : (
           <div className="mt-12 w-full max-w-5xl mx-auto flex flex-col items-center">
