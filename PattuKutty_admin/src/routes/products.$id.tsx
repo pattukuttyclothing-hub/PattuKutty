@@ -11,6 +11,7 @@ import {
   findCategory,
   getAllSubCategories,
   getPermittedSizesForCategory,
+  isPattuPaavadaiCategory,
   isSareeCategory,
   sizeOptions,
   subName,
@@ -234,6 +235,10 @@ function ProductEditor() {
     } else if (!draft && isCreateMode) {
       const initialCat = (search.category as CategoryId) || "blouses";
       const initialSub = search.sub || "bridal-blouses";
+      const initialPermitted = getPermittedSizesForCategory(initialCat, initialSub);
+      const defaultInitialSizes = isPattuPaavadaiCategory(initialCat, initialSub)
+        ? ["1 Year", "2 Year", "3 Year", "4 Year", "5 Year"]
+        : initialPermitted.slice(0, 5);
       setDraft({
         id: id || `design-new-${Date.now().toString(36)}`,
         name: "",
@@ -249,11 +254,7 @@ function ProductEditor() {
         isActive: true,
         soldOut: false,
         images: [],
-        variants: [
-          { size: "S", available: true, stockQty: 1 },
-          { size: "M", available: true, stockQty: 1 },
-          { size: "L", available: true, stockQty: 1 },
-        ],
+        variants: defaultInitialSizes.map((sz) => ({ size: sz, available: true, stockQty: 1 })),
       });
     }
   }, [stored, draft, isCreateMode, id]);
@@ -795,10 +796,20 @@ function ProductEditor() {
             </label>
           </Section>
 
-          <Section title={isSareeCategory(draft?.category, draft?.sub) ? "Saree specifications & stock" : "Sizes & independent stock"}>
+          <Section
+            title={
+              isSareeCategory(draft?.category, draft?.sub)
+                ? "Saree specifications & stock"
+                : isPattuPaavadaiCategory(draft?.category, draft?.sub)
+                ? "Age-based sizes (1–16 Years) & independent stock"
+                : "Sizes & independent stock"
+            }
+          >
             <p className="text-xs text-muted-foreground">
               {isSareeCategory(draft?.category, draft?.sub)
                 ? "Select saree specifications for this product and set stock quantity."
+                : isPattuPaavadaiCategory(draft?.category, draft?.sub)
+                ? "Select age categories for this Pattu Paavadai set (1 Year to 16 Year) and specify the stock quantity available for each age independently."
                 : "Select sizes for this design and specify the stock quantity available for each size independently."}
             </p>
             <div className="flex flex-wrap gap-2 sm:gap-2.5">

@@ -13,7 +13,7 @@ const fallbackCategories = [
     subs: [
       { id: "half-saree-classic", name: "Half Saree", blurb: "Silk sets with zari drape work" },
       { id: "lehenga", name: "Lehenga", blurb: "Bridal flare & can-can layers" },
-      { id: "pattu-pudavai", name: "Pattu Pudavai", blurb: "Traditional temple-border silk" },
+      { id: "pattu-pudavai", name: "Pattu Paavadai", blurb: "Traditional temple-border silk" },
     ],
   },
   {
@@ -695,7 +695,7 @@ export class CatalogueRepository {
         const subNames: Record<string, string> = {
           "half-saree-classic": "Half Saree",
           "lehenga": "Lehenga",
-          "pattu-pudavai": "Pattu Pudavai",
+          "pattu-pudavai": "Pattu Paavadai",
           "normal-frocks": "Normal Frocks",
           "wedding-frocks": "Wedding Frocks",
           "designer-frocks": "Designer Frocks",
@@ -1129,8 +1129,23 @@ export class CatalogueRepository {
         // Category-driven default size seeding
         const catSlug = String(payload.category_id || payload.category || "");
         const subSlug = String(payload.sub_category_id || payload.sub || "");
-        const isSaree = catSlug === "sarees" || (catSlug === "half-saree" && subSlug === "pattu-pudavai");
-        const defaultSizes = isSaree ? ["Free Size (5.5m + Blouse)"] : ["S", "M", "L"];
+        const isSaree = catSlug === "sarees";
+        const isPattuPaavadai = subSlug === "pattu-pudavai" || subSlug === "pattu-paavadai";
+        const isHalfSareeOrLehenga = catSlug === "half-saree" && !isPattuPaavadai;
+
+        let defaultSizes: string[];
+        if (isSaree) {
+          defaultSizes = ["Free Size (5.5m + Blouse)"];
+        } else if (isPattuPaavadai) {
+          defaultSizes = [
+            "1 Year", "2 Year", "3 Year", "4 Year", "5 Year", "6 Year", "7 Year", "8 Year",
+            "9 Year", "10 Year", "11 Year", "12 Year", "13 Year", "14 Year", "15 Year", "16 Year",
+          ];
+        } else if (isHalfSareeOrLehenga) {
+          defaultSizes = ["S", "M", "L", "XL", "XXL"];
+        } else {
+          defaultSizes = ["S", "M", "L", "XL", "XXL"];
+        }
         const { error: defaultVarErr } = await db.from("product_variants").insert(
           defaultSizes.map((size) => ({
             product_id: product.id,

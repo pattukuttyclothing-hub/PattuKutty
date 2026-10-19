@@ -168,7 +168,7 @@ export const categories: Category[] = [
       },
       {
         id: "pattu-pudavai",
-        name: "Pattu Pudavai",
+        name: "Pattu Paavadai",
         blurb: "Traditional temple-border silk",
         images: rotate(pools.saree, 3),
       },
@@ -377,21 +377,40 @@ export type Product = {
 
 export const sareeSizes = ["Free Size (5.5m + Blouse)", "With Running Blouse", "Without Blouse", "6.3m Grand Pallu"];
 export const stitchedSizes = ["XS", "S", "M", "L", "XL", "XXL"];
+export const halfSareeSizes = ["S", "M", "L", "XL", "XXL"];
+export const lehengaSizes = ["S", "M", "L", "XL", "XXL"];
+export const pattuPaavadaiAgeSizes = [
+  "1 Year", "2 Year", "3 Year", "4 Year", "5 Year", "6 Year", "7 Year", "8 Year",
+  "9 Year", "10 Year", "11 Year", "12 Year", "13 Year", "14 Year", "15 Year", "16 Year",
+];
 
 export function isSareeCategory(categoryId: string, subId?: string): boolean {
   if (categoryId === "sarees") return true;
-  if (categoryId === "half-saree" && subId === "pattu-pudavai") return true;
   return false;
+}
+
+export function isPattuPaavadaiCategory(categoryId?: string, subId?: string): boolean {
+  return subId === "pattu-pudavai" || subId === "pattu-paavadai";
+}
+
+export function isHalfSareeCategory(categoryId?: string, subId?: string): boolean {
+  return categoryId === "half-saree" && !isPattuPaavadaiCategory(categoryId, subId);
 }
 
 export function getSizesForCategory(categoryId: string, subId?: string): string[] {
   if (isSareeCategory(categoryId, subId)) {
     return sareeSizes;
   }
+  if (isPattuPaavadaiCategory(categoryId, subId)) {
+    return pattuPaavadaiAgeSizes;
+  }
+  if (isHalfSareeCategory(categoryId, subId)) {
+    return halfSareeSizes;
+  }
   return stitchedSizes;
 }
 
-const defaultSizes = ["XS", "S", "M", "L", "XL"];
+const defaultSizes = ["S", "M", "L", "XL", "XXL"];
 
 const nameBits = ["Signature", "Heritage", "Studio", "Festive", "Couture", "Classic"];
 
@@ -403,7 +422,15 @@ export const products: Product[] = categories.flatMap((cat) =>
       const base = 1499 + sIdx * 1800 + i * 950 + (cat.id === "half-saree" ? 5200 : 0);
       const price = base;
       const isUnstitched = isSareeCategory(cat.id, sub.id);
-      const categorySizes = isUnstitched ? ["Free Size (5.5m + Blouse)"] : defaultSizes;
+      const isPattu = isPattuPaavadaiCategory(cat.id, sub.id);
+      const isHalf = isHalfSareeCategory(cat.id, sub.id);
+      const categorySizes = isUnstitched
+        ? ["Free Size (5.5m + Blouse)"]
+        : isPattu
+        ? pattuPaavadaiAgeSizes
+        : isHalf
+        ? halfSareeSizes
+        : defaultSizes;
       const variants: SizeVariant[] = categorySizes.map((s, si) => ({
         size: s,
         available: isUnstitched ? true : (sIdx + i + si) % 5 !== 0,

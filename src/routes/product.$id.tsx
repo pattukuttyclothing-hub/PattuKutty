@@ -4,7 +4,7 @@ import { ArrowLeft, AlertCircle, Heart, MessageCircle, Minus, Plus, Share2, Shop
 import { PageShell, PageHeader } from "@/components/shared/Page";
 import { ProductGallery } from "@/components/shared/ProductGallery";
 import { ProductCard } from "@/components/boutique/ProductCard";
-import { findCategory, findProduct, findSub, isSareeCategory, type Product } from "@/data/boutique";
+import { findCategory, findProduct, findSub, isHalfSareeCategory, isPattuPaavadaiCategory, isSareeCategory, type Product } from "@/data/boutique";
 import { fetchProductById } from "@/lib/api/catalogue";
 import { abs, absImage, BRAND, breadcrumbJsonLd, seoDescription, seoTitle, socialMeta } from "@/lib/seo";
 import { inr, orderWaLink, useCart } from "@/lib/cart";
@@ -105,16 +105,41 @@ function ProductPage() {
     });
   }, [product?.variants]);
 
-  // Extract unique size labels from available variants
+  const isPattuPaavadai = isPattuPaavadaiCategory(product?.category, product?.sub);
+  const isHalfSareeOrLehenga =
+    isHalfSareeCategory(product?.category, product?.sub) ||
+    product?.sub === "half-saree-classic" ||
+    product?.sub === "lehenga";
+
+  // Extract unique size labels from available variants or category defaults
   const uniqueAvailableSizes = useMemo(() => {
-    const sizes: string[] = [];
+    const rawSizes: string[] = [];
     availableVariants.forEach((v) => {
-      if (v.size && !sizes.includes(v.size)) {
-        sizes.push(v.size);
+      if (v.size && !rawSizes.includes(v.size)) {
+        rawSizes.push(v.size);
       }
     });
-    return sizes;
-  }, [availableVariants]);
+
+    if (rawSizes.length > 0) {
+      if (isHalfSareeOrLehenga) {
+        const allowed = ["S", "M", "L", "XL", "XXL"];
+        const filtered = rawSizes.filter((s) => allowed.includes(s));
+        if (filtered.length > 0) return filtered;
+      }
+      return rawSizes;
+    }
+
+    if (isPattuPaavadai) {
+      return [
+        "1 Year", "2 Year", "3 Year", "4 Year", "5 Year", "6 Year", "7 Year", "8 Year",
+        "9 Year", "10 Year", "11 Year", "12 Year", "13 Year", "14 Year", "15 Year", "16 Year",
+      ];
+    }
+    if (isHalfSareeOrLehenga) {
+      return ["S", "M", "L", "XL", "XXL"];
+    }
+    return product?.sizes || ["S", "M", "L", "XL", "XXL"];
+  }, [availableVariants, isHalfSareeOrLehenga, isPattuPaavadai, product?.sizes]);
 
   // Set default selected size when real backend product variants load
   useEffect(() => {
@@ -340,49 +365,107 @@ function ProductPage() {
 
               {/* Size / Variation Selection */}
               <div className="mt-8">
-                <div className="flex items-center justify-between">
+                <div className="flex flex-wrap items-center justify-between gap-2">
                   <label className="text-xs font-semibold tracking-[0.12em] text-foreground uppercase">
-                    {isSareeCategory(activeProduct.category, activeProduct.sub) ? "Option / Specification" : "Select Size"}
+                    {isSareeCategory(activeProduct.category, activeProduct.sub)
+                      ? "Option / Specification"
+                      : isPattuPaavadai
+                      ? "Select Age / Size"
+                      : "Select Size"}
                   </label>
+                  {isHalfSareeOrLehenga ? (
+                    <span className="inline-flex items-center gap-1.5 rounded-full bg-accent/15 px-3 py-1 text-xs font-semibold text-accent border border-accent/20">
+                      <Sparkles className="h-3.5 w-3.5 text-accent shrink-0" />
+                      Upto 5XL it can Be customisable
+                    </span>
+                  ) : isPattuPaavadai ? (
+                    <span className="inline-flex items-center gap-1 rounded-full bg-secondary px-2.5 py-0.5 text-[0.7rem] font-medium text-muted-foreground">
+                      Age 1 Year – 16 Years
+                    </span>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={handleCustomizeClick}
+                      className="inline-flex items-center gap-1 text-xs font-medium text-accent hover:underline"
+                    >
+                      Custom Size / Fit? <Sparkles className="h-3 w-3" />
+                    </button>
+                  )}
+                </div>
+
+                {isPattuPaavadai ? (
+                  /* Mobile-responsive age grid */
+                  <div className="mt-3 grid grid-cols-4 sm:grid-cols-8 gap-2">
+                    {uniqueAvailableSizes.map((sz) => {
+                      const isSelected = size === sz;
+                      return (
+                        <button
+                          key={sz}
+                          type="button"
+                          onClick={() => setSize(sz)}
+                          className={`h-11 rounded-xl border text-xs font-semibold transition-all flex items-center justify-center text-center cursor-pointer ${
+                            isSelected
+                              ? "border-primary bg-primary text-primary-foreground shadow-soft ring-2 ring-primary/20 font-bold"
+                              : "border-border bg-card text-foreground hover:bg-secondary hover:border-primary/40"
+                          }`}
+                        >
+                          {sz}
+                        </button>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  /* Standard / Half Saree / Lehenga sizes */
+                  <div className="mt-3 flex flex-wrap gap-2 sm:gap-2.5">
+                    {uniqueAvailableSizes.map((sz) => {
+                      const isSelected = size === sz;
+                      const isLongText = sz.length > 4;
+
+                      return (
+                        <button
+                          key={sz}
+                          type="button"
+                          onClick={() => setSize(sz)}
+                          className={`relative rounded-xl border font-semibold transition-all leading-snug flex items-center justify-center text-center cursor-pointer ${
+                            isLongText
+                              ? "min-h-[2.75rem] px-4 py-2.5 sm:px-5 sm:py-3 text-xs sm:text-sm"
+                              : "min-w-[3.75rem] min-h-[2.75rem] px-3.5 py-2 text-xs sm:text-sm"
+                          } ${
+                            isSelected
+                              ? "border-primary bg-primary text-primary-foreground shadow-soft ring-2 ring-primary/20 font-bold"
+                              : "border-border bg-card text-foreground hover:bg-secondary hover:border-primary/40"
+                          }`}
+                        >
+                          {sz}
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+
+                {/* Customize button below size chart */}
+                <div className="mt-3.5 flex flex-wrap items-center gap-3">
                   <button
                     type="button"
                     onClick={handleCustomizeClick}
-                    className="inline-flex items-center gap-1 text-xs font-medium text-accent hover:underline"
+                    className="inline-flex items-center gap-2 rounded-xl border border-primary/40 bg-primary/10 px-4 py-2.5 text-xs font-bold text-primary hover:bg-primary hover:text-primary-foreground transition-all shadow-sm active:scale-95 cursor-pointer"
                   >
-                    Custom Size / Fit? <Sparkles className="h-3 w-3" />
+                    <Sparkles className="h-3.5 w-3.5 text-amber-500 fill-amber-500 shrink-0" />
+                    Customize Your Size & Color
                   </button>
-                </div>
-
-                <div className="mt-3 flex flex-wrap gap-2 sm:gap-2.5">
-                  {uniqueAvailableSizes.map((sz) => {
-                    const isSelected = size === sz;
-                    const isLongText = sz.length > 4;
-
-                    return (
-                      <button
-                        key={sz}
-                        type="button"
-                        onClick={() => setSize(sz)}
-                        className={`relative rounded-xl border font-semibold transition-all leading-snug flex items-center justify-center text-center ${
-                          isLongText
-                            ? "min-h-[2.75rem] px-4 py-2.5 sm:px-5 sm:py-3 text-xs sm:text-sm"
-                            : "min-w-[3.5rem] min-h-[2.75rem] px-3.5 py-2 text-xs sm:text-sm"
-                        } ${
-                          isSelected
-                            ? "border-primary bg-primary text-primary-foreground shadow-soft ring-2 ring-primary/20"
-                            : "border-border bg-card text-foreground hover:bg-secondary"
-                        }`}
-                      >
-                        {sz}
-                      </button>
-                    );
-                  })}
+                  {isHalfSareeOrLehenga && (
+                    <span className="text-[0.72rem] text-muted-foreground font-medium">
+                      Need 3XL, 4XL or 5XL? Click to customize exact fit.
+                    </span>
+                  )}
                 </div>
 
                 <div className="mt-3 space-y-1 rounded-xl bg-secondary/30 p-3 border border-border/50">
                   <p className="text-xs text-muted-foreground flex items-center gap-1.5 font-medium">
                     <Sparkles className="h-3.5 w-3.5 text-accent shrink-0" />
-                    Need a different size? Custom sizing is available.
+                    {isPattuPaavadai
+                      ? "Custom age fit and height adjustments available."
+                      : "Need a different size? Custom sizing is available."}
                   </p>
                   <p className="text-xs text-muted-foreground flex items-center gap-1.5 font-medium">
                     <Sparkles className="h-3.5 w-3.5 text-accent shrink-0" />

@@ -34,7 +34,12 @@ export type Spec = {
   sourceProductId?: string | undefined;
 };
 
-export const sizeOptions = ["XS", "S", "M", "L", "XL", "XXL", "XXXL", "Custom"];
+export const sizeOptions = ["S", "M", "L", "XL", "XXL", "3XL", "4XL", "5XL", "Custom"];
+export const ageSizeOptions = [
+  "1 Year", "2 Year", "3 Year", "4 Year", "5 Year", "6 Year", "7 Year", "8 Year",
+  "9 Year", "10 Year", "11 Year", "12 Year", "13 Year", "14 Year", "15 Year", "16 Year",
+  "Custom",
+];
 
 const categoryMeasurementFields: Record<string, { key: string; label: string }[]> = {
   blouses: [
@@ -133,8 +138,10 @@ export function SpecForm({
   const [uploadingColour, setUploadingColour] = useState(false);
   const [colourError, setColourError] = useState<string | null>(null);
   const [pendingColourCropFile, setPendingColourCropFile] = useState<File | null>(null);
+  const isPattu = spec?.sub === "pattu-pudavai" || spec?.sub === "pattu-paavadai";
+  const activeSizeOptions = isPattu ? ageSizeOptions : sizeOptions;
   const [customSizeInput, setCustomSizeInput] = useState(
-    !sizeOptions.includes(spec.size) ? spec.size : "",
+    !activeSizeOptions.includes(spec.size) ? spec.size : "",
   );
 
   const processCroppedColourImage = async (croppedFile: File) => {
@@ -373,10 +380,10 @@ export function SpecForm({
             />
           </Field>
 
-          <Field label="Size Label" hint={<InfoTip text="Select standard size or specify custom size label." />}>
+          <Field label={isPattu ? "Age / Size Label" : "Size Label"} hint={<InfoTip text="Select standard size or specify custom size label." />}>
             <div className="flex flex-wrap gap-2">
-              {sizeOptions.map((s) => {
-                const isSelected = spec.size === s || (s === "Custom" && !sizeOptions.slice(0, -1).includes(spec.size));
+              {activeSizeOptions.map((s) => {
+                const isSelected = spec.size === s || (s === "Custom" && !activeSizeOptions.slice(0, -1).includes(spec.size));
                 return (
                   <button
                     key={s}
@@ -395,7 +402,7 @@ export function SpecForm({
                 );
               })}
             </div>
-            {(!sizeOptions.slice(0, -1).includes(spec.size) || spec.size === "Custom") ? (
+            {(!activeSizeOptions.slice(0, -1).includes(spec.size) || spec.size === "Custom") ? (
               <div className="mt-3">
                 <input
                   id="customSizeInput"

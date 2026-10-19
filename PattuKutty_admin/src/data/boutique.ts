@@ -97,7 +97,7 @@ export const categories: Category[] = [
       },
       {
         id: "pattu-pudavai",
-        name: "Pattu Pudavai",
+        name: "Pattu Paavadai",
         blurb: "Traditional temple-border silk",
         images: rotate(pools.saree, 3),
       },
@@ -259,6 +259,12 @@ export const sareeSizeOptions = [
 ] as const;
 
 export const stitchedSizeOptions = ["XS", "S", "M", "L", "XL", "XXL"] as const;
+export const halfSareeSizes = ["S", "M", "L", "XL", "XXL"] as const;
+export const lehengaSizes = ["S", "M", "L", "XL", "XXL"] as const;
+export const pattuPaavadaiAgeSizes = [
+  "1 Year", "2 Year", "3 Year", "4 Year", "5 Year", "6 Year", "7 Year", "8 Year",
+  "9 Year", "10 Year", "11 Year", "12 Year", "13 Year", "14 Year", "15 Year", "16 Year",
+] as const;
 
 export const sizeOptions = [
   "XS",
@@ -271,18 +277,32 @@ export const sizeOptions = [
   "With Running Blouse",
   "Without Blouse",
   "6.3m Grand Pallu",
+  ...pattuPaavadaiAgeSizes,
 ] as const;
 export type SizeOption = string;
 
 export function isSareeCategory(categoryId?: string, subId?: string): boolean {
   if (categoryId === "sarees") return true;
-  if (categoryId === "half-saree" && subId === "pattu-pudavai") return true;
   return false;
+}
+
+export function isPattuPaavadaiCategory(categoryId?: string, subId?: string): boolean {
+  return subId === "pattu-pudavai" || subId === "pattu-paavadai";
+}
+
+export function isHalfSareeCategory(categoryId?: string, subId?: string): boolean {
+  return categoryId === "half-saree" && !isPattuPaavadaiCategory(categoryId, subId);
 }
 
 export function getPermittedSizesForCategory(categoryId?: string, subId?: string): readonly string[] {
   if (isSareeCategory(categoryId, subId)) {
     return sareeSizeOptions;
+  }
+  if (isPattuPaavadaiCategory(categoryId, subId)) {
+    return pattuPaavadaiAgeSizes;
+  }
+  if (isHalfSareeCategory(categoryId, subId)) {
+    return halfSareeSizes;
   }
   return stitchedSizeOptions;
 }
