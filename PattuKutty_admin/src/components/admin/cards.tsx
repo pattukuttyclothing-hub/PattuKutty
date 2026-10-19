@@ -5,8 +5,9 @@
  */
 
 import { Link } from "@tanstack/react-router";
-import { MessageCircle, Phone, Store, Truck, Trash2 } from "lucide-react";
+import { MessageCircle, Phone, Share2, Store, Truck, Trash2 } from "lucide-react";
 import { EntityCard } from "@/components/shared/EntityCard";
+import { shareProduct } from "@/lib/share";
 import { findCategory, subName, timelineById } from "@/data/boutique";
 import {
   getStagesForOrder,
@@ -146,6 +147,21 @@ export function ProductCard({
         ribbon={soldOut ? "PRODUCT SOLD OUT" : p.isActive ? undefined : "Hidden"}
         eyebrow={`${inr(p.basePrice)} · MRP ${inr(p.mrp)}`}
         title={p.name}
+        titleSuffix={
+          <button
+            type="button"
+            title="Share storefront product link"
+            aria-label={`Share ${p.name}`}
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              void shareProduct(p.id, p.name);
+            }}
+            className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-white/20 text-white hover:bg-white/35 backdrop-blur-sm transition-all active:scale-95 cursor-pointer"
+          >
+            <Share2 className="h-3.5 w-3.5" />
+          </button>
+        }
         metaLines={[soldOut ? "Product Sold Out" : `${available} stock available`]}
         cta="Edit design"
         footer={

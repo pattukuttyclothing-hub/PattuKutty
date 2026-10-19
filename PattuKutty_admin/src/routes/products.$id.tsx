@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState, useRef } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { ArrowLeft, Save, Upload, X, AlertTriangle, CheckCircle2, Loader2, RefreshCw, Trash2 } from "lucide-react";
+import { ArrowLeft, Save, Share2, Upload, X, AlertTriangle, CheckCircle2, Loader2, RefreshCw, Trash2 } from "lucide-react";
 import { toast } from "sonner";
+import { shareProduct } from "@/lib/share";
 import { AdminShell, PageHead } from "@/components/admin/AdminShell";
 import { ProductGallery } from "@/components/shared/ProductGallery";
 import { DeleteConfirmationModal } from "@/components/shared/DeleteConfirmationModal";
@@ -467,7 +468,22 @@ function ProductEditor() {
     <AdminShell>
       <PageHead
         eyebrow={`${cat?.name ?? draft.category} · ${subName(draft.sub)}`}
-        title={isCreateMode ? (draft.name.trim() ? `Create — ${draft.name}` : "Create New Design") : draft.name}
+        title={
+          <span className="inline-flex items-center gap-3">
+            <span>{isCreateMode ? (draft.name.trim() ? `Create — ${draft.name}` : "Create New Design") : draft.name}</span>
+            {!isCreateMode && draft.id ? (
+              <button
+                type="button"
+                title="Share storefront product link"
+                aria-label={`Share ${draft.name}`}
+                onClick={() => void shareProduct(draft.id, draft.name)}
+                className="grid h-8 w-8 place-items-center rounded-full border border-border bg-card text-muted-foreground hover:bg-primary/10 hover:text-primary hover:border-primary/30 active:scale-95 transition-all cursor-pointer"
+              >
+                <Share2 className="h-4 w-4" />
+              </button>
+            ) : null}
+          </span>
+        }
         subtitle={
           <span className="inline-flex flex-wrap items-center gap-2">
             {!isCreateMode ? (

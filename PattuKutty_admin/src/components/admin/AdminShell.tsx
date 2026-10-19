@@ -142,7 +142,7 @@ export function PageHead({
   actions,
 }: {
   eyebrow?: ReactNode;
-  title: string;
+  title: ReactNode;
   subtitle?: ReactNode;
   actions?: ReactNode;
 }) {

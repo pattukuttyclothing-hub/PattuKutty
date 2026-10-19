@@ -25,6 +25,7 @@ export function EntityCard({
   corner,
   eyebrow,
   title,
+  titleSuffix,
   metaLines,
   cta,
   footer,
@@ -38,6 +39,7 @@ export function EntityCard({
   corner?: ReactNode;
   eyebrow?: ReactNode;
   title: string;
+  titleSuffix?: ReactNode;
   metaLines?: ReactNode[];
   cta: string;
   footer?: ReactNode;
@@ -71,9 +73,12 @@ export function EntityCard({
               {eyebrow}
             </p>
           ) : null}
-          <h3 className="font-display mt-1.5 text-lg leading-snug font-semibold text-primary-foreground">
-            {title}
-          </h3>
+          <div className="mt-1.5 flex items-center justify-between gap-2">
+            <h3 className="font-display text-lg leading-snug font-semibold text-primary-foreground">
+              {title}
+            </h3>
+            {titleSuffix}
+          </div>
           {metaLines?.length ? (
             <div className="mt-2 space-y-1">
               {metaLines.map((m, k) => (

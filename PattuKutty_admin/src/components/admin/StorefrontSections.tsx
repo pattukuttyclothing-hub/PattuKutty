@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import { Link } from "@tanstack/react-router";
-import { Pause, Play, Volume2, VolumeX } from "lucide-react";
+import { Pause, Play, Share2, Volume2, VolumeX } from "lucide-react";
+import { shareProduct } from "@/lib/share";
 import { Carousel3D } from "@/components/shared/Carousel3D";
 import { AutoImageFade } from "@/components/shared/AutoImageFade";
 import type { AdminProduct, ReelItem } from "@/lib/admin-store";
@@ -278,9 +279,24 @@ export function StorefrontProductCard({
         ) : null}
       </div>
       <div className="flex flex-1 flex-col p-3.5">
-        <h3 className="font-display line-clamp-2 text-sm leading-snug font-semibold text-foreground">
-          {p.name}
-        </h3>
+        <div className="flex items-start justify-between gap-2">
+          <h3 className="font-display line-clamp-2 text-sm leading-snug font-semibold text-foreground">
+            {p.name}
+          </h3>
+          <button
+            type="button"
+            title="Share storefront product link"
+            aria-label={`Share ${p.name}`}
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              void shareProduct(p.id, p.name);
+            }}
+            className="grid h-7 w-7 shrink-0 place-items-center rounded-full text-muted-foreground hover:bg-primary/10 hover:text-primary active:scale-95 transition-all cursor-pointer"
+          >
+            <Share2 className="h-3.5 w-3.5" />
+          </button>
+        </div>
         <div className="mt-1.5 flex items-baseline gap-2">
           <span className="text-sm font-semibold text-primary">{inr(p.basePrice)}</span>
           <span className="text-[0.7rem] text-muted-foreground line-through">{inr(p.mrp)}</span>

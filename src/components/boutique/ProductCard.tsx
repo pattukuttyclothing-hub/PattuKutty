@@ -1,6 +1,7 @@
 import { Link } from "@tanstack/react-router";
-import { Heart, Sparkles } from "lucide-react";
+import { Heart, Share2, Sparkles } from "lucide-react";
 import { inr } from "@/lib/cart";
+import { shareProduct } from "@/lib/share";
 import { useWishlist } from "@/lib/wishlist";
 import { AutoImageFade } from "@/components/shared/AutoImageFade";
 import type { Product } from "@/data/boutique";
@@ -73,9 +74,24 @@ export function ProductCard({ product: p, index = 0 }: { product: Product; index
       </div>
 
       <div className="flex flex-1 flex-col p-4">
-        <h3 className="font-display text-base leading-snug font-semibold text-foreground">
-          {p.name}
-        </h3>
+        <div className="flex items-start justify-between gap-2">
+          <h3 className="font-display text-base leading-snug font-semibold text-foreground">
+            {p.name}
+          </h3>
+          <button
+            type="button"
+            title="Share product link"
+            aria-label={`Share ${p.name}`}
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              void shareProduct(p.id, p.name);
+            }}
+            className="grid h-7 w-7 shrink-0 place-items-center rounded-full text-muted-foreground/80 hover:bg-primary/10 hover:text-primary active:scale-95 transition-all cursor-pointer"
+          >
+            <Share2 className="h-3.5 w-3.5" />
+          </button>
+        </div>
         <div className="mt-2 flex items-baseline gap-2">
           <span className="text-base font-semibold text-primary">{inr(priceVal)}</span>
           {mrpVal > priceVal ? (

@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
 import { createFileRoute, Link, notFound, useNavigate } from "@tanstack/react-router";
-import { ArrowLeft, AlertCircle, Heart, MessageCircle, Minus, Plus, ShoppingBag, Sparkles } from "lucide-react";
+import { ArrowLeft, AlertCircle, Heart, MessageCircle, Minus, Plus, Share2, ShoppingBag, Sparkles } from "lucide-react";
 import { PageShell, PageHeader } from "@/components/shared/Page";
 import { ProductGallery } from "@/components/shared/ProductGallery";
 import { ProductCard } from "@/components/boutique/ProductCard";
@@ -10,6 +10,7 @@ import { abs, absImage, BRAND, breadcrumbJsonLd, seoDescription, seoTitle, socia
 import { inr, orderWaLink, useCart } from "@/lib/cart";
 import { useWishlist } from "@/lib/wishlist";
 import { useAuthGate } from "@/lib/auth";
+import { shareProduct } from "@/lib/share";
 import { useProduct, useProductsBySubCategory } from "@/lib/useStorefront";
 
 export const Route = createFileRoute("/product/$id")({
@@ -242,19 +243,30 @@ function ProductPage() {
                 alt={activeProduct.name}
                 isSoldOut={isSoldOut}
                 overlay={
-                  <button
-                    type="button"
-                    title={has(activeProduct.id) ? "Remove from wishlist" : "Save to wishlist"}
-                    aria-label={has(activeProduct.id) ? "Remove from wishlist" : "Save to wishlist"}
-                    onClick={() => toggle(activeProduct.id)}
-                    className="grid h-10 w-10 place-items-center rounded-full bg-white/95 dark:bg-black/90 shadow-md border border-border/60 transition-all hover:scale-110 active:scale-95 cursor-pointer"
-                  >
-                    <Heart
-                      className={`h-5 w-5 transition-colors ${
-                        has(activeProduct.id) ? "fill-rose-500 text-rose-500" : "text-rose-500/80 fill-rose-50/50 hover:text-rose-600 hover:fill-rose-100"
-                      }`}
-                    />
-                  </button>
+                  <div className="flex flex-col gap-2">
+                    <button
+                      type="button"
+                      title={has(activeProduct.id) ? "Remove from wishlist" : "Save to wishlist"}
+                      aria-label={has(activeProduct.id) ? "Remove from wishlist" : "Save to wishlist"}
+                      onClick={() => toggle(activeProduct.id)}
+                      className="grid h-10 w-10 place-items-center rounded-full bg-white/95 dark:bg-black/90 shadow-md border border-border/60 transition-all hover:scale-110 active:scale-95 cursor-pointer"
+                    >
+                      <Heart
+                        className={`h-5 w-5 transition-colors ${
+                          has(activeProduct.id) ? "fill-rose-500 text-rose-500" : "text-rose-500/80 fill-rose-50/50 hover:text-rose-600 hover:fill-rose-100"
+                        }`}
+                      />
+                    </button>
+                    <button
+                      type="button"
+                      title="Share product link"
+                      aria-label={`Share ${activeProduct.name}`}
+                      onClick={() => void shareProduct(activeProduct.id, activeProduct.name)}
+                      className="grid h-10 w-10 place-items-center rounded-full bg-white/95 dark:bg-black/90 shadow-md border border-border/60 text-muted-foreground transition-all hover:scale-110 hover:text-primary active:scale-95 cursor-pointer"
+                    >
+                      <Share2 className="h-4.5 w-4.5" />
+                    </button>
+                  </div>
                 }
               />
             </div>
@@ -277,9 +289,20 @@ function ProductPage() {
                 </button>
               </div>
 
-              <h1 className="font-display text-2xl font-bold tracking-tight text-foreground sm:text-3xl lg:text-4xl">
-                {activeProduct.name}
-              </h1>
+              <div className="flex items-center gap-3">
+                <h1 className="font-display text-2xl font-bold tracking-tight text-foreground sm:text-3xl lg:text-4xl">
+                  {activeProduct.name}
+                </h1>
+                <button
+                  type="button"
+                  title="Share product link"
+                  aria-label={`Share ${activeProduct.name}`}
+                  onClick={() => void shareProduct(activeProduct.id, activeProduct.name)}
+                  className="grid h-9 w-9 sm:h-10 sm:w-10 shrink-0 place-items-center rounded-full border border-border/80 bg-card text-muted-foreground shadow-sm hover:border-primary/40 hover:bg-primary/10 hover:text-primary active:scale-95 transition-all cursor-pointer"
+                >
+                  <Share2 className="h-4.5 w-4.5" />
+                </button>
+              </div>
 
               <div className="mt-4 flex items-baseline gap-3">
                 <span className="font-display text-2xl font-bold text-primary sm:text-3xl">
