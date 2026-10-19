@@ -161,26 +161,44 @@ function SubCategoryPage() {
                 </p>
               </div>
               <div className="flex flex-wrap justify-center gap-4 sm:gap-6 lg:gap-8">
-                {sub.subs!.map((nestedSub, i) => (
-                  <Reveal
-                    key={nestedSub.id}
-                    delay={stagger(i, 80)}
-                    className="w-full sm:w-[calc(50%-0.75rem)] lg:w-[calc(33.333%-1.35rem)] max-w-[420px]"
-                  >
-                    <Link
-                      to="/category/$category/$sub"
-                      params={{ category: cat.id, sub: nestedSub.id }}
-                      className="card-lift group relative block aspect-[4/5] sm:aspect-[3/3.8] w-full overflow-hidden rounded-3xl bg-card shadow-lift"
+                {sub.subs!.map((nestedSub, i) => {
+                  const nestedCount =
+                    nestedSub.designCount != null
+                      ? nestedSub.designCount
+                      : (nestedSub as any).design_count;
+                  const nestedBadge =
+                    nestedCount != null && nestedCount > 0
+                      ? `${nestedCount} ${nestedCount === 1 ? "design" : "designs"}`
+                      : nestedCount === 0
+                        ? "Coming Soon"
+                        : null;
+                  return (
+                    <Reveal
+                      key={nestedSub.id}
+                      delay={stagger(i, 80)}
+                      className="w-full sm:w-[calc(50%-0.75rem)] lg:w-[calc(33.333%-1.35rem)] max-w-[420px]"
                     >
-                      <AutoImageFade
-                        images={nestedSub.images}
-                        alt={`${nestedSub.name} designs`}
-                        className="absolute inset-0 h-full w-full object-cover object-top"
-                        interval={7000}
-                        offset={i * 1500}
-                      />
-                      <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-maroon/85 via-maroon/20 to-transparent" />
-                      <div className="absolute inset-x-0 bottom-0 z-10 p-5 sm:p-6">
+                      <Link
+                        to="/category/$category/$sub"
+                        params={{ category: cat.id, sub: nestedSub.id }}
+                        className="card-lift group relative block aspect-[4/5] sm:aspect-[3/3.8] w-full overflow-hidden rounded-3xl bg-card shadow-lift"
+                      >
+                        <AutoImageFade
+                          images={nestedSub.images}
+                          alt={`${nestedSub.name} designs`}
+                          className="absolute inset-0 h-full w-full object-cover object-top"
+                          interval={7000}
+                          offset={i * 1500}
+                        />
+                        <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-maroon/85 via-maroon/20 to-transparent" />
+                        <div className="absolute top-3 left-3 z-10">
+                          {nestedBadge != null && (
+                            <span className="inline-flex items-center rounded-full bg-primary px-2.5 py-1 text-[0.6rem] sm:text-[0.65rem] font-bold tracking-wide text-primary-foreground shadow-soft border border-accent/40">
+                              {nestedBadge}
+                            </span>
+                          )}
+                        </div>
+                        <div className="absolute inset-x-0 bottom-0 z-10 p-5 sm:p-6">
                         <h4 className="font-display text-xl leading-tight font-semibold text-primary-foreground sm:text-2xl">
                           {nestedSub.name}
                         </h4>
@@ -194,7 +212,8 @@ function SubCategoryPage() {
                       </div>
                     </Link>
                   </Reveal>
-                ))}
+                );
+              })}
               </div>
             </div>
           ) : loading ? (

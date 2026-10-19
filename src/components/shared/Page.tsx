@@ -4,6 +4,7 @@ import { ArrowLeft, ChevronRight, Clock, Compass, Home, RefreshCw, Sparkles, Wif
 import { Navbar } from "@/components/boutique/Navbar";
 import { Footer } from "@/components/boutique/Footer";
 import { FloralMotif } from "@/components/boutique/Motifs";
+import type { CategoryId } from "@/data/boutique";
 
 /** Standard inner-page shell: solid navbar, padded main, footer. */
 export function PageShell({ children }: { children: ReactNode }) {
@@ -206,7 +207,7 @@ export function ComingSoonView({
 }: {
   title?: string;
   subtitle?: string;
-  category?: string;
+  category?: CategoryId;
   sub?: string;
   className?: string;
 }) {
@@ -228,7 +229,10 @@ export function ComingSoonView({
         <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
           <Link
             to="/design-studio"
-            search={{ category, sub }}
+            search={{
+              ...(category ? { category } : {}),
+              ...(sub ? { sub } : {}),
+            }}
             className="inline-flex items-center gap-2 rounded-full bg-primary px-6 py-2.5 text-xs font-semibold tracking-wider uppercase text-primary-foreground shadow-soft transition-transform hover:scale-105"
           >
             <Sparkles className="h-3.5 w-3.5" /> Design Your Own

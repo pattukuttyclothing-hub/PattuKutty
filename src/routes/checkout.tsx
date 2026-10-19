@@ -383,8 +383,7 @@ function CheckoutPage() {
       }
 
       if (method === "cod") {
-        const idempotencyKey = `cod_${user.id}_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
-        await finalise({ status: "pending" }, effectiveAddress, idempotencyKey);
+        toast.error("Cash on delivery is currently paused. Please choose online payment.");
         return;
       }
 
@@ -880,7 +879,7 @@ function CheckoutPage() {
                     />
                   </label>
                   <p className="mt-2 text-center text-xs text-muted-foreground">
-                    Ready to pay? Click below to select payment method (Razorpay or Pay on Delivery).
+                    Ready to pay? Click below to proceed to payment.
                   </p>
                   <button
                     type="button"
@@ -909,29 +908,41 @@ function CheckoutPage() {
                         icon: <CreditCard className="h-4 w-4" />,
                         label: "Pay online with Razorpay",
                         hint: "UPI, cards, netbanking & wallets — 100% secure.",
+                        disabled: false,
+                        badge: null,
                       },
                       {
                         id: "cod" as const,
                         icon: <Wallet className="h-4 w-4" />,
                         label: "Pay on delivery",
                         hint: "Pay cash or UPI when your outfit arrives.",
+                        disabled: true,
+                        badge: "Coming Soon",
                       },
                     ]
                   ).map((opt) => (
                     <button
                       key={opt.id}
                       type="button"
-                      onClick={() => setMethod(opt.id)}
-                      className={`flex w-full items-start gap-3 rounded-2xl border p-4 text-left transition-colors ${
-                        method === opt.id
-                          ? "border-primary bg-secondary/60"
-                          : "border-border hover:bg-secondary/40"
+                      disabled={opt.disabled}
+                      onClick={() => !opt.disabled && setMethod(opt.id)}
+                      className={`relative flex w-full items-start gap-3 rounded-2xl border p-4 text-left transition-all ${
+                        opt.disabled
+                          ? "opacity-50 cursor-not-allowed border-border/60 bg-muted/20"
+                          : method === opt.id
+                            ? "border-primary bg-secondary/60"
+                            : "border-border hover:bg-secondary/40"
                       }`}
                     >
-                      <span className="mt-0.5 grid h-8 w-8 place-items-center rounded-full bg-secondary text-primary">
+                      {opt.badge ? (
+                        <span className="absolute top-3.5 right-3.5 rounded-full border border-accent/40 bg-background/90 px-2.5 py-0.5 text-[0.62rem] font-bold tracking-wider uppercase text-primary shadow-soft">
+                          {opt.badge}
+                        </span>
+                      ) : null}
+                      <span className="mt-0.5 grid h-8 w-8 place-items-center rounded-full bg-secondary text-primary shrink-0">
                         {opt.icon}
                       </span>
-                      <span>
+                      <span className={opt.badge ? "pr-24" : ""}>
                         <span className="block text-sm font-semibold text-foreground">
                           {opt.label}
                         </span>

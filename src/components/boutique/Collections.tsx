@@ -19,13 +19,6 @@ export function Collections() {
 
         <div className="mt-10 flex flex-wrap justify-center gap-4 sm:mt-12 sm:gap-6 lg:gap-8">
           {categories.map((c, i) => {
-            const designCount =
-              c.designCount != null
-                ? c.designCount
-                : c.design_count != null
-                  ? c.design_count
-                  : c.subs.reduce((sum, s) => sum + (s.designCount || 0), 0);
-
             return (
               <Reveal
                 key={c.id}
@@ -53,12 +46,6 @@ export function Collections() {
                   <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-maroon/92 via-maroon/45 to-maroon/5 transition-opacity duration-500 group-hover:from-maroon/95" />
                   {/* gold sheen sweep */}
                   <div className="pointer-events-none absolute inset-0 translate-x-[-120%] bg-gradient-to-r from-transparent via-accent/25 to-transparent transition-transform duration-[1100ms] ease-out group-hover:translate-x-[120%]" />
-
-                  {designCount > 0 ? (
-                    <span className="absolute top-2.5 left-2.5 z-10 rounded-full border border-accent/40 bg-background/85 px-2.5 py-1 text-[0.58rem] font-bold tracking-[0.12em] text-primary uppercase backdrop-blur-sm sm:top-4 sm:left-4 sm:text-[0.62rem]">
-                      {designCount} {designCount === 1 ? "design" : "designs"}
-                    </span>
-                  ) : null}
 
                   <div className="relative z-10 p-3.5 sm:p-6">
                     <h3 className="font-display text-base leading-snug font-semibold text-primary-foreground sm:text-2xl">

@@ -11,6 +11,7 @@ import {
   findCategory,
   getAllSubCategories,
   getPermittedSizesForCategory,
+  isBlouseCategory,
   isFrocksCategory,
   isPattuPaavadaiCategory,
   isSalwarReadymadeCategory,

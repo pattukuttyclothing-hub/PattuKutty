@@ -89,8 +89,13 @@ function CategoryPage() {
                 sub.designCount != null
                   ? sub.designCount
                   : sub.design_count;
-              // count === -1 means "no live DB data yet" — hide badge entirely
-              const badgeText = (count != null && count >= 0) ? `${count} ${count === 1 ? "design" : "designs"}` : null;
+              // If count > 0: show count. If count === 0: show "Coming Soon". If count == null or -1: hide.
+              const badgeText =
+                count != null && count > 0
+                  ? `${count} ${count === 1 ? "design" : "designs"}`
+                  : count === 0
+                    ? "Coming Soon"
+                    : null;
               return (
                 <Reveal
                   key={sub.id}

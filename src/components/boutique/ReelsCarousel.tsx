@@ -80,12 +80,12 @@ export function ReelsCarousel() {
                 We are currently filming fresh design and stitching reels in our Coimbatore boutique studio. Stay tuned!
               </p>
               <div className="mt-6">
-                <Link
-                  to="/#collections"
+                <a
+                  href="/#collections"
                   className="inline-flex items-center gap-2 rounded-full bg-primary px-6 py-2.5 text-xs font-semibold tracking-wider uppercase text-primary-foreground shadow-soft transition-transform hover:scale-105"
                 >
                   Explore Collections
-                </Link>
+                </a>
               </div>
             </div>
           </div>
