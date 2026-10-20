@@ -19,6 +19,8 @@ export const storeInfo = {
   whatsapp: "919791712622",
   area: "Gandhipuram, Coimbatore",
   mapUrl: "https://maps.app.goo.gl/sMeKczDah8m2FeWs9",
+  mapEmbedUrl:
+    "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3916.3022301151864!2d76.97664481062407!3d11.01593568910247!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3ba859cf0d52ac45%3A0x1e09ad67b8c4cba7!2sPattuKutty%20Clothing!5e0!3m2!1sen!2sin!4v1792470702025!5m2!1sen!2sin",
 };
 
 export const waLink = (phone: string, message: string) =>

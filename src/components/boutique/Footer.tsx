@@ -109,10 +109,11 @@ export function Footer() {
             <div className="mt-5 overflow-hidden rounded-2xl border border-primary-foreground/20 bg-primary-foreground/5 shadow-lg">
               <iframe
                 title={`${storeInfo.name} location on Google Maps`}
-                src="https://www.google.com/maps?q=11.0159357,76.9792251&hl=en&z=16&output=embed"
+                src={storeInfo?.mapEmbedUrl || "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3916.3022301151864!2d76.97664481062407!3d11.01593568910247!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3ba859cf0d52ac45%3A0x1e09ad67b8c4cba7!2sPattuKutty%20Clothing!5e0!3m2!1sen!2sin!4v1792470702025!5m2!1sen!2sin"}
                 className="h-40 w-full border-0 sm:h-44"
+                style={{ border: 0 }}
                 loading="lazy"
-                referrerPolicy="no-referrer-when-downgrade"
+                referrerPolicy="strict-origin-when-cross-origin"
                 allowFullScreen
               />
             </div>
