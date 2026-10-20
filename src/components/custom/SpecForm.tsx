@@ -86,7 +86,7 @@ export const makeSpec = (category?: string, sub?: string): Spec => {
   const validCategory = cat.id as CategoryId;
   const isSaree = validCategory === "sarees";
   const isBlouse = validCategory === "blouses";
-  const validSub = (isSaree || isBlouse)
+  const validSub = ((cat.subs ?? []).length === 0)
     ? ""
     : (sub && cat.subs?.some((s) => s.id === sub || s.subs?.some((child) => child.id === sub))
       ? sub

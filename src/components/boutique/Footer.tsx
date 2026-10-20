@@ -117,7 +117,7 @@ export function Footer() {
               />
             </div>
             <a
-              href="https://www.google.com/maps/place/463,+Bharathiyar+Rd,+Ramnagar,+Lakshmi+Mills+Colony,+Pappanaickenpalayam,+Coimbatore,+Tamil+Nadu+641037/@11.0161317,76.9772903,16z"
+              href={storeInfo?.mapUrl || "https://maps.app.goo.gl/sMeKczDah8m2FeWs9"}
               target="_blank"
               rel="noreferrer"
               className="gold-underline mt-3 inline-flex items-center gap-1.5 text-xs text-accent"

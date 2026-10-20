@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState, useRef } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { ArrowLeft, Save, Share2, Upload, X, AlertTriangle, CheckCircle2, Loader2, RefreshCw, Trash2, Sparkles } from "lucide-react";
+import { ArrowLeft, Save, Share2, Upload, X, AlertTriangle, CheckCircle2, Loader2, RefreshCw, Trash2, Sparkles, ChevronLeft, ChevronRight, Star, GripVertical, ArrowLeftRight } from "lucide-react";
 import { toast } from "sonner";
 import { shareProduct } from "@/lib/share";
 import { AdminShell, PageHead } from "@/components/admin/AdminShell";
@@ -149,6 +149,37 @@ function ProductEditor() {
     setAdminCropQueue(picked.slice(1));
   };
 
+  const [draggedImgIdx, setDraggedImgIdx] = useState<number | null>(null);
+  const [dragOverImgIdx, setDragOverImgIdx] = useState<number | null>(null);
+
+  const moveImage = (fromIdx: number, toIdx: number) => {
+    if (fromIdx === toIdx) return;
+    setDraft((d) => {
+      if (!d || !d.images) return d;
+      const images = [...d.images];
+      if (fromIdx < 0 || fromIdx >= images.length || toIdx < 0 || toIdx >= images.length) return d;
+      const [item] = images.splice(fromIdx, 1);
+      if (!item) return d;
+      images.splice(toIdx, 0, item);
+      return { ...d, images };
+    });
+    toast.success(toIdx === 0 ? "Cover photo updated (photo #1)." : `Photo moved to position ${toIdx + 1}.`);
+  };
+
+  const swapImages = (idxA: number, idxB: number) => {
+    if (idxA === idxB) return;
+    setDraft((d) => {
+      if (!d || !d.images) return d;
+      const images = [...d.images];
+      if (idxA < 0 || idxA >= images.length || idxB < 0 || idxB >= images.length) return d;
+      const temp = images[idxA]!;
+      images[idxA] = images[idxB]!;
+      images[idxB] = temp;
+      return { ...d, images };
+    });
+    toast.success(`Photos ${idxA + 1} and ${idxB + 1} swapped.`);
+  };
+
   const handleConfirmDeleteImage = async () => {
     if (!deleteConfirmImage) return;
     const targetUrl = deleteConfirmImage;
@@ -234,46 +265,24 @@ function ProductEditor() {
 
   useEffect(() => {
     if (stored && !draft) {
-      setDraft(stored);
+      const catObj = categories.find((c) => c.id === stored.category);
+      const hasSubs = (catObj?.subs ?? []).length > 0;
+      setDraft({
+        ...stored,
+        sub: hasSubs ? (stored.sub || "") : "",
+      });
     } else if (!draft && isCreateMode) {
       const initialCat = (search.category as CategoryId) || "blouses";
       const isSaree = initialCat === "sarees";
       const isBlouse = initialCat === "blouses";
       const catObj = categories.find((c) => c.id === initialCat);
-      const initialSub = (isSaree || isBlouse) ? "" : (search.sub || (catObj?.subs[0]?.id ?? ""));
+      const hasSubs = (catObj?.subs ?? []).length > 0;
+      const initialSub = hasSubs ? (search.sub || (catObj?.subs[0]?.id ?? "")) : "";
       const initialPermitted = getPermittedSizesForCategory(initialCat, initialSub);
       const defaultInitialSizes = isPattuPaavadaiCategory(initialCat, initialSub)
         ? ["1 Year", "2 Year", "3 Year", "4 Year", "5 Year"]
         : initialPermitted.slice(0, 5);
 
-      setDraft({
-        id: id || `design-new-${Date.now().toString(36)}`,
-        name: "",
-        description: "",
-        category: initialCat,
-        sub: initialSub,
-        basePrice: 0,
-        mrp: 0,
-        blurb: "",
-        badge: "",
-        expressFromPrice: 0,
-        deliveryCharge: 0,
-        isActive: true,
-        soldOut: false,
-        images: [],
-        variants: isSaree
-          ? [{ size: "Standard", available: true, stockQty: 5 }]
-          : isBlouse
-            ? [
-                { size: "32", available: true, stockQty: 2 },
-                { size: "34", available: true, stockQty: 2 },
-                { size: "36", available: true, stockQty: 2 },
-                { size: "38", available: true, stockQty: 2 },
-                { size: "40", available: true, stockQty: 2 },
-                { size: "42", available: true, stockQty: 2 },
-              ]
-            : defaultInitialSizes.map((sz) => ({ size: sz, available: true, stockQty: 1 })),
-      });
       setDraft({
         id: id || `design-new-${Date.now().toString(36)}`,
         name: "",
@@ -414,7 +423,9 @@ function ProductEditor() {
     if (!d.category) {
       missing.push("Category");
     }
-    if (d.category !== "sarees" && !d.sub) {
+    const catObj = findCategory(d.category);
+    const hasSubCategories = (catObj?.subs ?? []).length > 0;
+    if (hasSubCategories && !d.sub) {
       missing.push("Sub-Category");
     }
     if (!d.basePrice || Number(d.basePrice) <= 0) {
@@ -438,13 +449,17 @@ function ProductEditor() {
     }
     setSaving(true);
     try {
+      const catObj = findCategory(draft.category);
+      const hasSubCategories = (catObj?.subs ?? []).length > 0;
+      const cleanSub = hasSubCategories ? (draft.sub || "") : "";
+
       let result: AdminProduct;
       if (isCreateMode) {
         result = await createProduct({
           slug: draft.id,
           name: draft.name,
           categoryId: draft.category,
-          subCategoryId: draft.category === "sarees" ? "" : draft.sub,
+          subCategoryId: cleanSub,
           description: draft.description,
           blurb: draft.blurb,
           badge: draft.badge,
@@ -463,7 +478,9 @@ function ProductEditor() {
         if (!stored || draft.blurb !== stored.blurb) patchPayload["blurb"] = draft.blurb;
         if (!stored || draft.badge !== stored.badge) patchPayload["badge"] = draft.badge;
         if (!stored || draft.category !== stored.category) patchPayload["category"] = draft.category;
-        if (!stored || draft.sub !== stored.sub) patchPayload["sub"] = draft.category === "sarees" ? "" : draft.sub;
+        if (!stored || draft.sub !== stored.sub || (!hasSubCategories && draft.sub)) {
+          patchPayload["sub"] = cleanSub;
+        }
         if (!stored || draft.basePrice !== stored.basePrice) patchPayload["basePrice"] = draft.basePrice;
         if (!stored || draft.mrp !== stored.mrp) patchPayload["mrp"] = draft.mrp;
         if (!stored || draft.deliveryCharge !== stored.deliveryCharge) patchPayload["deliveryCharge"] = draft.deliveryCharge;
@@ -484,7 +501,7 @@ function ProductEditor() {
         ...result,
         id: result?.id || draft.id,
         category: result?.category || draft.category,
-        sub: result?.sub || draft.sub,
+        sub: hasSubCategories ? (result?.sub || draft.sub || "") : "",
         images: Array.isArray(result?.images) ? result.images : (draft.images || []),
         variants: Array.isArray(result?.variants) && result.variants.length > 0 ? result.variants : (draft.variants || []),
       };
@@ -587,9 +604,16 @@ function ProductEditor() {
           <div className="mt-5 rounded-3xl border border-border bg-card p-5 shadow-soft">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
-                <h2 className="font-display text-base font-semibold">Photos</h2>
+                <div className="flex items-center gap-2">
+                  <h2 className="font-display text-base font-semibold">Photos</h2>
+                  {currentImages.length > 1 && (
+                    <span className="rounded-full bg-primary/10 px-2.5 py-0.5 text-[0.68rem] font-semibold text-primary">
+                      {currentImages.length} photos · drag or swap to reorder
+                    </span>
+                  )}
+                </div>
                 <p className="mt-1 text-xs text-muted-foreground">
-                  First photo is the cover. Upload directly from your device to Supabase Storage.
+                  First photo is the cover. Drag and drop or use arrow buttons to swap photo order.
                 </p>
               </div>
               <div className="flex items-center gap-2">
@@ -627,36 +651,139 @@ function ProductEditor() {
               </div>
             </div>
 
-            <div className="mt-4 flex flex-wrap items-center gap-3">
-              {currentImages.map((src) => (
-                <span key={src} className="group relative">
-                  <img
-                    src={src}
-                    alt=""
-                    className="h-20 w-16 rounded-2xl border border-border object-cover object-top shrink-0"
-                  />
-                  <div className="absolute -top-2 -right-2 flex items-center gap-1.5 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity z-10">
-                    <button
-                      type="button"
-                      aria-label="Update photo"
-                      title="Update / Replace Image"
-                      onClick={() => setUpdateConfirmImage(src)}
-                      className="grid h-9 w-9 sm:h-7 sm:w-7 place-items-center rounded-full bg-primary text-primary-foreground shadow-soft hover:scale-105 active:scale-95"
-                    >
-                      <RefreshCw className="h-4 w-4 sm:h-3.5 sm:w-3.5" />
-                    </button>
-                    <button
-                      type="button"
-                      aria-label="Remove photo"
-                      title="Delete Image"
-                      onClick={() => setDeleteConfirmImage(src)}
-                      className="grid h-9 w-9 sm:h-7 sm:w-7 place-items-center rounded-full bg-destructive text-destructive-foreground shadow-soft hover:scale-105 active:scale-95"
-                    >
-                      <X className="h-4 w-4 sm:h-3.5 sm:w-3.5" />
-                    </button>
+            <div className="mt-4 flex flex-wrap items-stretch gap-3">
+              {currentImages.map((src, idx) => {
+                const isCover = idx === 0;
+                const isDragging = draggedImgIdx === idx;
+                const isDragOver = dragOverImgIdx === idx && draggedImgIdx !== idx;
+
+                return (
+                  <div
+                    key={`${src}-${idx}`}
+                    draggable
+                    onDragStart={(e) => {
+                      setDraggedImgIdx(idx);
+                      e.dataTransfer.effectAllowed = "move";
+                      e.dataTransfer.setData("text/plain", String(idx));
+                    }}
+                    onDragOver={(e) => {
+                      e.preventDefault();
+                      e.dataTransfer.dropEffect = "move";
+                      if (dragOverImgIdx !== idx) setDragOverImgIdx(idx);
+                    }}
+                    onDragLeave={() => {
+                      setDragOverImgIdx((cur) => (cur === idx ? null : cur));
+                    }}
+                    onDrop={(e) => {
+                      e.preventDefault();
+                      const from = draggedImgIdx ?? Number(e.dataTransfer.getData("text/plain"));
+                      if (!isNaN(from) && from !== idx) {
+                        moveImage(from, idx);
+                      }
+                      setDraggedImgIdx(null);
+                      setDragOverImgIdx(null);
+                    }}
+                    onDragEnd={() => {
+                      setDraggedImgIdx(null);
+                      setDragOverImgIdx(null);
+                    }}
+                    className={`group relative flex w-28 sm:w-32 flex-col justify-between rounded-2xl border bg-card p-1.5 shadow-xs transition-all duration-200 select-none ${
+                      isDragging
+                        ? "opacity-35 scale-95 border-dashed border-primary"
+                        : isDragOver
+                          ? "ring-2 ring-primary border-primary bg-primary/10 scale-105 shadow-lift z-20"
+                          : "border-border/80 hover:border-primary/50 hover:shadow-soft"
+                    }`}
+                  >
+                    {/* Top Row: Cover/Position Badge + Set as Cover button */}
+                    <div className="mb-1 flex items-center justify-between px-0.5">
+                      {isCover ? (
+                        <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/20 text-amber-700 dark:text-amber-300 border border-amber-500/30 px-1.5 py-0.5 text-[0.58rem] font-bold">
+                          <Star className="h-2.5 w-2.5 fill-current" /> Cover
+                        </span>
+                      ) : (
+                        <span className="rounded-full bg-secondary text-muted-foreground px-1.5 py-0.5 text-[0.58rem] font-semibold">
+                          #{idx + 1}
+                        </span>
+                      )}
+
+                      {!isCover && (
+                        <button
+                          type="button"
+                          onClick={() => moveImage(idx, 0)}
+                          title="Make Cover (Move to 1st position)"
+                          className="text-[0.58rem] font-semibold text-primary hover:underline"
+                        >
+                          Set Cover
+                        </button>
+                      )}
+                    </div>
+
+                    {/* Image Box */}
+                    <div className="relative aspect-[3/4] w-full overflow-hidden rounded-xl bg-secondary/50 cursor-grab active:cursor-grabbing">
+                      <img
+                        src={src}
+                        alt={`Photo ${idx + 1}`}
+                        className="h-full w-full object-cover object-top"
+                      />
+
+                      {/* Top Right Action Icons */}
+                      <div className="absolute top-1.5 right-1.5 flex items-center gap-1 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity z-10">
+                        <button
+                          type="button"
+                          aria-label="Update photo"
+                          title="Update / Replace Image"
+                          onClick={() => setUpdateConfirmImage(src)}
+                          className="grid h-7 w-7 place-items-center rounded-full bg-primary/95 text-primary-foreground shadow-soft hover:scale-105 active:scale-95"
+                        >
+                          <RefreshCw className="h-3 w-3" />
+                        </button>
+                        <button
+                          type="button"
+                          aria-label="Remove photo"
+                          title="Delete Image"
+                          onClick={() => setDeleteConfirmImage(src)}
+                          className="grid h-7 w-7 place-items-center rounded-full bg-destructive text-destructive-foreground shadow-soft hover:scale-105 active:scale-95"
+                        >
+                          <X className="h-3 w-3" />
+                        </button>
+                      </div>
+
+                      {/* Center Grab Overlay hint on hover */}
+                      <div className="pointer-events-none absolute inset-0 flex items-center justify-center opacity-0 sm:group-hover:opacity-40 transition-opacity bg-black/20">
+                        <GripVertical className="h-6 w-6 text-white drop-shadow-md" />
+                      </div>
+                    </div>
+
+                    {/* Bottom Swap Bar */}
+                    <div className="mt-1.5 flex items-center justify-between gap-1 border-t border-border/50 pt-1">
+                      <button
+                        type="button"
+                        disabled={idx === 0}
+                        onClick={() => swapImages(idx, idx - 1)}
+                        title="Swap with previous photo"
+                        className="grid h-6 w-6 place-items-center rounded-lg border border-border bg-background hover:bg-secondary text-foreground disabled:opacity-20 disabled:pointer-events-none transition-colors"
+                      >
+                        <ChevronLeft className="h-3.5 w-3.5" />
+                      </button>
+
+                      <span className="text-[0.58rem] font-medium text-muted-foreground flex items-center gap-0.5">
+                        <ArrowLeftRight className="h-2.5 w-2.5 opacity-60" /> Swap
+                      </span>
+
+                      <button
+                        type="button"
+                        disabled={idx === currentImages.length - 1}
+                        onClick={() => swapImages(idx, idx + 1)}
+                        title="Swap with next photo"
+                        className="grid h-6 w-6 place-items-center rounded-lg border border-border bg-background hover:bg-secondary text-foreground disabled:opacity-20 disabled:pointer-events-none transition-colors"
+                      >
+                        <ChevronRight className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
                   </div>
-                </span>
-              ))}
+                );
+              })}
               {!currentImages.length ? (
                 <p className="text-xs text-muted-foreground">No photos yet — upload one from your device.</p>
               ) : null}
@@ -755,6 +882,7 @@ function ProductEditor() {
                     const firstSubId = c.subs && c.subs.length > 0 ? c.subs[0]!.id : "";
                     const isSaree = c.id === "sarees";
                     const isBlouse = c.id === "blouses";
+                    const hasSubs = (c.subs ?? []).length > 0;
                     return (
                       <button
                         key={c.id}
@@ -787,7 +915,7 @@ function ProductEditor() {
                                   { size: "L", available: true, stockQty: 1 },
                                 ]
                               : draft.variants;
-                            set({ category: c.id, sub: firstSubId, variants: newVariants });
+                            set({ category: c.id, sub: hasSubs ? firstSubId : "", variants: newVariants });
                           }
                         }}
                         className={`flex items-center gap-2 rounded-full border py-1.5 pr-3.5 pl-1.5 text-[0.75rem] font-medium transition-colors ${

@@ -30,6 +30,7 @@ export const storeInfo = {
   instagram: "@pattu.kutty",
   address: "463, Bharathiyar Road, Pappanaicken Palayam, Coimbatore – 641037",
   area: "Gandhipuram, Coimbatore",
+  mapUrl: "https://maps.app.goo.gl/sMeKczDah8m2FeWs9",
   hours: [
     { day: "Monday – Saturday", time: "9:30 AM – 8:30 PM" },
     { day: "Sunday", time: "10:00 AM – 2:00 PM" },

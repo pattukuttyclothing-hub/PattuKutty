@@ -715,10 +715,16 @@ function OrderTrackingPage() {
               {isPickup ? (
                 <div className="space-y-2 text-sm text-muted-foreground">
                   <p className="font-semibold text-foreground">{storeInfo?.name}</p>
-                  <p className="flex items-start gap-2">
+                  <a
+                    href={(storeInfo as any)?.mapUrl || "https://maps.app.goo.gl/sMeKczDah8m2FeWs9"}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="flex items-start gap-2 hover:text-foreground hover:underline transition-colors"
+                    title="Open in Google Maps"
+                  >
                     <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
                     <span>{storeInfo?.address}</span>
-                  </p>
+                  </a>
                   <p className="flex items-center gap-2">
                     <Phone className="h-4 w-4 text-primary" />
                     <span>{storeInfo?.phone || "+91 97917 12622"}</span>

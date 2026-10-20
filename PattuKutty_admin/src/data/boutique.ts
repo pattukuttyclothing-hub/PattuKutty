@@ -18,6 +18,7 @@ export const storeInfo = {
   phone: "+91 97917 12622",
   whatsapp: "919791712622",
   area: "Gandhipuram, Coimbatore",
+  mapUrl: "https://maps.app.goo.gl/sMeKczDah8m2FeWs9",
 };
 
 export const waLink = (phone: string, message: string) =>

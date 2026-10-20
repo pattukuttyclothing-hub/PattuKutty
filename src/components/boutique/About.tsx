@@ -112,10 +112,16 @@ export function About() {
               >
                 Book an Appointment
               </a>
-              <p className="flex max-w-xs items-start gap-2 text-xs leading-relaxed text-muted-foreground">
+              <a
+                href={storeInfo.mapUrl || "https://maps.app.goo.gl/sMeKczDah8m2FeWs9"}
+                target="_blank"
+                rel="noreferrer"
+                className="flex max-w-xs items-start gap-2 text-xs leading-relaxed text-muted-foreground hover:text-foreground transition-colors"
+                title="View on Google Maps"
+              >
                 <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
-                {storeInfo.address}
-              </p>
+                <span>{storeInfo.address}</span>
+              </a>
             </div>
           </Reveal>
         </div>

@@ -1,5 +1,5 @@
 import { useMemo, useRef, useState } from "react";
-import { Check, Search, Sparkles, Upload, X, Loader2, CheckCircle2 } from "lucide-react";
+import { Check, Search, Sparkles, Upload, X, Loader2, CheckCircle2, ChevronLeft, ChevronRight } from "lucide-react";
 import { toast } from "sonner";
 import { categories, findSub, type CategoryId } from "@/data/boutique";
 import { useAdmin, type AdminProduct, type ReelItem } from "@/lib/admin-store";
@@ -86,18 +86,25 @@ export function AddReelDialog({ open, onClose, editing }: Props) {
 
 
   const createProduct = () => {
-    const s = findSub(nCat, nSub);
-    if (!s) return;
-    const imgs = nImages.length ? nImages : s.images.slice(0, 4);
+    const cat = categories.find((c) => c.id === nCat);
+    const hasSubs = (cat?.subs ?? []).length > 0;
+    const s = hasSubs ? findSub(nCat, nSub) : null;
+    if (hasSubs && !s) return;
+
+    const catName = s ? s.name : (cat?.name || "Design");
+    const catBlurb = s ? s.blurb : (cat?.blurb || "");
+    const fallbackImgs = s ? s.images.slice(0, 4) : (cat?.image ? [cat.image] : []);
+    const imgs = nImages.length ? nImages : fallbackImgs;
+
     const p: AdminProduct = {
-      id: uid(nSub),
-      name: nName.trim() || `New ${s.name}`,
-      description: `${s.name} — ${s.blurb.toLowerCase()}, stitched to exact measurements.`,
+      id: uid(nSub || nCat),
+      name: nName.trim() || `New ${catName}`,
+      description: `${catName} — ${catBlurb.toLowerCase()}, stitched to exact measurements.`,
       category: nCat,
-      sub: nSub,
+      sub: nSub || "",
       basePrice: nPrice,
       mrp: nMrp,
-      blurb: s.blurb,
+      blurb: catBlurb,
       badge: "",
       expressFromPrice: Math.round(nPrice * 1.15),
       deliveryCharge: 49,
@@ -117,6 +124,22 @@ export function AddReelDialog({ open, onClose, editing }: Props) {
     if (!files?.length) return;
     const urls = await Promise.all(Array.from(files).slice(0, 4).map((f) => fileToUrl(f)));
     setNImages((l) => [...l, ...urls].slice(0, 4));
+  };
+
+  const moveNImage = (from: number, to: number) => {
+    if (from === to || from < 0 || to < 0) return;
+    setNImages((prev) => {
+      const next = [...prev];
+      if (to >= next.length) return prev;
+      const [moved] = next.splice(from, 1);
+      if (!moved) return prev;
+      next.splice(to, 0, moved);
+      return next;
+    });
+  };
+
+  const removeNImage = (idx: number) => {
+    setNImages((prev) => prev.filter((_, i) => i !== idx));
   };
 
   const submit = () => {
@@ -419,25 +442,27 @@ export function AddReelDialog({ open, onClose, editing }: Props) {
                           ))}
                         </select>
                       </label>
-                      <label className="block">
-                        <span className="text-[0.68rem] font-semibold text-muted-foreground uppercase">
-                          Sub-category
-                        </span>
-                        <select
-                          id="reelSubCategory"
-                          name="reelSubCategory"
-                          value={nSub}
-                          onChange={(e) => setNSub(e.target.value)}
-                          className="mt-1.5 w-full rounded-2xl border border-border bg-card px-3 py-2 text-sm outline-none focus:border-primary"
-                        >
-                          {subs.map((s) => (
-                            <option key={s.id} value={s.id}>
-                              {s.name}
-                            </option>
-                          ))}
-                        </select>
-                      </label>
-                      <label className="block sm:col-span-2">
+                      {subs.length > 0 && (
+                        <label className="block">
+                          <span className="text-[0.68rem] font-semibold text-muted-foreground uppercase">
+                            Sub-category
+                          </span>
+                          <select
+                            id="reelSubCategory"
+                            name="reelSubCategory"
+                            value={nSub}
+                            onChange={(e) => setNSub(e.target.value)}
+                            className="mt-1.5 w-full rounded-2xl border border-border bg-card px-3 py-2 text-sm outline-none focus:border-primary"
+                          >
+                            {subs.map((s) => (
+                              <option key={s.id} value={s.id}>
+                                {s.name}
+                              </option>
+                            ))}
+                          </select>
+                        </label>
+                      )}
+                      <label className={`block ${subs.length > 0 ? "sm:col-span-2" : "sm:col-span-1"}`}>
                         <span className="text-[0.68rem] font-semibold text-muted-foreground uppercase">
                           Design name
                         </span>
@@ -480,19 +505,55 @@ export function AddReelDialog({ open, onClose, editing }: Props) {
 
                     <div>
                       <span className="text-[0.68rem] font-semibold text-muted-foreground uppercase">
-                        Photos
+                        Photos {nImages.length > 1 ? "(use arrows to swap)" : ""}
                       </span>
                       <div className="mt-2 flex flex-wrap items-center gap-2">
-                        {(nImages.length ? nImages : findSub(nCat, nSub)?.images.slice(0, 4) ?? []).map(
-                          (src, i) => (
+                        {nImages.map((src, i) => (
+                          <div key={i} className="group relative flex flex-col items-center">
+                            <img
+                              src={src}
+                              alt=""
+                              className="h-16 w-14 rounded-xl border border-border object-cover"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => removeNImage(i)}
+                              title="Remove image"
+                              className="absolute -top-1.5 -right-1.5 grid h-5 w-5 place-items-center rounded-full bg-destructive text-destructive-foreground shadow-xs"
+                            >
+                              <X className="h-3 w-3" />
+                            </button>
+                            <div className="mt-1 flex items-center gap-1">
+                              <button
+                                type="button"
+                                disabled={i === 0}
+                                onClick={() => moveNImage(i, i - 1)}
+                                className="grid h-4 w-4 place-items-center rounded bg-secondary text-foreground disabled:opacity-20"
+                                title="Move left"
+                              >
+                                <ChevronLeft className="h-3 w-3" />
+                              </button>
+                              <button
+                                type="button"
+                                disabled={i === nImages.length - 1}
+                                onClick={() => moveNImage(i, i + 1)}
+                                className="grid h-4 w-4 place-items-center rounded bg-secondary text-foreground disabled:opacity-20"
+                                title="Move right"
+                              >
+                                <ChevronRight className="h-3 w-3" />
+                              </button>
+                            </div>
+                          </div>
+                        ))}
+                        {!nImages.length &&
+                          (findSub(nCat, nSub)?.images.slice(0, 4) ?? (categories.find((x) => x.id === nCat)?.image ? [categories.find((x) => x.id === nCat)!.image] : [])).map((src, i) => (
                             <img
                               key={i}
                               src={src}
                               alt=""
-                              className="h-16 w-14 rounded-xl object-cover"
+                              className="h-16 w-14 rounded-xl object-cover opacity-60"
                             />
-                          ),
-                        )}
+                          ))}
                         <label className="grid h-16 w-14 cursor-pointer place-items-center rounded-xl border border-dashed border-primary/40 text-primary">
                           <Upload className="h-4 w-4" />
                           <input

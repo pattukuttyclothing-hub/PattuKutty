@@ -959,7 +959,16 @@ export class CatalogueRepository {
       }
       if (productPayload.isActive !== undefined) updateData.is_active = Boolean(productPayload.isActive);
       if (catUuid) updateData.category_id = catUuid;
-      if (subUuid) updateData.sub_category_id = subUuid;
+      if (subUuid) {
+        updateData.sub_category_id = subUuid;
+      } else if (
+        productPayload.subCategoryId === "" ||
+        productPayload.sub === "" ||
+        productPayload.subCategoryId === null ||
+        productPayload.sub === null
+      ) {
+        updateData.sub_category_id = null;
+      }
       updateData.updated_at = new Date().toISOString();
 
       if (this.isUUID(productId)) {

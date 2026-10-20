@@ -6,7 +6,7 @@ import { SpecForm, makeSpec, type Spec } from "@/components/custom/SpecForm";
 import { StudioSpotlight } from "@/components/custom/StudioSpotlight";
 import { SubmissionCelebration } from "@/components/custom/SubmissionCelebration";
 import { StatusBadge } from "@/components/shared/Badge";
-import { type CategoryId } from "@/data/boutique";
+import { findCategory, type CategoryId } from "@/data/boutique";
 import { useRequests } from "@/lib/requests";
 import { useAuth, useAuthGate } from "@/lib/auth";
 import { useCategories, useProduct } from "@/lib/useStorefront";
@@ -131,8 +131,8 @@ function DesignStudio() {
       return;
     }
     const isSaree = spec.category === "sarees";
-    const isBlouse = spec.category === "blouses";
-    const catHasNoSubs = isSaree || isBlouse;
+    const catObj = findCategory(spec.category);
+    const catHasNoSubs = (catObj?.subs ?? []).length === 0;
     if (!catHasNoSubs && !spec.sub) {
       setErrorMsg("Please select a design style.");
       return;
