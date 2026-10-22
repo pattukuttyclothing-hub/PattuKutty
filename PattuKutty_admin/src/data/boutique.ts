@@ -234,6 +234,24 @@ export function isFrocksCategory(categoryId?: string): boolean {
   return categoryId === "frocks";
 }
 
+export const salwarMaterialSizeOptions = ["Standard"] as const;
+
+export function isSalwarMaterialCategory(categoryId?: string, subId?: string): boolean {
+  const cleanCat = (categoryId || "").toLowerCase().trim();
+  const cleanSub = (subId || "").toLowerCase().trim();
+  if (cleanCat === "salwar-materials" || cleanCat === "salwar-material") return true;
+  const isSalwar = cleanCat === "salwar" || cleanCat === "salwars" || cleanCat === "churidhar";
+  const isMaterialSub =
+    cleanSub === "salwar-materials" ||
+    cleanSub === "salwar-material" ||
+    cleanSub === "materials" ||
+    cleanSub === "material" ||
+    cleanSub === "dress-materials" ||
+    cleanSub === "dress-material" ||
+    cleanSub.includes("material");
+  return isSalwar && isMaterialSub;
+}
+
 export function isSalwarReadymadeCategory(categoryId?: string, subId?: string): boolean {
   const cleanCat = (categoryId || "").toLowerCase().trim();
   const cleanSub = (subId || "").toLowerCase().trim();
@@ -244,7 +262,7 @@ export function isSalwarReadymadeCategory(categoryId?: string, subId?: string): 
 }
 
 export function getPermittedSizesForCategory(categoryId?: string, subId?: string): readonly string[] {
-  if (isSareeCategory(categoryId, subId)) {
+  if (isSareeCategory(categoryId, subId) || isSalwarMaterialCategory(categoryId, subId)) {
     return sareeSizeOptions;
   }
   if (isBlouseCategory(categoryId)) {

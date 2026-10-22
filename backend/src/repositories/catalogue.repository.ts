@@ -685,8 +685,12 @@ export class CatalogueRepository {
       "salwar-readymade-top": "salwar-readymade",
       "readymade": "salwar-readymade",
       "salwar-readymade": "salwar-readymade",
+      "material": "salwar-materials",
       "materials": "salwar-materials",
+      "salwar-material": "salwar-materials",
       "salwar-materials": "salwar-materials",
+      "dress-material": "salwar-materials",
+      "dress-materials": "salwar-materials",
       "pattu-pudavai": "pattu-pudavai",
       "pattu-paavadai": "pattu-pudavai",
       "half-saree-classic": "half-saree-classic",
@@ -1194,13 +1198,16 @@ export class CatalogueRepository {
         // Category-driven default size seeding
         const catSlug = String(payload.category_id || payload.category || "");
         const subSlug = String(payload.sub_category_id || payload.sub || "");
-const isSaree = catSlug === "sarees";
+        const isSaree = catSlug === "sarees";
+        const isSalwarMaterial =
+          (catSlug === "salwar" || catSlug === "salwars" || catSlug === "salwar-materials") &&
+          (subSlug === "salwar-materials" || subSlug === "salwar-material" || subSlug === "materials" || subSlug === "material" || subSlug.includes("material"));
         const isBlouse = catSlug === "blouses" || catSlug === "blouse";
         const isPattuPaavadai = subSlug === "pattu-pudavai" || subSlug === "pattu-paavadai";
         const isHalfSareeOrLehenga = catSlug === "half-saree" && !isPattuPaavadai;
 
         let defaultSizes: string[];
-        if (isSaree) {
+        if (isSaree || isSalwarMaterial) {
           defaultSizes = ["Standard"];
         } else if (isBlouse) {
           defaultSizes = ["32", "34", "36", "38", "40", "42"];

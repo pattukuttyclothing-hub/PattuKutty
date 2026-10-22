@@ -4,7 +4,7 @@ import { ArrowLeft, ArrowRight, AlertCircle, Heart, MessageCircle, Minus, Plus, 
 import { PageShell, PageHeader, ComingSoonView, NoInternetConnectionView } from "@/components/shared/Page";
 import { ProductGallery } from "@/components/shared/ProductGallery";
 import { ProductCard } from "@/components/boutique/ProductCard";
-import { findCategory, findSub, isFrocksCategory, isHalfSareeCategory, isPattuPaavadaiCategory, isSalwarReadymadeCategory, isSareeCategory, isBlouseCategory, blouseSizes, type Product } from "@/data/boutique";
+import { findCategory, findSub, isFrocksCategory, isHalfSareeCategory, isPattuPaavadaiCategory, isSalwarReadymadeCategory, isSalwarMaterialCategory, isSareeCategory, isBlouseCategory, blouseSizes, type Product } from "@/data/boutique";
 import { fetchProductById } from "@/lib/api/catalogue";
 import { abs, absImage, BRAND, breadcrumbJsonLd, seoDescription, seoTitle, socialMeta } from "@/lib/seo";
 import { inr, orderWaLink, useCart } from "@/lib/cart";
@@ -92,9 +92,10 @@ function ProductPage() {
   const subCategorySlug = product?.sub ?? "";
   const isSaree = categorySlug === "sarees" || isSareeCategory(categorySlug, subCategorySlug);
   const isBlouse = categorySlug === "blouses" || isBlouseCategory(categorySlug);
+  const isSalwarMaterial = isSalwarMaterialCategory(categorySlug, subCategorySlug);
   const relatedRes = useProductsBySubCategory(categorySlug, (isSaree || isBlouse) ? "" : subCategorySlug);
 
-  const [size, setSize] = useState<string>(isSaree ? "Standard" : isBlouse ? "38" : "");
+  const [size, setSize] = useState<string>((isSaree || isSalwarMaterial) ? "Standard" : isBlouse ? "38" : "");
   const [showBlouseSizeGuide, setShowBlouseSizeGuide] = useState<boolean>(false);
   const [qty, setQty] = useState<number>(1);
 
@@ -126,7 +127,7 @@ function ProductPage() {
       }
     });
 
-    if (isSaree) {
+    if (isSaree || isSalwarMaterial) {
       return ["Standard"];
     }
 
@@ -157,11 +158,11 @@ function ProductPage() {
       return ["S", "M", "L", "XL", "XXL"];
     }
     return product?.sizes || ["S", "M", "L", "XL", "XXL"];
-  }, [availableVariants, isBlouse, isCustomizableStitched, isHalfSareeOrLehenga, isPattuPaavadai, isSaree, product?.sizes]);
+  }, [availableVariants, isBlouse, isCustomizableStitched, isHalfSareeOrLehenga, isPattuPaavadai, isSaree, isSalwarMaterial, product?.sizes]);
 
   // Set default selected size when real backend product variants load
   useEffect(() => {
-    if (isSaree) {
+    if (isSaree || isSalwarMaterial) {
       setSize("Standard");
     } else if (isBlouse) {
       if (!size || !blouseSizes.includes(size)) {
@@ -174,7 +175,7 @@ function ProductPage() {
     } else {
       setSize("");
     }
-  }, [uniqueAvailableSizes, isSaree, isBlouse]);
+  }, [uniqueAvailableSizes, isSaree, isBlouse, isSalwarMaterial]);
 
   if (loading && !product) {
     return (
@@ -212,12 +213,12 @@ function ProductPage() {
   const related = (relatedRes.data || []).filter((x) => x.id !== activeProduct.id).slice(0, 4);
 
   const isSoldOut = activeProduct.soldOut || (
-    isSaree
+    (isSaree || isSalwarMaterial)
       ? Boolean(activeProduct.variants && activeProduct.variants.length > 0 && !activeProduct.variants.some(v => v.available !== false && (v.stockQty === undefined || v.stockQty > 0)))
       : (activeProduct.variants && activeProduct.variants.length > 0 && uniqueAvailableSizes.length === 0)
   );
 
-  const selectedSize = isSaree ? "Standard" : (size || uniqueAvailableSizes[0] || "S");
+  const selectedSize = (isSaree || isSalwarMaterial) ? "Standard" : (size || uniqueAvailableSizes[0] || "S");
 
   const handleAddToCart = () => {
     gate(() => {
@@ -412,6 +413,48 @@ function ProductPage() {
                     <span className="rounded-full border border-border/60 bg-card px-2.5 py-1">✓ 5.5m Saree</span>
                     <span className="rounded-full border border-border/60 bg-card px-2.5 py-1">✓ Running Blouse Piece</span>
                     <span className="rounded-full border border-border/60 bg-card px-2.5 py-1">✓ Express Delivery Available</span>
+                  </div>
+                </div>
+              ) : isSalwarMaterial ? (
+                <div className="mt-6 rounded-2xl border border-border/60 bg-secondary/30 p-4 shadow-xs">
+                  <div className="flex items-center gap-2">
+                    <span className="inline-flex items-center gap-1.5 text-xs font-bold tracking-wider uppercase text-primary">
+                      <Sparkles className="h-3.5 w-3.5 text-accent fill-accent/20" /> Salwar Material Specifications
+                    </span>
+                  </div>
+                  <p className="mt-1.5 text-xs text-muted-foreground leading-relaxed">
+                    Complete 3-piece unstitched dress material set. Premium fabric cut to generous dimensions ready for custom tailoring to your desired fit.
+                  </p>
+                  <div className="mt-3 grid grid-cols-3 gap-2.5">
+                    <div className="rounded-xl border border-border/60 bg-card p-3 text-center shadow-2xs">
+                      <span className="block text-[0.68rem] font-semibold text-muted-foreground uppercase tracking-wider">Top</span>
+                      <span className="mt-0.5 block text-sm sm:text-base font-bold text-foreground">2.5m</span>
+                    </div>
+                    <div className="rounded-xl border border-border/60 bg-card p-3 text-center shadow-2xs">
+                      <span className="block text-[0.68rem] font-semibold text-muted-foreground uppercase tracking-wider">Bottom</span>
+                      <span className="mt-0.5 block text-sm sm:text-base font-bold text-foreground">2.25m</span>
+                    </div>
+                    <div className="rounded-xl border border-border/60 bg-card p-3 text-center shadow-2xs">
+                      <span className="block text-[0.68rem] font-semibold text-muted-foreground uppercase tracking-wider">Dupatta</span>
+                      <span className="mt-0.5 block text-sm sm:text-base font-bold text-foreground">2.5m</span>
+                    </div>
+                  </div>
+                  <div className="mt-3 flex flex-wrap gap-2 text-[0.7rem] font-medium text-foreground/80">
+                    <span className="rounded-full border border-border/60 bg-card px-2.5 py-1 font-semibold text-primary">✓ Top = 2.5m</span>
+                    <span className="rounded-full border border-border/60 bg-card px-2.5 py-1 font-semibold text-primary">✓ Bottom = 2.25m</span>
+                    <span className="rounded-full border border-border/60 bg-card px-2.5 py-1 font-semibold text-primary">✓ Dupatta = 2.5m</span>
+                    <span className="rounded-full border border-border/60 bg-card px-2.5 py-1">✓ Unstitched Material</span>
+                    <span className="rounded-full border border-border/60 bg-card px-2.5 py-1">✓ Express Delivery Available</span>
+                  </div>
+                  <div className="mt-3.5 flex flex-wrap items-center gap-3">
+                    <button
+                      type="button"
+                      onClick={handleCustomizeClick}
+                      className="inline-flex items-center gap-2 rounded-xl border border-primary/40 bg-primary/10 px-4 py-2.5 text-xs font-bold text-primary hover:bg-primary hover:text-primary-foreground transition-all shadow-xs active:scale-95 cursor-pointer"
+                    >
+                      <Sparkles className="h-3.5 w-3.5 text-amber-500 fill-amber-500 shrink-0" />
+                      Want Us to Stitch This Material? Custom Tailoring
+                    </button>
                   </div>
                 </div>
               ) : isBlouse ? (

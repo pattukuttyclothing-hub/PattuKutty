@@ -141,11 +141,11 @@ export const subCopy: Record<string, SubCopy> = {
   },
   "salwar-materials": {
     blurb: "Unstitched salwar materials & dress sets",
-    meta: "Unstitched salwar dress materials in Coimbatore — cotton, silk blend and chanderi unstitched suit sets with matching dupatta. Express custom stitching available.",
+    meta: "Unstitched salwar dress materials in Coimbatore — cotton, silk blend and chanderi unstitched suit sets with matching dupatta (Top=2.5m, Bottom=2.25m, Dupatta=2.5m). Express custom stitching available.",
     intro:
-      "Premium unstitched salwar materials with matching dupatta and bottom fabrics. Order as unstitched fabric or have our studio custom stitch it for you.",
+      "Premium unstitched salwar materials with matching dupatta and bottom fabrics (Top=2.5m, Bottom=2.25m, Dupatta=2.5m). Order as unstitched fabric or have our studio custom stitch it for you.",
     product: (name) =>
-      `${name} is an unstitched salwar dress material set complete with top fabric, bottom material and dupatta. Available as unstitched fabric or stitched to your measurements. ${shipLine}`,
+      `${name} is an unstitched salwar dress material set complete with Top (2.5m), Bottom (2.25m), and Dupatta (2.5m). ${shipLine}`,
   },
   sarees: {
     blurb: "Curated silk, fancy and designer sarees with unstitched blouse piece",

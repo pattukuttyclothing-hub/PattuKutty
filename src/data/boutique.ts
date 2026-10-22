@@ -274,6 +274,13 @@ export const findSub = (categoryId: string, subId: string): SubCategory | undefi
       if (child) return child;
     }
   }
+  const cleanSub = (subId || "").toLowerCase().trim();
+  if (cleanSub === "materials" || cleanSub === "material" || cleanSub === "salwar-material" || cleanSub === "salwar-materials" || cleanSub === "dress-materials" || cleanSub === "dress-material") {
+    return cat.subs.find((s) => s.id === "salwar-materials");
+  }
+  if (cleanSub === "readymade" || cleanSub === "readymade-top" || cleanSub === "readymade-kurthi") {
+    return cat.subs.find((s) => s.id === "salwar-readymade");
+  }
   return undefined;
 };
 
@@ -341,6 +348,8 @@ export function isFrocksCategory(categoryId?: string): boolean {
   return categoryId === "frocks";
 }
 
+export const salwarMaterialSizes = ["Standard"];
+
 export function isSalwarReadymadeCategory(categoryId?: string, subId?: string): boolean {
   const cleanCat = (categoryId || "").toLowerCase().trim();
   const cleanSub = (subId || "").toLowerCase().trim();
@@ -350,8 +359,24 @@ export function isSalwarReadymadeCategory(categoryId?: string, subId?: string): 
   );
 }
 
+export function isSalwarMaterialCategory(categoryId?: string, subId?: string): boolean {
+  const cleanCat = (categoryId || "").toLowerCase().trim();
+  const cleanSub = (subId || "").toLowerCase().trim();
+  if (cleanCat === "salwar-materials" || cleanCat === "salwar-material") return true;
+  const isSalwar = cleanCat === "salwar" || cleanCat === "salwars" || cleanCat === "churidhar";
+  const isMaterialSub =
+    cleanSub === "salwar-materials" ||
+    cleanSub === "salwar-material" ||
+    cleanSub === "materials" ||
+    cleanSub === "material" ||
+    cleanSub === "dress-materials" ||
+    cleanSub === "dress-material" ||
+    cleanSub.includes("material");
+  return isSalwar && isMaterialSub;
+}
+
 export function getSizesForCategory(categoryId?: string, subId?: string): string[] {
-  if (isSareeCategory(categoryId, subId)) {
+  if (isSareeCategory(categoryId, subId) || isSalwarMaterialCategory(categoryId, subId)) {
     return sareeSizes;
   }
   if (categoryId && isBlouseCategory(categoryId)) {

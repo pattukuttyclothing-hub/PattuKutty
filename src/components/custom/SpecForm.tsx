@@ -8,6 +8,7 @@ import {
   categories,
   colourSwatches,
   findCategory,
+  isSalwarMaterialCategory,
   timelines,
   type CategoryId,
   type TimelineId,
@@ -101,7 +102,7 @@ export const makeSpec = (category?: string, sub?: string): Spec => {
     /** phone is pre-filled from the saved customer profile / details, editable */
     phone: typeof window === "undefined" ? "" : window.localStorage.getItem("butterflies-phone") || "",
     qty: 1,
-    size: isSaree ? "Standard" : isBlouse ? "38" : "M",
+    size: (isSaree || isSalwarMaterialCategory(validCategory, validSub)) ? "Standard" : isBlouse ? "38" : "M",
     measurements: {},
     timeline: "1-day",
     fulfilment: "pickup",
@@ -396,6 +397,17 @@ export function SpecForm({
                 </span>
                 <p className="mt-1 text-xs text-muted-foreground">
                   Custom sizing is not required for sarees. If you want custom blouse stitching, describe it in the notes below.
+                </p>
+              </div>
+            </Field>
+          ) : isSalwarMaterialCategory(spec.category, spec.sub) ? (
+            <Field label="Salwar Material Specification" hint={<InfoTip text="Dress materials are unstitched fabric sets for custom tailoring." />}>
+              <div className="rounded-2xl border border-border bg-card p-4">
+                <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-primary">
+                  <Sparkles className="h-4 w-4 text-accent" /> Top=2.5m, Bottom=2.25m, Dupatta=2.5m
+                </span>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Dress materials are standard unstitched 3-piece sets. Standard body sizes do not apply. If you'd like us to custom stitch it, provide your body measurements below.
                 </p>
               </div>
             </Field>

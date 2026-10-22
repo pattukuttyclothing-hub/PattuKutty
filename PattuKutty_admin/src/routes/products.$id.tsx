@@ -15,6 +15,7 @@ import {
   isFrocksCategory,
   isPattuPaavadaiCategory,
   isSalwarReadymadeCategory,
+  isSalwarMaterialCategory,
   isSareeCategory,
   sizeOptions,
   subName,
@@ -944,7 +945,14 @@ function ProductEditor() {
                           type="button"
                           onClick={() => {
                             const targetSub = s.subs && s.subs.length > 0 ? s.subs[0]!.id : s.id;
-                            set({ sub: targetSub });
+                            if (isSalwarMaterialCategory(draft.category, targetSub)) {
+                              set({
+                                sub: targetSub,
+                                variants: [{ size: "Standard", available: true, stockQty: 5 }],
+                              });
+                            } else {
+                              set({ sub: targetSub });
+                            }
                           }}
                           className={`flex items-center gap-2 rounded-full border py-1.5 pr-3.5 pl-1.5 text-[0.75rem] font-medium transition-colors ${
                             isMainSubActive
@@ -1008,6 +1016,8 @@ function ProductEditor() {
             title={
               isSareeCategory(draft?.category, draft?.sub)
                 ? "Saree Inventory & Direct Stock"
+                : isSalwarMaterialCategory(draft?.category, draft?.sub)
+                ? "Salwar Material Inventory & Direct Stock"
                 : isBlouseCategory(draft?.category)
                 ? "Blouse Sizes (32–42) & independent stock"
                 : isPattuPaavadaiCategory(draft?.category, draft?.sub)
@@ -1018,6 +1028,8 @@ function ProductEditor() {
             <p className="text-xs text-muted-foreground">
               {isSareeCategory(draft?.category, draft?.sub)
                 ? "Manage stock quantity and availability directly. Sarees are universal fit (5.5m Saree + 0.8m Blouse Piece) and do not have clothing sizes."
+                : isSalwarMaterialCategory(draft?.category, draft?.sub)
+                ? "Manage stock quantity and availability directly. Salwar materials are unstitched sets (Top=2.5m, Bottom=2.25m, Dupatta=2.5m) and do not have clothing sizes."
                 : isBlouseCategory(draft?.category)
                 ? "Select blouse bust sizes (32 to 42 inches) and specify the stock quantity available for each size independently."
                 : isPattuPaavadaiCategory(draft?.category, draft?.sub)
@@ -1029,16 +1041,20 @@ function ProductEditor() {
                 : "Select sizes for this design and specify the stock quantity available for each size independently."}
             </p>
 
-            {isSareeCategory(draft?.category, draft?.sub) ? (
+            {isSareeCategory(draft?.category, draft?.sub) || isSalwarMaterialCategory(draft?.category, draft?.sub) ? (
               <div className="rounded-2xl border border-primary/20 bg-primary/5 p-4 sm:p-5 space-y-4">
                 <div className="flex items-start gap-3">
                   <div className="rounded-xl bg-primary/10 p-2.5 text-primary shrink-0">
                     <Sparkles className="h-5 w-5" />
                   </div>
                   <div>
-                    <h4 className="text-sm font-semibold text-foreground">Standard Saree Dimension (Free Size)</h4>
+                    <h4 className="text-sm font-semibold text-foreground">
+                      {isSareeCategory(draft?.category, draft?.sub) ? "Standard Saree Dimension (Free Size)" : "Standard Salwar Material Specification"}
+                    </h4>
                     <p className="text-xs text-muted-foreground mt-0.5 leading-relaxed">
-                      Sarees are continuous drapes (5.5m Saree + 0.8m Blouse Piece) and do not require clothing size variants or size charts. Manage physical inventory directly below.
+                      {isSareeCategory(draft?.category, draft?.sub)
+                        ? "Sarees are continuous drapes (5.5m Saree + 0.8m Blouse Piece) and do not require clothing size variants or size charts. Manage physical inventory directly below."
+                        : "Dress materials are unstitched 3-piece sets (Top=2.5m, Bottom=2.25m, Dupatta=2.5m) and do not require clothing size variants or size charts. Manage physical inventory directly below."}
                     </p>
                   </div>
                 </div>

@@ -6,7 +6,7 @@ import { SpecForm, makeSpec, type Spec } from "@/components/custom/SpecForm";
 import { StudioSpotlight } from "@/components/custom/StudioSpotlight";
 import { SubmissionCelebration } from "@/components/custom/SubmissionCelebration";
 import { StatusBadge } from "@/components/shared/Badge";
-import { findCategory, type CategoryId } from "@/data/boutique";
+import { findCategory, isSalwarMaterialCategory, type CategoryId } from "@/data/boutique";
 import { useRequests } from "@/lib/requests";
 import { useAuth, useAuthGate } from "@/lib/auth";
 import { useCategories, useProduct } from "@/lib/useStorefront";
@@ -131,13 +131,14 @@ function DesignStudio() {
       return;
     }
     const isSaree = spec.category === "sarees";
+    const isSalwarMaterial = isSalwarMaterialCategory(spec.category, spec.sub);
     const catObj = findCategory(spec.category);
     const catHasNoSubs = (catObj?.subs ?? []).length === 0;
     if (!catHasNoSubs && !spec.sub) {
       setErrorMsg("Please select a design style.");
       return;
     }
-    if (!isSaree && (!spec.size || !spec.size.trim())) {
+    if (!isSaree && !isSalwarMaterial && (!spec.size || !spec.size.trim())) {
       setErrorMsg("Please select an outfit size.");
       return;
     }
